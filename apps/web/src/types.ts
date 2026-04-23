@@ -10,19 +10,50 @@ export interface BaseBlock {
   _key: string;
 }
 
+export interface PromoBgImage {
+  _key: string;
+  fileReference?: SanityImageRef;
+  fileReferenceAemPath?: string;
+  imageLink?: string;
+  /** AEM authoring hint: which breakpoint this image is intended for. */
+  visible?: "desktop" | "mobile" | string;
+  alignment?: string;
+}
+
+export interface PromoButton {
+  _key: string;
+  text?: string;
+  link?: string;
+  /**
+   * AEM button style hint. Real data uses `ghost` (outlined) and `link`
+   * (inline text link); `button` is the filled-primary variant.
+   */
+  type?: "button" | "ghost" | "link" | string;
+  ariaLabel?: string;
+  buttonHexColor?: string;
+  ctaTextHexColor?: string;
+}
+
 export interface PromoBlock extends BaseBlock {
   _type: "promo";
   headline1?: string;
   headline2?: string;
   description?: PortableTextBlock[];
+  /** Legacy single-image shape, still rendered when bgImages isn't present. */
   fileReference?: SanityImageRef;
   fileReferenceAemPath?: string;
   imageLink?: string;
   link?: string;
+  /** Responsive banner variants (desktop + mobile), authored as a multifield. */
+  bgImages?: PromoBgImage[];
+  /** CTA row. Multiple buttons, each with its own style hint. */
+  buttons?: PromoButton[];
   tagLevel?: string;
   align?: "left" | "center" | "right";
   size?: string;
   theme?: string;
+  backgroundColor?: string;
+  copySize?: string;
 }
 
 export interface HrBlock extends BaseBlock {
