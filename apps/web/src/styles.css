@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/*
+ * Ethereal Atelier tokens — see docs/DESIGN.md.
+ *
+ * The "no-line" rule means we never reach for `border`; section boundaries
+ * land as tonal shifts between these surface colors. The Ghost Border
+ * (`outline-variant` at 20% opacity) is the only acceptable fallback.
+ */
+@theme {
+  --color-surface: #f9f9f9;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f3f3f4;
+  --color-surface-container: #ededee;
+  --color-on-surface: #1a1c1c;
+  --color-on-surface-variant: #5c3f41;
+
+  --color-primary: #be0039;
+  --color-primary-container: #e8184c;
+  --color-on-primary: #ffffff;
+  --color-secondary-container: #fbdbdb;
+
+  --color-outline-variant: #e6bdbe;
+  --color-error: #ba1a1a;
+
+  --font-display: "Noto Serif", "Cormorant Garamond", "Times New Roman", serif;
+  --font-body: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-label: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Tuned shadow — tinted with on-surface-variant per DESIGN.md §4. */
+  --shadow-ambient: 0 20px 50px rgba(92, 63, 65, 0.05);
+}
+
+/*
+ * Body default — use `on-surface` instead of `#000` for the "softer, more
+ * premium reading experience" spec'd under Don'ts.
+ */
+html,
+body,
+#root {
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/*
+ * The "satin" CTA gradient — a single utility we reach for from the Promo
+ * and ColorCarousel primary buttons. Keeps the gradient spec (§2 "Glass &
+ * Gradient Rule") in one place so we don't drift into rendering slightly
+ * different primary fills on each block.
+ */
+.cta-satin {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-container) 100%
+  );
+  color: var(--color-on-primary);
+  border-radius: 0.125rem; /* rounded-sm per §5 */
+}
+
+.label-caps {
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+}
