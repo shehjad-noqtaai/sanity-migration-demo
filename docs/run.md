@@ -105,6 +105,9 @@ Flags:
 ### 4d. `import`
 **What this does:** Reads every file under `output/clean/` and commits the docs into your Sanity dataset via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Because `_id` values are derived from JCR paths, re-runs upsert rather than duplicate. **Dry-run by default** — prints what it *would* write until you set `MIGRATION_DRY_RUN=false`.
 
+Flags:
+- `--discard-drafts` (or `MIGRATION_DISCARD_DRAFTS=true`) — also delete `drafts.{id}` in the same transaction. Without this, the Studio's draft pins stale content even after a successful re-import. Opt-in; destroys authored in-progress edits.
+
 All four are dry-run by default. To actually write to Sanity, export `MIGRATION_DRY_RUN=false` before running `assets` + `import` (plus `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN`, and for `assets` `SANITY_MEDIA_LIBRARY_ID` + `SANITY_ML_LINK_TOKEN`).
 
 ### One-time before the first live `assets` run:

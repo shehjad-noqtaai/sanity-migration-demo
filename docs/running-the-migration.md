@@ -52,6 +52,7 @@ cp examples/davids-bridal/.env.example examples/davids-bridal/.env
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
 | `MIGRATION_DRY_RUN` | optional | `aem-assets` and `aem-import` are dry-run unless this is explicitly set to `false`. Default (unset): dry-run. |
 | `MIGRATION_LINK_ONLY` | optional | `aem-assets` only. `true` ⇔ passing `--link-only`. Skips phases 1 + 2 (download + upload) and relies on phase 0 to find assets already in the Media Library. See § 4c. |
+| `MIGRATION_DISCARD_DRAFTS` | optional | `aem-import` only. `true` ⇔ passing `--discard-drafts`. Deletes `drafts.{id}` alongside each published `createOrReplace` so the Studio shows the freshly-imported content instead of a stale draft from a prior run. Opt-in — destroys authored in-progress edits. |
 | `AEM_VERBOSE` | optional | `true` ⇔ passing `--verbose`. Elevates the CLI logger to `debug` so every AEM GET is logged. |
 | `SANITY_PROJECT_ID` | required for writes | Only read when `MIGRATION_DRY_RUN=false`. |
 | `SANITY_DATASET` | required for writes | |
@@ -319,6 +320,8 @@ Reads every file under `output/clean/` and commits the docs via `@sanity/client`
 
 - **Dry-run default.** With `MIGRATION_DRY_RUN` unset or truthy, the command only prints what it *would* write.
 - **Requires** `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN` when writing.
+- **Flags:**
+  - `--discard-drafts` (or `MIGRATION_DISCARD_DRAFTS=true`) — delete `drafts.{id}` in the same transaction as each published `createOrReplace`. The Studio opens a draft whenever one exists, so without this flag a stale draft from a prior migration run keeps shadowing freshly-imported published data — you re-run `aem-import`, the terminal shows "Committed", and the Studio still shows the old content. Opt-in because it also destroys any authored in-progress edits; use it when re-running migrations against a dataset that only this pipeline writes to.
 
 ### Depth-5 truncation — handled for you
 

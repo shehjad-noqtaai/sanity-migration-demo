@@ -69,6 +69,10 @@ MIGRATION_DRY_RUN=false pnpm aem-import                  # commit docs
 - `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup finds assets already in the Media Library and links them into the dataset. Useful for re-runs, for iterating on link/rewrite logic without re-hitting AEM, or when assets were pushed out-of-band. Mutually exclusive with `--upload-only`. See § *aem-assets — Media Library flow* below for the caveat about the `aemSource` aspect.
 - `--no-rewrite` — skip the in-place rewrite of `clean/*.json`.
 
+`aem-import` flags:
+
+- `--discard-drafts` (or `MIGRATION_DISCARD_DRAFTS=true`) — delete `drafts.{id}` alongside each published `createOrReplace`. Without this flag a stale draft from a prior run keeps shadowing freshly-imported content in the Studio. Opt-in; destroys authored in-progress edits.
+
 ## Type-aware coercion (transform)
 
 AEM's JCR is schemaless on dialog inputs — every authored value arrives in `.infinity.json` as a JSON string, no matter what the dialog widget was. `aem-transform` reads each mapped block's `fields: [{name, type}]` from `content-type-registry.json` and coerces ingested string values into the Sanity-expected scalar:
