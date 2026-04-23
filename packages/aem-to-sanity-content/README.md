@@ -89,6 +89,10 @@ Legacy `fields: string[]` registry entries skip every coercion step (pass-throug
 
 Every CLI appends an `Elapsed:` line to its summary. `aem-assets` also reports per-phase durations (`phase 0 (ML dedup)` / `phase 1 (download)` / `phase 2 (upload)` / `phase 3 (link)` / `phase 4 (rewrite)`), which lets you see at a glance whether a slow run is bottlenecked on AEM fetches, ML uploads, or the dataset link API.
 
+## Parallelism in aem-assets
+
+Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (default `4`). Phase 0's ML dedup pre-pass resolves every DAM path that already lives in the Media Library, so the downstream phases only touch each DAM path with a single worker — the shared `manifest` is never contended at the same key, and no locks are needed. The manifest file is persisted via synchronous `writeFileSync` + `JSON.stringify`, both atomic relative to the single-threaded event loop. If that ever moves to async `writeFile`, a serial lock becomes mandatory. Output is logged in completion order so progress reflects actual throughput.
+
 ## Reports
 
 - `output/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.
@@ -101,7 +105,7 @@ Every CLI appends an `Elapsed:` line to its summary. `aem-assets` also reports p
 
 `aem-assets` runs five phases. Dry-run default stops after phase 1 (local download).
 
-0. **Dedup against the Media Library** — GROQ on `aspects.aemSource.damPath`. A hit populates the manifest with both ids so phases 1+2 skip entirely for that asset. Requires the `aemSource` aspect to be deployed once per ML. Skipped on dry-run by default; `--link-only` forces it to run (safe, read-only).
+0. **Dedup against the Media Library + manifest staleness check** — GROQ on `aspects.aemSource.damPath`. A hit populates the manifest with both ids so phases 1+2 skip entirely for that asset. When the lookup misses but the manifest claims an `mediaLibraryAssetId`, phase 0 verifies the doc still exists in the ML by id; if it's been deleted (e.g. ML wipe), the stale linkage is cleared so phases 2-3 re-upload + re-link for real. Transport errors are treated conservatively — manifest state is preserved and the next healthy-network run re-verifies. Requires the `aemSource` aspect to be deployed once per ML. Skipped on dry-run by default; `--link-only` forces it to run (safe, read-only).
 1. **Download** AEM DAM binary → local cache in `output/assets/`.
 2. **Upload to Media Library** — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload`. Response `{asset: {_id}, assetInstance: {_id}}` captures the parent asset id and the versioned instance id (both needed for step 3). Uses `SANITY_TOKEN` — a project robot token works for this step.
 3. **Link to dataset** — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Response `{document: {_id, media: {_ref}, ...}}` — `document._id` is the dataset-local asset ref that goes into docs. **Requires a personal auth token** (`SANITY_ML_LINK_TOKEN`) because the endpoint rejects project robot tokens with `401 Invalid non-global session`.
