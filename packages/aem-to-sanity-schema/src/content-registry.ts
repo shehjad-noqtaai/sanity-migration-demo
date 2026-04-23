@@ -7,17 +7,20 @@ const GENERATED_MARKER = "__generated";
 export interface RegistryField {
   name: string;
   type: string;
+  /** Nested item fields when `type === "array-of-object"`. */
+  itemFields?: RegistryField[];
 }
 
 export interface RegistryEntry {
   resourceType: string;
   sanityType: string;
   /**
-   * Every field the emitted Sanity schema declares, with its Sanity `type`.
-   * `aem-transform` reads this so it can coerce AEM values to the right
-   * shape — notably, HTML strings on `array-of-blocks` fields become
-   * Portable Text. Flattened across nested multifield members; ordering is
-   * not significant (consumers look up by `name`).
+   * Tree of every field the emitted Sanity schema declares, with its
+   * Sanity `type`. Nested array-of-object members are carried under
+   * `itemFields` so `aem-transform` can coerce AEM values at any depth —
+   * richtext HTML strings inside multifield items become Portable Text
+   * rather than landing as raw strings that the Studio rejects with
+   * "expected array".
    */
   fields: RegistryField[];
 }
@@ -75,22 +78,13 @@ export async function writeContentRegistry(
 
   const entries: RegistryEntry[] = report.results
     .filter((r): r is Extract<typeof r, { status: "success" }> => r.status === "success")
-    .map((r) => {
-      // Dedup by field name (nested multifields can collide after
-      // flattening), keeping the first declared type. Stable ordering keeps
-      // diffs clean across runs.
-      const seen = new Map<string, RegistryField>();
-      for (const f of r.fields) {
-        if (!seen.has(f.name)) seen.set(f.name, { name: f.name, type: f.type });
-      }
-      return {
-        resourceType: r.path.startsWith(jcrPrefix)
-          ? r.path.slice(jcrPrefix.length)
-          : r.path.replace(/^\/+/, ""),
-        sanityType: r.sanityTypeName,
-        fields: [...seen.values()].sort((a, b) => a.name.localeCompare(b.name)),
-      };
-    })
+    .map((r) => ({
+      resourceType: r.path.startsWith(jcrPrefix)
+        ? r.path.slice(jcrPrefix.length)
+        : r.path.replace(/^\/+/, ""),
+      sanityType: r.sanityTypeName,
+      fields: normalizeFieldTree(r.fields),
+    }))
     .sort((a, b) => a.resourceType.localeCompare(b.resourceType));
 
   const payload = {
@@ -101,4 +95,28 @@ export async function writeContentRegistry(
 
   await writeTextFile(outputFile, JSON.stringify(payload, null, 2) + "\n");
   return { file: outputFile, written: true, entryCount: entries.length };
+}
+
+/**
+ * Dedup + sort a field tree for stable on-disk output. Fields at each
+ * nesting level are deduped by name (keeping the first occurrence, which
+ * matches the declaration order in the emitted schema) and sorted
+ * alphabetically so re-runs produce byte-identical registries — the
+ * deterministic-diff invariant the rest of the pipeline relies on.
+ */
+function normalizeFieldTree(
+  fields: readonly { name: string; type: string; itemFields?: readonly { name: string; type: string; itemFields?: unknown }[] }[],
+): RegistryField[] {
+  const seen = new Map<string, RegistryField>();
+  for (const f of fields) {
+    if (seen.has(f.name)) continue;
+    const entry: RegistryField = { name: f.name, type: f.type };
+    if (f.itemFields?.length) {
+      entry.itemFields = normalizeFieldTree(
+        f.itemFields as readonly { name: string; type: string }[],
+      );
+    }
+    seen.set(f.name, entry);
+  }
+  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
 }

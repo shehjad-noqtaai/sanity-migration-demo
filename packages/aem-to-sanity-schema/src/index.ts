@@ -8,12 +8,13 @@ export type { EmitInput } from "./emitter.ts";
 export {
   mapDialog,
   flattenSchemaFieldNames,
-  flattenSchemaFields,
+  describeSchemaFields,
   AEM_FILE_UPLOAD_PATH_FIELD_SUFFIX,
 } from "./mapper.ts";
 export type {
   NodeFetcher,
   SanityField,
+  SchemaFieldInfo,
   UnmappedField,
   RenamedField,
   CommonFieldProps,

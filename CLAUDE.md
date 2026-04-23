@@ -47,13 +47,14 @@ When you change how any artifact is generated, **re-run the relevant stage again
 
 AEM's JCR is schemaless on dialog inputs — `.infinity.json` serializes every authored value as a **JSON string** regardless of what the dialog widget was (numberfield → `"10"`, checkbox → `"true"` / `"false"`, richtext → HTML string). The emitted Sanity schemas declare proper types, so without coercion the Studio rejects every ingested value with "Expected type X, got String".
 
-`content-type-registry.json` records each field's Sanity type (`fields: Array<{name, type}>`). `aem-transform` reads those types and coerces at ingest:
+`content-type-registry.json` records each field's Sanity type as a **tree** (`fields: Array<{name, type, itemFields?}>`). `aem-transform` reads those types and coerces at every depth:
 
 - **`array-of-blocks`** → Portable Text via `@portabletext/block-tools` + `jsdom`. Decorators / styles / lists / `link` annotations preserved. `_key`s SHA1-seeded for deterministic diffs.
 - **`number`** → `Number(v)`; kept as-is on `NaN`.
 - **`boolean`** → `"true"` / `"false"` literal strings only.
+- **`array-of-object`** → recurses into each item using the field's `itemFields` subtree, so nested richtext / number / boolean (e.g. `variableColumn.columnContents[].columnText`) are coerced the same as top-level fields. If the AEM value is a plain object instead of an array (named-key multifield — e.g. `colorCarousel.colors: { weddingDresses: {...}, ... }`), `Object.values` materializes it in authored order before recursing. The same principle applies to `splitAemFileUploadDamPaths`: nested field names are collected from the registry tree so `{base}AemPath` moves work at any depth.
 
-**Scope is top-level only** — nested multifield members fall through because the registry flattens field lists. If nested typed values surface in real AEM content, carry structured nesting in the registry before broadening here.
+**Dialog-runtime metadata.** AEM writes bookkeeping sidecars next to authored fields (e.g. `textIsRich: "true"` beside richtext values). These have no Sanity counterpart and would surface as "Unknown field found" warnings if not dropped. Maintained as a narrow allowlist (`AEM_DIALOG_RUNTIME_KEYS` in `transform.ts`) — add new leaks there as they appear; never substitute a blanket heuristic.
 
 **When adding a new coerced type:**
 1. Extend `coerceScalarFields` (or `coerceRichTextFields` if shape-heavy) in `packages/aem-to-sanity-content/src/transform.ts`.
@@ -62,6 +63,10 @@ AEM's JCR is schemaless on dialog inputs — `.infinity.json` serializes every a
 4. Update the mirror blurbs in `packages/aem-to-sanity-content/README.md`, `docs/running-the-migration.md` § 4b, and `docs/run.md` § 4b.
 
 If the issue is actually a wrong Sanity type (not a coercion gap), fix it at the schema emitter layer — check that the dialog's `sling:resourceType` is mapped correctly in `packages/aem-to-sanity-schema/src/mapping-table.ts`. Don't paper over schema-layer bugs with per-field coercion in the transform.
+
+## Drafts shadow imports
+
+The Studio edits `drafts.{id}` whenever one exists. `aem-import` by default only writes the published `{id}`, so a stale draft keeps shadowing fresh migration output — the operator sees old content after a "successful" re-import and gets confused. For migration re-runs, pass `--discard-drafts` (or set `MIGRATION_DISCARD_DRAFTS=true`). When diagnosing "I re-ran the import and nothing changed in the Studio", check for a shadowing draft first.
 
 ## Running verification
 

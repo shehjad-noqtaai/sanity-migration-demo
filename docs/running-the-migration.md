@@ -52,6 +52,7 @@ cp examples/davids-bridal/.env.example examples/davids-bridal/.env
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
 | `MIGRATION_DRY_RUN` | optional | `aem-assets` and `aem-import` are dry-run unless this is explicitly set to `false`. Default (unset): dry-run. |
 | `MIGRATION_LINK_ONLY` | optional | `aem-assets` only. `true` ⇔ passing `--link-only`. Skips phases 1 + 2 (download + upload) and relies on phase 0 to find assets already in the Media Library. See § 4c. |
+| `MIGRATION_DISCARD_DRAFTS` | optional | `aem-import` only. `true` ⇔ passing `--discard-drafts`. Deletes `drafts.{id}` alongside each published `createOrReplace` so the Studio shows the freshly-imported content instead of a stale draft from a prior run. Opt-in — destroys authored in-progress edits. |
 | `AEM_VERBOSE` | optional | `true` ⇔ passing `--verbose`. Elevates the CLI logger to `debug` so every AEM GET is logged. |
 | `SANITY_PROJECT_ID` | required for writes | Only read when `MIGRATION_DRY_RUN=false`. |
 | `SANITY_DATASET` | required for writes | |
@@ -130,7 +131,7 @@ Consumed by `aem-transform`. One `sling:resourceType` (or `apps/...` prefix) per
 
 - `resourceType` — derived by stripping `/apps/` from each component path. Override via `jcrPrefix` on the programmatic API if your install uses a different prefix.
 - `sanityType` — the emitted schema's `name`.
-- `fields` — `Array<{name, type}>` covering every field the emitted schema declares (including flattened multifield members). The content transform reads this to coerce AEM scalars into the right Sanity shape — notably, HTML strings on `array-of-blocks` fields are converted to Portable Text at ingest via `@portabletext/block-tools`.
+- `fields` — tree-shaped `Array<{name, type, itemFields?}>` covering every field the emitted schema declares. `array-of-object` fields carry their members under `itemFields` so the content transform can coerce AEM scalars into the right Sanity shape at any depth — HTML strings on `array-of-blocks` fields become Portable Text (via `@portabletext/block-tools`) whether they sit at the top level or inside a `variableColumn.columnContents[]` multifield row.
 
 Legacy `fields: string[]` registry files are still accepted. The transform falls back to pass-through behavior on fields without type info, so old registries keep working but don't get the richtext coercion — regenerate to opt in.
 
@@ -241,11 +242,12 @@ Reads every entry in `aem-content-roots`, fetches `{root}.infinity.json` from AE
 
 Walks each raw JCR tree, maps `sling:resourceType` values via `content-type-registry.json`, and emits one `page` doc per input file with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key` (from `jcr:uuid` or path SHA1). Unknown resource types and nodes listed in `aem-component-exceptions` are skipped but noted in the audit.
 
-**Type-aware coercion.** AEM's JCR is schemaless on dialog inputs — every authored value lands in `.infinity.json` as a JSON string regardless of what the dialog widget was. The emitted Sanity schemas declare proper types (`number`, `boolean`, `array-of-blocks`), so without coercion the Studio rejects ingested values with "Expected type X, got String". Transform reads each mapped block's registry `fields` entries and coerces at ingest (top-level fields only; nested multifield members fall through):
+**Type-aware coercion.** AEM's JCR is schemaless on dialog inputs — every authored value lands in `.infinity.json` as a JSON string regardless of what the dialog widget was. The emitted Sanity schemas declare proper types (`number`, `boolean`, `array-of-blocks`), so without coercion the Studio rejects ingested values with "Expected type X, got String". Transform reads the registry's tree-shaped `fields` (`Array<{name, type, itemFields?}>`) and coerces at every depth — top-level fields *and* members inside nested `array-of-object` multifields (e.g. `variableColumn.columnContents[].columnText`):
 
 - **`array-of-blocks`** — AEM `cq/gui/components/authoring/dialog/richtext` / Coral richtext values arrive as HTML strings. Converted to Portable Text via `@portabletext/block-tools` (with `jsdom` as the DOM). Decorators (`strong`, `em`, `underline`, `strike-through`, `code`), styles (`normal`, `h1`–`h4`, `blockquote`), lists (`bullet`, `number`), and `<a href>` annotations are preserved. `_key`s are derived from a SHA1 of `{jcrPath}::{fieldName}:{counter}` so re-runs produce byte-identical clean docs. On parser failure the original string is kept intact.
 - **`number`** — coerced via `Number(v)`; kept as-is on `NaN`. AEM numberfield values land as `"10"` etc.
 - **`boolean`** — coerced when the value is the literal string `"true"` or `"false"`; kept as-is otherwise. AEM checkbox values land as `"true"` / `"false"`.
+- **`array-of-object`** — recurses into nested multifield items. Handles both AEM shapes: the ordered `item0`/`item1` form (materialized earlier in `transformInline`) and the named-key form (e.g. `colorCarousel.colors: { weddingDresses: {...}, bridesmaidDresses: {...} }`) — materialized here by taking `Object.values` of the keyed map in authored order.
 
 Legacy `content-type-registry.json` files without `fields[].type` skip every coercion step — regenerate via `pnpm migrate:schema` to opt in.
 
@@ -318,6 +320,8 @@ Reads every file under `output/clean/` and commits the docs via `@sanity/client`
 
 - **Dry-run default.** With `MIGRATION_DRY_RUN` unset or truthy, the command only prints what it *would* write.
 - **Requires** `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN` when writing.
+- **Flags:**
+  - `--discard-drafts` (or `MIGRATION_DISCARD_DRAFTS=true`) — delete `drafts.{id}` in the same transaction as each published `createOrReplace`. The Studio opens a draft whenever one exists, so without this flag a stale draft from a prior migration run keeps shadowing freshly-imported published data — you re-run `aem-import`, the terminal shows "Committed", and the Studio still shows the old content. Opt-in because it also destroys any authored in-progress edits; use it when re-running migrations against a dataset that only this pipeline writes to.
 
 ### Depth-5 truncation — handled for you
 

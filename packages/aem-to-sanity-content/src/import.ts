@@ -30,6 +30,17 @@ async function main(): Promise<void> {
   const cleanDir = join(outputDir, "cache", "clean");
   const dryRun = process.env.MIGRATION_DRY_RUN !== "false";
 
+  // `--discard-drafts` (or `MIGRATION_DISCARD_DRAFTS=true`) deletes
+  // `drafts.{id}` alongside each `createOrReplace({id})`. The Studio edits
+  // a draft whenever one exists, so without this flag a stale draft from
+  // a prior migration run keeps shadowing the newly-written published
+  // doc — the user sees old data even though the import "succeeded".
+  // Opt-in because it destroys authored-in-progress edits; the right
+  // default is to leave drafts alone.
+  const discardDrafts =
+    process.argv.includes("--discard-drafts") ||
+    process.env.MIGRATION_DISCARD_DRAFTS === "true";
+
   const files = readdirSync(cleanDir).filter((f) => f.endsWith(".json")).sort();
   if (files.length === 0) {
     console.error(`No clean files in ${cleanDir}. Run \`aem-transform\` first.`);
@@ -48,18 +59,29 @@ async function main(): Promise<void> {
     client = mod.createClient({ projectId, dataset, token, apiVersion, useCdn: false });
   }
 
-  console.error(
-    `[import] ${files.length} page(s) ${dryRun ? c.dim("(DRY RUN — set MIGRATION_DRY_RUN=false to commit)") : c.bold("→ Sanity")}`,
-  );
+  const mode = dryRun
+    ? c.dim("(DRY RUN — set MIGRATION_DRY_RUN=false to commit)")
+    : discardDrafts
+      ? c.bold("→ Sanity") + c.dim(" (discarding drafts)")
+      : c.bold("→ Sanity");
+  console.error(`[import] ${files.length} page(s) ${mode}`);
 
   let pages = 0;
   let docs = 0;
+  let draftsDiscarded = 0;
   for (const file of files) {
     const clean = JSON.parse(readFileSync(join(cleanDir, file), "utf8")) as CleanFile;
     if (clean.docs.length === 0) continue;
     if (!dryRun && client) {
       const tx = (client as SanityClientLike).transaction();
-      for (const doc of clean.docs) tx.createOrReplace(doc);
+      for (const doc of clean.docs) {
+        if (discardDrafts) {
+          const draftId = doc._id.startsWith("drafts.") ? doc._id : `drafts.${doc._id}`;
+          tx.delete(draftId);
+          draftsDiscarded++;
+        }
+        tx.createOrReplace(doc);
+      }
       await tx.commit();
     }
     pages++;
@@ -73,10 +95,14 @@ async function main(): Promise<void> {
   console.error(
     `${dryRun ? c.dim("Would commit") : c.green("Committed")}: ${c.green(pages)} page(s), ${c.green(docs)} doc(s)`,
   );
+  if (discardDrafts && !dryRun) {
+    console.error(`${c.dim("Drafts discarded:")} ${c.green(draftsDiscarded)}`);
+  }
 }
 
 interface SanityTransactionLike {
   createOrReplace(doc: SanityDoc): SanityTransactionLike;
+  delete(id: string): SanityTransactionLike;
   commit(): Promise<unknown>;
 }
 interface SanityClientLike {

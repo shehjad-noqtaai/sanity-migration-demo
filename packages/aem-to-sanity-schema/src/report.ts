@@ -1,5 +1,5 @@
 import { writeJson } from "aem-to-sanity-core";
-import type { RenamedField, UnmappedField } from "./mapper.ts";
+import type { RenamedField, SchemaFieldInfo, UnmappedField } from "./mapper.ts";
 
 export type Outcome =
   | {
@@ -16,12 +16,13 @@ export type Outcome =
       /** Names of the fields that landed on the emitted Sanity type. */
       fieldNames: string[];
       /**
-       * Fields with their Sanity type (e.g. `{name: "description", type:
-       * "array-of-blocks"}`). The content registry writes this shape so
-       * `aem-transform` can coerce AEM values to the target type at ingest
-       * time — e.g. HTML strings → Portable Text on `array-of-blocks` fields.
+       * Tree of fields with Sanity types; nested array-of-object members
+       * are carried under `itemFields`. The content registry writes this
+       * shape so `aem-transform` can coerce AEM values at any depth — HTML
+       * strings → Portable Text, string numbers → number, etc. — including
+       * inside nested multifields.
        */
-      fields: Array<{ name: string; type: string }>;
+      fields: SchemaFieldInfo[];
       unmapped: UnmappedField[];
       renamed: RenamedField[];
     }
