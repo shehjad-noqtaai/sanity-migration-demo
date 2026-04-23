@@ -9,6 +9,7 @@ import {
 } from "aem-to-sanity-core";
 import {
   flattenSchemaFieldNames,
+  flattenSchemaFields,
   mapDialog,
   type NodeFetcher,
 } from "./mapper.ts";
@@ -375,6 +376,7 @@ async function processOne(
     schemaTitle: resolveSchemaTitle(typeName, schemaTitle),
     outputFile,
     fieldNames: flattenSchemaFieldNames(mapped.fields),
+    fields: flattenSchemaFields(mapped.fields),
     unmapped: mapped.unmapped,
     renamed: mapped.renamed,
   });

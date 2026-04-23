@@ -15,6 +15,13 @@ export type Outcome =
       outputFile: string;
       /** Names of the fields that landed on the emitted Sanity type. */
       fieldNames: string[];
+      /**
+       * Fields with their Sanity type (e.g. `{name: "description", type:
+       * "array-of-blocks"}`). The content registry writes this shape so
+       * `aem-transform` can coerce AEM values to the target type at ingest
+       * time — e.g. HTML strings → Portable Text on `array-of-blocks` fields.
+       */
+      fields: Array<{ name: string; type: string }>;
       unmapped: UnmappedField[];
       renamed: RenamedField[];
     }

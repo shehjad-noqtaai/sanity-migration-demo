@@ -8,6 +8,7 @@ export type { EmitInput } from "./emitter.ts";
 export {
   mapDialog,
   flattenSchemaFieldNames,
+  flattenSchemaFields,
   AEM_FILE_UPLOAD_PATH_FIELD_SUFFIX,
 } from "./mapper.ts";
 export type {
@@ -43,6 +44,7 @@ export {
 export { writeContentRegistry } from "./content-registry.ts";
 export type {
   RegistryEntry as ContentRegistryEntry,
+  RegistryField as ContentRegistryField,
   WriteContentRegistryOptions,
   WriteContentRegistryResult,
 } from "./content-registry.ts";

@@ -30,4 +30,6 @@ Startup banner (always printed at info level) shows what the run is about to con
 
 Reserved-name handling: `resolveSanityTypeNames` (exported from this package) maps each AEM component path to its final Sanity type name up front. Bases that collide with Sanity built-ins (`image`, `file`, `slug`, `text`, etc.) are prefixed with `aem` at emission time, and the same resolved name lands in `schemas/*.ts`, `pageBuilder.of[]`, and `content-type-registry.json` — so the Studio never has to rename and ingested `_type` values match what the schema registers.
 
+Content registry carries Sanity types: each entry's `fields` is `Array<{name, type}>`, not just names. `aem-transform` reads those types to coerce AEM values into the exact Sanity shape — for example, HTML strings on `array-of-blocks` fields (AEM's `cq/gui/components/authoring/dialog/richtext`) are converted into Portable Text at ingest. Legacy `fields: string[]` registries are still read, minus the coercion.
+
 > Status: scaffold. See repo root for the refactor plan.

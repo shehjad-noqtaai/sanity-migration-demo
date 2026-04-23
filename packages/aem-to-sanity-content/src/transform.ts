@@ -4,16 +4,33 @@ import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { createColors } from "aem-to-sanity-core";
+import { htmlToBlocks } from "@portabletext/block-tools";
+import { compileSchema, defineSchema, type Schema } from "@portabletext/schema";
+import { JSDOM } from "jsdom";
 
 interface AemNode {
   [key: string]: unknown;
   "sling:resourceType"?: string;
   "jcr:uuid"?: string;
 }
+/**
+ * Registry entry as written on disk. Supports two shapes for back-compat:
+ *   - Legacy: `fields: string[]` — names only.
+ *   - Current: `fields: Array<{name, type}>` — names + Sanity type, required
+ *     for HTML → Portable Text coercion on `array-of-blocks` fields.
+ * Entries are normalized into {@link NormalizedRegistryEntry} at load.
+ */
 interface RegistryEntry {
   resourceType: string;
   sanityType: string;
-  fields?: string[];
+  fields?: Array<string | { name: string; type?: string }>;
+}
+interface NormalizedRegistryEntry {
+  resourceType: string;
+  sanityType: string;
+  fieldNames: string[];
+  /** `name → sanity type`. Missing for legacy string[] entries. */
+  fieldTypes: Map<string, string>;
 }
 interface RawFile {
   jcrPath: string;
@@ -103,7 +120,7 @@ function sanityPropertyKeyFromAemChild(
   return toCamelCase(stripped);
 }
 
-function loadRegistry(path: string): Map<string, RegistryEntry> {
+function loadRegistry(path: string): Map<string, NormalizedRegistryEntry> {
   const raw = JSON.parse(readFileSync(path, "utf8")) as unknown;
   const entries = Array.isArray(raw)
     ? (raw as RegistryEntry[])
@@ -113,9 +130,28 @@ function loadRegistry(path: string): Map<string, RegistryEntry> {
   if (!entries) {
     throw new Error(`${path}: expected RegistryEntry[] or { entries: RegistryEntry[] }`);
   }
-  const map = new Map<string, RegistryEntry>();
-  for (const e of entries) map.set(e.resourceType, e);
+  const map = new Map<string, NormalizedRegistryEntry>();
+  for (const e of entries) map.set(e.resourceType, normalizeRegistryEntry(e));
   return map;
+}
+
+function normalizeRegistryEntry(e: RegistryEntry): NormalizedRegistryEntry {
+  const fieldNames: string[] = [];
+  const fieldTypes = new Map<string, string>();
+  for (const f of e.fields ?? []) {
+    if (typeof f === "string") {
+      fieldNames.push(f);
+      continue;
+    }
+    fieldNames.push(f.name);
+    if (f.type) fieldTypes.set(f.name, f.type);
+  }
+  return {
+    resourceType: e.resourceType,
+    sanityType: e.sanityType,
+    fieldNames,
+    fieldTypes,
+  };
 }
 
 function normalizeExceptionKey(v: string): string {
@@ -170,7 +206,7 @@ function asString(v: unknown): string | undefined {
 interface TransformContext {
   visited: WeakSet<object>;
   depth: number;
-  registry: Map<string, RegistryEntry>;
+  registry: Map<string, NormalizedRegistryEntry>;
   audit: Audit;
 }
 
@@ -209,10 +245,10 @@ function isAemMultifieldItemMap(o: Record<string, unknown>): boolean {
  */
 function splitAemFileUploadDamPaths(
   value: unknown,
-  registryFields: string[] | undefined,
+  fieldNames: string[] | undefined,
 ): void {
-  if (!registryFields?.length) return;
-  const fieldSet = new Set(registryFields);
+  if (!fieldNames?.length) return;
+  const fieldSet = new Set(fieldNames);
   function walk(o: unknown): void {
     if (Array.isArray(o)) {
       for (const x of o) walk(x);
@@ -234,6 +270,105 @@ function splitAemFileUploadDamPaths(
     for (const v of Object.values(rec)) walk(v);
   }
   walk(value);
+}
+
+/**
+ * Default Portable Text schema used to compile AEM richtext HTML into Sanity
+ * blocks. Matches the shape our emitter produces for `array-of-blocks` fields
+ * (`{ type: "array", of: [{ type: "block" }] }`): Sanity's default decorators
+ * + styles + lists + a `link` annotation. Kept module-level so every call
+ * reuses the same compiled schema — the compile pass is not free.
+ */
+const PORTABLE_TEXT_SCHEMA: Schema = compileSchema(
+  defineSchema({
+    decorators: [
+      { name: "strong" },
+      { name: "em" },
+      { name: "underline" },
+      { name: "strike-through" },
+      { name: "code" },
+    ],
+    styles: [
+      { name: "normal" },
+      { name: "h1" },
+      { name: "h2" },
+      { name: "h3" },
+      { name: "h4" },
+      { name: "blockquote" },
+    ],
+    lists: [{ name: "bullet" }, { name: "number" }],
+    annotations: [
+      { name: "link", fields: [{ name: "href", type: "string" }] },
+    ],
+  }),
+);
+
+const parseHtml = (html: string): Document =>
+  new JSDOM(html, { contentType: "text/html" }).window.document;
+
+/**
+ * Deterministic `_key` generator for a single htmlToBlocks call. Seeds a
+ * SHA1 stream with `{seed}:{counter}` so re-running the transform on
+ * byte-identical input produces byte-identical Portable Text — preserving
+ * the "re-runs produce clean git diffs" invariant that makes this pipeline
+ * usable in CI.
+ */
+function deterministicKeyGen(seed: string): () => string {
+  let counter = 0;
+  return () =>
+    createHash("sha1")
+      .update(`${seed}:${counter++}`)
+      .digest("hex")
+      .slice(0, 12);
+}
+
+/**
+ * Convert an AEM richtext HTML string into Portable Text blocks. Returns
+ * `null` on parser failure so the caller can keep the original string and
+ * surface the failure via the audit — never drops content silently.
+ */
+function htmlStringToPortableText(
+  html: string,
+  seed: string,
+): unknown[] | null {
+  try {
+    return htmlToBlocks(html, PORTABLE_TEXT_SCHEMA, {
+      parseHtml,
+      keyGenerator: deterministicKeyGen(seed),
+    }) as unknown[];
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * In-place coercion: any top-level field whose declared Sanity type is
+ * `array-of-blocks` and whose ingested value is a string is parsed as HTML
+ * and replaced with Portable Text blocks. AEM's `cq/gui/components/authoring/dialog/richtext`
+ * dialog fields land as HTML strings; Sanity expects PT arrays. Without
+ * this step the Studio rejects the field with "value is string, expected
+ * array".
+ *
+ * Scope is intentionally flat — nested array-of-object members get
+ * pass-through behavior because the registry flattens field lists and
+ * doesn't preserve nesting. If nested richtext starts appearing in real
+ * AEM content, thread structured field metadata through instead of
+ * broadening the detection here.
+ */
+function coerceRichTextFields(
+  inline: Record<string, unknown>,
+  fieldTypes: Map<string, string>,
+  jcrPath: string,
+): void {
+  if (fieldTypes.size === 0) return;
+  for (const [name, type] of fieldTypes) {
+    if (type !== "array-of-blocks") continue;
+    const v = inline[name];
+    if (typeof v !== "string") continue;
+    const blocks = htmlStringToPortableText(v, `${jcrPath}::${name}`);
+    if (blocks === null) continue;
+    inline[name] = blocks;
+  }
 }
 
 function deepCoerceAemMultifieldMapsToArrays(val: unknown): unknown {
@@ -326,7 +461,8 @@ function collectPageBuilder(
         visited: new WeakSet(),
       };
       const inline = transformInline(frame.node, frame.jcrPath, inlineCtx);
-      splitAemFileUploadDamPaths(inline, entry.fields);
+      splitAemFileUploadDamPaths(inline, entry.fieldNames);
+      coerceRichTextFields(inline, entry.fieldTypes, frame.jcrPath);
       out.push({
         _type: entry.sanityType,
         _key: stableKey(asString(frame.node["jcr:uuid"]), frame.jcrPath),
@@ -431,9 +567,9 @@ function createAudit(maxExamples = 3): Audit {
   };
 }
 
-function diffProps(node: AemNode, entry: RegistryEntry | undefined): Array<{ prop: string; value: unknown }> {
-  if (!entry?.fields) return [];
-  const expected = new Set(entry.fields);
+function diffProps(node: AemNode, entry: NormalizedRegistryEntry | undefined): Array<{ prop: string; value: unknown }> {
+  if (!entry?.fieldNames?.length) return [];
+  const expected = new Set(entry.fieldNames);
   const out: Array<{ prop: string; value: unknown }> = [];
   for (const [key, value] of Object.entries(node)) {
     if (JCR_METADATA.has(key)) continue;

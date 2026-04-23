@@ -109,6 +109,31 @@ export function flattenSchemaFieldNames(fields: SanityField[]): string[] {
   return out;
 }
 
+/**
+ * Every mapped field with its Sanity type. Carries just enough information
+ * downstream so `aem-transform` can coerce scalar AEM values into the exact
+ * Sanity shape the schema expects — notably, HTML strings on
+ * `array-of-blocks` fields become Portable Text instead of landing as raw
+ * strings that the Studio rejects with "expected array".
+ *
+ * Only the emitter-visible leaf types are surfaced; nested item fields are
+ * flattened alongside the parent (path is implicit via ordering). Consumers
+ * that need nested structure should iterate `SanityField[]` directly.
+ */
+export function flattenSchemaFields(
+  fields: SanityField[],
+): Array<{ name: string; type: string }> {
+  const out: Array<{ name: string; type: string }> = [];
+  function walk(f: SanityField): void {
+    out.push({ name: f.name, type: f.type });
+    if (f.type === "array-of-object" && f.itemFields?.length) {
+      for (const inner of f.itemFields) walk(inner);
+    }
+  }
+  for (const f of fields) walk(f);
+  return out;
+}
+
 export async function mapDialog(
   root: DialogNode,
   fetcher: NodeFetcher,

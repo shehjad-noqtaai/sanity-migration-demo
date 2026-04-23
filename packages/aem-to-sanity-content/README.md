@@ -69,6 +69,12 @@ MIGRATION_DRY_RUN=false pnpm aem-import                  # commit docs
 - `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup finds assets already in the Media Library and links them into the dataset. Useful for re-runs, for iterating on link/rewrite logic without re-hitting AEM, or when assets were pushed out-of-band. Mutually exclusive with `--upload-only`. See § *aem-assets — Media Library flow* below for the caveat about the `aemSource` aspect.
 - `--no-rewrite` — skip the in-place rewrite of `clean/*.json`.
 
+## Type-aware coercion (transform)
+
+`aem-transform` reads each mapped block's `fields: [{name, type}]` from `content-type-registry.json` and, when a field's declared Sanity type is `array-of-blocks`, converts the AEM HTML string value into Portable Text via `@portabletext/block-tools` (parsed through `jsdom`). This is what matches AEM's `cq/gui/components/authoring/dialog/richtext` storage shape to Sanity's editor. Decorators (`strong`, `em`, `underline`, `strike-through`, `code`), styles (`normal`, `h1`–`h4`, `blockquote`), lists (`bullet`, `number`), and `link` annotations are preserved. Keys are derived from a SHA1 of `{jcrPath}::{field}:{counter}` so re-runs produce byte-identical clean docs.
+
+Legacy `fields: string[]` registry entries skip the coercion (pass-through) so older registries still work — regenerate the registry via `migrate:schema` to opt in.
+
 ## Reports
 
 - `output/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.

@@ -4,10 +4,22 @@ import type { Report } from "./report.ts";
 
 const GENERATED_MARKER = "__generated";
 
+export interface RegistryField {
+  name: string;
+  type: string;
+}
+
 export interface RegistryEntry {
   resourceType: string;
   sanityType: string;
-  fields: string[];
+  /**
+   * Every field the emitted Sanity schema declares, with its Sanity `type`.
+   * `aem-transform` reads this so it can coerce AEM values to the right
+   * shape — notably, HTML strings on `array-of-blocks` fields become
+   * Portable Text. Flattened across nested multifield members; ordering is
+   * not significant (consumers look up by `name`).
+   */
+  fields: RegistryField[];
 }
 
 export interface WriteContentRegistryOptions {
@@ -63,13 +75,22 @@ export async function writeContentRegistry(
 
   const entries: RegistryEntry[] = report.results
     .filter((r): r is Extract<typeof r, { status: "success" }> => r.status === "success")
-    .map((r) => ({
-      resourceType: r.path.startsWith(jcrPrefix)
-        ? r.path.slice(jcrPrefix.length)
-        : r.path.replace(/^\/+/, ""),
-      sanityType: r.sanityTypeName,
-      fields: [...new Set(r.fieldNames)].sort(),
-    }))
+    .map((r) => {
+      // Dedup by field name (nested multifields can collide after
+      // flattening), keeping the first declared type. Stable ordering keeps
+      // diffs clean across runs.
+      const seen = new Map<string, RegistryField>();
+      for (const f of r.fields) {
+        if (!seen.has(f.name)) seen.set(f.name, { name: f.name, type: f.type });
+      }
+      return {
+        resourceType: r.path.startsWith(jcrPrefix)
+          ? r.path.slice(jcrPrefix.length)
+          : r.path.replace(/^\/+/, ""),
+        sanityType: r.sanityTypeName,
+        fields: [...seen.values()].sort((a, b) => a.name.localeCompare(b.name)),
+      };
+    })
     .sort((a, b) => a.resourceType.localeCompare(b.resourceType));
 
   const payload = {
