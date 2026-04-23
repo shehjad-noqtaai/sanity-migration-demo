@@ -128,4 +128,36 @@ pnpm --filter studio exec sanity schema validate
 
 ---
 
+## 7. Media Library clean-up (test environments only)
+
+```bash
+# dry-run — prints what would be deleted
+pnpm --filter example-davids-bridal wipe:media-library
+
+# actually delete
+pnpm --filter example-davids-bridal wipe:media-library -- --confirm-delete
+```
+
+**What this does:** Runs `scripts/wipe-media-library.ts`, which deletes **every** asset from the configured Sanity Media Library. It queries all `sanity.asset` parents plus their `sanity.imageAsset` / `sanity.fileAsset` instances, then removes them in batches of 50 via the Media Library mutate endpoint.
+
+**Destructive and org-scoped — intended for test environments only. Not reversible.**
+
+- **Dry-run by default** — without `--confirm-delete` it only lists the first 10 ids it would remove and reports the total count.
+- **Env required:** `SANITY_TOKEN` (user-scoped, with ML write access) and `SANITY_MEDIA_LIBRARY_ID`. `SANITY_API_VERSION` is optional (defaults to `2025-02-19`).
+- **What it does NOT clean up:**
+  - **Dataset-level linked asset docs** created by `aem-assets` phase 3 (`/assets/media-library-link`). These stay behind in the dataset after a wipe. Re-run `aem-import` to re-hydrate, or delete them separately via `@sanity/client`.
+  - **Local manifest** — `output/cache/assets/manifest.json` will be stale after a wipe. Delete `output/cache/` (or at least the manifest) before the next `aem-assets` run, otherwise phase 0's dedup cache will point at assets that no longer exist.
+
+Typical reset sequence for a test environment:
+
+```bash
+pnpm --filter example-davids-bridal wipe:media-library -- --confirm-delete
+rm -rf examples/davids-bridal/output/cache/assets
+# optionally also clear the dataset's linked-asset docs, then re-run:
+pnpm --filter example-davids-bridal assets
+pnpm --filter example-davids-bridal import
+```
+
+---
+
 Tell me which stage you want to start with and I can walk through just that one (or tail the output, inspect reports, etc.).
