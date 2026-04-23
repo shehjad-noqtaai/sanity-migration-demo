@@ -18,8 +18,10 @@ export type {
   CommonFieldProps,
 } from "./mapper.ts";
 export {
+  RESERVED_SANITY_TYPE_NAMES,
   componentPathToTypeName,
   displayTitleFromAemComponentJcrTitle,
+  resolveSanityTypeNames,
   toCamelCase,
   toTitleCase,
 } from "./naming.ts";
@@ -45,6 +47,7 @@ export type {
   WriteContentRegistryResult,
 } from "./content-registry.ts";
 export type {
+  PageBuilderMember,
   WritePageBuilderArtifactsOptions,
   WritePageBuilderArtifactsResult,
 } from "./pagebuilder.ts";

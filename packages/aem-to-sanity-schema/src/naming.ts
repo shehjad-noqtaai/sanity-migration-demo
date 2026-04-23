@@ -1,4 +1,30 @@
 /**
+ * Sanity built-in type names that can't be re-used for user-defined types.
+ * Shared across the emitter pipeline (`resolveSanityTypeNames`) and the
+ * Studio-side `sanitizeSchemaTypes` defense-in-depth step so both agree on
+ * what counts as a collision.
+ */
+export const RESERVED_SANITY_TYPE_NAMES: ReadonlySet<string> = new Set<string>([
+  "image",
+  "file",
+  "geopoint",
+  "reference",
+  "slug",
+  "url",
+  "text",
+  "string",
+  "number",
+  "boolean",
+  "date",
+  "datetime",
+  "block",
+  "object",
+  "array",
+  "email",
+  "span",
+]);
+
+/**
  * Convert an AEM component path into a stable, camelCase Sanity type name.
  *
  *   /apps/aem-integration/components/promo           → "promo"
@@ -57,4 +83,52 @@ export function displayTitleFromAemComponentJcrTitle(raw: string): string {
   if (!t) return t;
   const stripped = t.replace(/\s+component$/i, "").trim();
   return stripped.length > 0 ? stripped : t;
+}
+
+/**
+ * Resolve every AEM component path to a final, collision-free Sanity type
+ * name. Returns a `Map<path, typeName>` preserving the input paths verbatim
+ * as keys.
+ *
+ * The emitted name is the authoritative identifier: it's what lands on disk
+ * (`{name}.ts`), what gets registered in `pageBuilder.of[]`, what the
+ * content registry writes as `sanityType`, and what the ingest pipeline
+ * stamps onto `_type` in every document. Resolving up front (rather than
+ * per-path inside the Studio with `sanitizeSchemaTypes`) is what keeps all
+ * those artifacts in lockstep — otherwise a later rename leaves ingested
+ * data orphaned as "unknown type" in the Studio.
+ *
+ * Resolution rules:
+ *   1. Base name: `componentPathToTypeName(path)`.
+ *   2. If the base collides with a Sanity built-in (`RESERVED_SANITY_TYPE_NAMES`)
+ *      or with a name already assigned to another path, prefix with `aem`.
+ *   3. If that's still taken, append a numeric suffix (`aemImage2`, etc.).
+ *
+ * Iteration order is the input order — earlier paths win ties, which gives
+ * deterministic output for a given `aem-component-paths` list.
+ */
+export function resolveSanityTypeNames(
+  componentPaths: readonly string[],
+): Map<string, string> {
+  const assigned = new Map<string, string>();
+  const taken = new Set<string>();
+
+  for (const path of componentPaths) {
+    const base = componentPathToTypeName(path);
+    let name = base;
+    if (RESERVED_SANITY_TYPE_NAMES.has(name) || taken.has(name)) {
+      name = "aem" + base.charAt(0).toUpperCase() + base.slice(1);
+    }
+    if (taken.has(name)) {
+      const root = name;
+      let suffix = 2;
+      do {
+        name = `${root}${suffix++}`;
+      } while (taken.has(name));
+    }
+    assigned.set(path, name);
+    taken.add(name);
+  }
+
+  return assigned;
 }

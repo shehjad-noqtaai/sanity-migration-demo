@@ -7,14 +7,31 @@ import {
   createColors,
   createLogger,
   fetchInfinityJson,
+  logStartupBanner,
   resolveConfig,
   type DialogNode,
+  type SanityRuntimeSummary,
 } from "aem-to-sanity-core";
 import { migrateSchemas } from "./api.ts";
 
 async function main(): Promise<void> {
   const config = resolveConfig(process.env);
-  const logger = createLogger({ level: "info" });
+
+  // `--verbose` / `-v` elevates log level to `debug`, which surfaces the
+  // per-request `GET <url>` line already emitted by the AEM fetcher
+  // (`packages/aem-to-sanity-core/src/aem/fetcher.ts`). Also honor the
+  // `AEM_VERBOSE=true` env var for CI pipelines that can't pass flags.
+  const verbose =
+    process.argv.includes("--verbose") ||
+    process.argv.includes("-v") ||
+    process.env.AEM_VERBOSE === "true";
+  const logger = createLogger({ level: verbose ? "debug" : "info" });
+
+  logStartupBanner(logger, config, {
+    command: "migrate:schema",
+    verbose,
+    sanity: describeSanityEnv(process.env),
+  });
 
   // Accept both the CLI flag and the env var. When true, per-component 401/403
   // failures are recorded as skips and the batch keeps going; the api-level
@@ -174,6 +191,23 @@ function normalizeExceptionKey(v: string): string {
 function toResourceTypeFromPath(componentPath: string): string {
   const noLead = componentPath.replace(/^\/+/, "");
   return noLead.startsWith("apps/") ? noLead.slice("apps/".length) : noLead;
+}
+
+/**
+ * Surface Sanity runtime env values for the startup banner. `migrate:schema`
+ * never connects to Sanity — this is pre-flight context so the operator can
+ * confirm their `.env` is loaded correctly for the downstream ingest step.
+ * Secrets are not read, only presence (`tokenSet: boolean`).
+ */
+function describeSanityEnv(env: NodeJS.ProcessEnv): SanityRuntimeSummary {
+  const projectId = env.SANITY_STUDIO_PROJECT_ID ?? env.SANITY_PROJECT_ID;
+  const dataset = env.SANITY_STUDIO_DATASET ?? env.SANITY_DATASET;
+  return {
+    projectId,
+    dataset,
+    apiVersion: env.SANITY_API_VERSION,
+    tokenSet: Boolean(env.SANITY_TOKEN),
+  };
 }
 
 function applyComponentExceptions(

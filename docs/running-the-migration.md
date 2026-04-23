@@ -51,6 +51,8 @@ cp examples/davids-bridal/.env.example examples/davids-bridal/.env
 | `OUTPUT_DIR` | optional | Where schemas, reports, and audit live. Default: `./output`. |
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
 | `MIGRATION_DRY_RUN` | optional | `aem-assets` and `aem-import` are dry-run unless this is explicitly set to `false`. Default (unset): dry-run. |
+| `MIGRATION_LINK_ONLY` | optional | `aem-assets` only. `true` ⇔ passing `--link-only`. Skips phases 1 + 2 (download + upload) and relies on phase 0 to find assets already in the Media Library. See § 4c. |
+| `AEM_VERBOSE` | optional | `true` ⇔ passing `--verbose`. Elevates the CLI logger to `debug` so every AEM GET is logged. |
 | `SANITY_PROJECT_ID` | required for writes | Only read when `MIGRATION_DRY_RUN=false`. |
 | `SANITY_DATASET` | required for writes | |
 | `SANITY_TOKEN` | required for writes | Write-scoped API token. Used for `aem-import` and for the Media Library **upload** phase of `aem-assets`. |
@@ -133,22 +135,38 @@ Anything outside this registry is still extracted but tagged `_type: "aemUnmappe
 
 ```bash
 pnpm --filter example-davids-bridal migrate:schema
+pnpm --filter example-davids-bridal migrate:schema --verbose  # + per-request AEM GET logs
 ```
+
+On start-up the CLI prints a banner summarizing what it's connecting to: AEM env, base URL, auth kind (basic shows the username only; bearer is shown as `len=N, prefix=abcd…` so you can confirm the right token is loaded without it leaking into logs), paths / roots files, output dir, concurrency. A Sanity preflight block follows with project id, dataset, and token presence — schema generation never calls Sanity, it's a config confirmation for the downstream content ingest.
+
+| Flag / env | Effect |
+| --- | --- |
+| `--verbose` / `-v` or `AEM_VERBOSE=true` | Elevates the logger to `debug` level. Surfaces every `GET {url}` the AEM fetcher issues plus Sling `.N.json` depth-fallback retries. |
+| `--continue-on-auth` or `AEM_CONTINUE_ON_AUTH=true` | Treat per-component 401/403 as per-path ACL skips and keep going, as long as at least one component succeeds. A circuit breaker still aborts on `N` consecutive auth failures with zero successes (signals credentials-wide failure, not ACL). |
 
 **Outputs under `output/`:**
 
 | Path | What it is |
 | --- | --- |
-| `schemas/*.ts` | One Sanity object type per AEM component, named `componentNameInCamelCase`. |
-| `schemas/pageBuilder.ts` | Array type with every emitted block in `of: [...]`. Regenerated each run. |
+| `schemas/*.ts` | One Sanity object type per AEM component, named `componentNameInCamelCase`. Each carries a `preview.prepare` that returns a guaranteed-non-empty title (AEM `jcr:title` → title-cased type name → raw type name fallback), so array/Page Builder rows never render as "Untitled" even before the row has any data. |
+| `schemas/pageBuilder.ts` | Array type with every emitted block in `of: [...]`. Each member is emitted as `defineArrayMember({ type, title })` so the "+ Add" menu and row previews carry friendly labels. Regenerated each run. |
 | `schemas/page.ts` | Minimal document type (`title`, `slug`, `pageBuilder`). Preserved if you hand-author it. |
 | `schemas/index.ts` | Barrel exporting `allSchemaTypes` — plug straight into `defineConfig`. |
 | `content-type-registry.json` | AEM `sling:resourceType` → Sanity type + field names, consumed by stage 3. Preserved if you hand-edit. |
 | `aem/components/**/*.json` | Raw dialog snapshots — audit trail. |
-| `migration-report.json` | Pass/fail per component + unmapped props inventory. |
+| `migration-report.json` | Pass/fail per component (including the resolved `sanityTypeName` and friendly `schemaTitle`) + unmapped props inventory. |
 | `audit/unmapped-examples.json` | Real-world examples per unmapped AEM type. Feed these back into `mapping-table.ts` when adding new mappings. |
 
 Re-run any time — output is deterministic, so `git diff` shows only real changes.
+
+### Type-name resolution (reserved-name handling)
+
+Component type names are resolved up front via `resolveSanityTypeNames` (in `aem-to-sanity-schema/naming.ts`). The base name is the camelCased tail after `components/`; if that collides with a Sanity built-in (`image`, `file`, `slug`, `text`, `string`, `number`, `block`, `object`, `array`, etc.) or with another path, it's prefixed with `aem` and — only if still colliding — suffixed with a numeric counter.
+
+Example: `/apps/aem-integration/components/image` → `aemImage.ts` on disk, `aemImage` in `pageBuilder.of[]`, `"sanityType": "aemImage"` in the content registry, and `_type: "aemImage"` on every ingested document. Keeping all four artifacts aligned up front is what prevents ingested data from later appearing as "Untitled" + unknown-type warnings in the Studio.
+
+The Studio-side `sanitizeSchemaTypes` still exists and runs the same rename as a defense-in-depth pass for hand-authored schemas, but for the emitter path it's a no-op.
 
 ### Registering new block types between migrations
 
@@ -270,7 +288,10 @@ interface ManifestEntry {
   - `SANITY_TOKEN` — used for the upload phase (project robot token with write access works fine).
   - `SANITY_ML_LINK_TOKEN` — **required for the link phase** when `SANITY_TOKEN` is a project robot token. The `/assets/media-library-link` endpoint requires a *personal* authorization token with read/write on both the Media Library (org-level) and the project/dataset; a project-only robot token is rejected with `401 Invalid non-global session`. Generate one via `sanity login` + `sanity debug --secrets` or the Sanity user management UI. Falls back to `SANITY_TOKEN` if unset (works only if that token is already a personal/OAuth token).
   - `SANITY_API_VERSION` — defaults to `2025-02-19`, which is when Media Library support landed.
-- **Flags:** `--upload-only` skips the download phase, `--no-rewrite` skips the in-place clean-doc rewrite.
+- **Flags:**
+  - `--upload-only` — skip phase 1 (download). Assumes the local cache already exists.
+  - `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup resolves existing assets by `aemSource.damPath`; phases 3 + 4 run as normal. Dry-run + `--link-only` = preview of which DAM paths would be linked vs. missing from the ML. Mutually exclusive with `--upload-only`. Intended for re-runs against an ML that already holds the binaries (either from a prior pipeline run or stamped out-of-band). Any DAM path that phase 0 can't resolve stays in `/content/dam/*` form in clean docs and is listed in `output/assets-report.json → rewrite.unresolved`. Caveat: phase 0 keys on the `aemSource` aspect stamped by this pipeline on upload, so assets uploaded through the Studio UI without that aspect will not be found by DAM path.
+  - `--no-rewrite` — skip phase 4 (in-place rewrite of `clean/*.json`).
 
 Ordering contract: the link phase must complete before `aem-import` runs, because the clean docs only contain the linked `_ref` after phase 4. The `migrate:content` chain (`extract → transform → assets → import`) already enforces this.
 

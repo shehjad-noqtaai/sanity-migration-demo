@@ -6,6 +6,12 @@ export type Outcome =
       status: "success";
       path: string;
       sanityTypeName: string;
+      /**
+       * Friendly Studio title — the string rendered in array pickers,
+       * Page Builder rows, etc. Sourced from AEM `jcr:title` with a
+       * title-cased `sanityTypeName` fallback; always non-empty.
+       */
+      schemaTitle: string;
       outputFile: string;
       /** Names of the fields that landed on the emitted Sanity type. */
       fieldNames: string[];

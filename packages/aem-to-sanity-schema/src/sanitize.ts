@@ -1,29 +1,5 @@
 import { defineField } from "sanity";
-
-/**
- * Sanity built-in type names that can't be re-used for user types. Any AEM
- * component whose emitted name collides with one of these is renamed at
- * import time so the Studio schema validates.
- */
-const RESERVED = new Set<string>([
-  "image",
-  "file",
-  "geopoint",
-  "reference",
-  "slug",
-  "url",
-  "text",
-  "string",
-  "number",
-  "boolean",
-  "date",
-  "datetime",
-  "block",
-  "object",
-  "array",
-  "email",
-  "span",
-]);
+import { RESERVED_SANITY_TYPE_NAMES } from "./naming.ts";
 
 function aemPrefix(name: string): string {
   return "aem" + name.charAt(0).toUpperCase() + name.slice(1);
@@ -33,11 +9,14 @@ function aemPrefix(name: string): string {
  * Post-process emitted Sanity schemas so that they validate under `sanity
  * schema validate`:
  *
- *   1. Types whose name collides with a Sanity built-in are prefixed with
- *      `aem` (e.g. `image` → `aemImage`).
- *   2. Object types with zero fields get a hidden `aemPlaceholder` string
+ *   1. Object types with zero fields get a hidden `aemPlaceholder` string
  *      field. AEM dialogs occasionally consist entirely of hidden/unmapped
  *      children and would otherwise fail Sanity's "at least one field" rule.
+ *   2. Defense-in-depth rename for any type still colliding with a Sanity
+ *      built-in. The emitter's `resolveSanityTypeNames` already applies this
+ *      prefix up front (so the on-disk name, the content registry, and
+ *      ingested `_type` values agree). This pass only catches hand-authored
+ *      schemas that slipped the prefix.
  *
  * The schema files on disk are untouched — the fix is applied at import time
  * so the emitted artifact remains a faithful AEM-shape snapshot. Call this
@@ -46,7 +25,10 @@ function aemPrefix(name: string): string {
 export function sanitizeSchemaTypes<T>(types: T[]): T[] {
   return types.map((raw) => {
     const t = { ...(raw as Record<string, unknown>) };
-    if (typeof t.name === "string" && RESERVED.has(t.name)) {
+    if (
+      typeof t.name === "string" &&
+      RESERVED_SANITY_TYPE_NAMES.has(t.name)
+    ) {
       t.name = aemPrefix(t.name);
     }
     const isContainer = t.type === "object" || t.type === "document";

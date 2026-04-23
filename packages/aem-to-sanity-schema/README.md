@@ -16,7 +16,18 @@ import { migrateSchemas } from "aem-to-sanity-schema";
 Usage (CLI):
 
 ```sh
-aem-to-sanity-schema --paths ./aem-component-paths --out ./output
+aem-to-sanity-schema                  # read config from env/.env
+aem-to-sanity-schema --verbose        # + log every AEM GET
+aem-to-sanity-schema --continue-on-auth
 ```
+
+Flags:
+
+- `--verbose` / `-v` (or `AEM_VERBOSE=true`) — elevate logger to `debug`; surfaces every `GET {url}` + Sling `.N.json` depth-fallback retries issued by `aem-to-sanity-core`'s AEM fetcher.
+- `--continue-on-auth` (or `AEM_CONTINUE_ON_AUTH=true`) — treat per-component 401/403 as per-path ACL skips and keep going, as long as at least one component succeeds. A circuit breaker still aborts on `N` consecutive auth failures with zero successes.
+
+Startup banner (always printed at info level) shows what the run is about to connect to: AEM env + base URL, auth kind (basic: username only; bearer: `len=N, prefix=abcd…`), paths / roots files, output dir, concurrency. A Sanity preflight block reports `SANITY_PROJECT_ID` / `SANITY_DATASET` / token presence — the schema stage never calls Sanity, it's a config sanity check for the downstream content ingest.
+
+Reserved-name handling: `resolveSanityTypeNames` (exported from this package) maps each AEM component path to its final Sanity type name up front. Bases that collide with Sanity built-ins (`image`, `file`, `slug`, `text`, etc.) are prefixed with `aem` at emission time, and the same resolved name lands in `schemas/*.ts`, `pageBuilder.of[]`, and `content-type-registry.json` — so the Studio never has to rename and ingested `_type` values match what the schema registers.
 
 > Status: scaffold. See repo root for the refactor plan.
