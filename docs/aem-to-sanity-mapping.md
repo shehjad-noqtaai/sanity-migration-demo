@@ -51,7 +51,7 @@ When a dialog node has `sling:resourceType`: `granite/ui/components/coral/founda
 
 AEM's JCR is schemaless on dialog inputs: `.infinity.json` serializes everything authored through a dialog widget as a **JSON string**, regardless of what the dialog thinks the type is. A numberfield storing `10` lands as `"10"`; a checkbox lands as `"true"` / `"false"`; a richtext widget lands as an HTML string. The emitted Sanity schemas declare proper types (`number`, `boolean`, `array-of-blocks`), so without coercion the Studio rejects every ingested value with "Expected type X, got String".
 
-`content-type-registry.json` records each field's Sanity type (`fields: Array<{name, type}>`) so `aem-transform` can coerce on the way in. Scope is intentionally **top-level only** — nested multifield members fall through because the registry flattens field lists without preserving nesting. If nested typed values surface in real AEM content, thread structured field metadata through the registry before broadening here.
+`content-type-registry.json` records each field's Sanity type as a tree (`fields: Array<{name, type, itemFields?}>`) so `aem-transform` can coerce at any depth. Nested array-of-object members carry their own field types under `itemFields`; the coercion pass recurses into every multifield item, so richtext / number / boolean inside a `variableColumn.columnContents[]` row is treated the same as a top-level field.
 
 ### Richtext → Portable Text
 

@@ -47,13 +47,12 @@ When you change how any artifact is generated, **re-run the relevant stage again
 
 AEM's JCR is schemaless on dialog inputs — `.infinity.json` serializes every authored value as a **JSON string** regardless of what the dialog widget was (numberfield → `"10"`, checkbox → `"true"` / `"false"`, richtext → HTML string). The emitted Sanity schemas declare proper types, so without coercion the Studio rejects every ingested value with "Expected type X, got String".
 
-`content-type-registry.json` records each field's Sanity type (`fields: Array<{name, type}>`). `aem-transform` reads those types and coerces at ingest:
+`content-type-registry.json` records each field's Sanity type as a **tree** (`fields: Array<{name, type, itemFields?}>`). `aem-transform` reads those types and coerces at every depth:
 
 - **`array-of-blocks`** → Portable Text via `@portabletext/block-tools` + `jsdom`. Decorators / styles / lists / `link` annotations preserved. `_key`s SHA1-seeded for deterministic diffs.
 - **`number`** → `Number(v)`; kept as-is on `NaN`.
 - **`boolean`** → `"true"` / `"false"` literal strings only.
-
-**Scope is top-level only** — nested multifield members fall through because the registry flattens field lists. If nested typed values surface in real AEM content, carry structured nesting in the registry before broadening here.
+- **`array-of-object`** → recurses into each item using the field's `itemFields` subtree, so nested richtext / number / boolean (e.g. `variableColumn.columnContents[].columnText`) are coerced the same as top-level fields.
 
 **When adding a new coerced type:**
 1. Extend `coerceScalarFields` (or `coerceRichTextFields` if shape-heavy) in `packages/aem-to-sanity-content/src/transform.ts`.

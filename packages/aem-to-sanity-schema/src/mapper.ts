@@ -110,28 +110,33 @@ export function flattenSchemaFieldNames(fields: SanityField[]): string[] {
 }
 
 /**
- * Every mapped field with its Sanity type. Carries just enough information
- * downstream so `aem-transform` can coerce scalar AEM values into the exact
- * Sanity shape the schema expects — notably, HTML strings on
- * `array-of-blocks` fields become Portable Text instead of landing as raw
- * strings that the Studio rejects with "expected array".
+ * Tree of every mapped field with its Sanity type. Nested array-of-object
+ * members are carried under `itemFields` so `aem-transform` can coerce
+ * scalar AEM values at any depth — notably, richtext HTML strings inside
+ * nested multifields (variableColumn > columnContents[] > columnText)
+ * become Portable Text instead of raising "expected array" in the Studio.
  *
- * Only the emitter-visible leaf types are surfaced; nested item fields are
- * flattened alongside the parent (path is implicit via ordering). Consumers
- * that need nested structure should iterate `SanityField[]` directly.
+ * Leaf fields have no `itemFields`; `array-of-object` carries the nested
+ * structure. This mirrors Sanity's own `of: [{ type: "object", fields:
+ * [...] }]` shape without the full `SanityField` details the transform
+ * doesn't need (e.g. options, validation, group).
  */
-export function flattenSchemaFields(
+export interface SchemaFieldInfo {
+  name: string;
+  type: string;
+  itemFields?: SchemaFieldInfo[];
+}
+
+export function describeSchemaFields(
   fields: SanityField[],
-): Array<{ name: string; type: string }> {
-  const out: Array<{ name: string; type: string }> = [];
-  function walk(f: SanityField): void {
-    out.push({ name: f.name, type: f.type });
+): SchemaFieldInfo[] {
+  return fields.map((f) => {
+    const info: SchemaFieldInfo = { name: f.name, type: f.type };
     if (f.type === "array-of-object" && f.itemFields?.length) {
-      for (const inner of f.itemFields) walk(inner);
+      info.itemFields = describeSchemaFields(f.itemFields);
     }
-  }
-  for (const f of fields) walk(f);
-  return out;
+    return info;
+  });
 }
 
 export async function mapDialog(

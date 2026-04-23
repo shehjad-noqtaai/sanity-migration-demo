@@ -8,8 +8,8 @@ import {
   type Logger,
 } from "aem-to-sanity-core";
 import {
+  describeSchemaFields,
   flattenSchemaFieldNames,
-  flattenSchemaFields,
   mapDialog,
   type NodeFetcher,
 } from "./mapper.ts";
@@ -376,7 +376,7 @@ async function processOne(
     schemaTitle: resolveSchemaTitle(typeName, schemaTitle),
     outputFile,
     fieldNames: flattenSchemaFieldNames(mapped.fields),
-    fields: flattenSchemaFields(mapped.fields),
+    fields: describeSchemaFields(mapped.fields),
     unmapped: mapped.unmapped,
     renamed: mapped.renamed,
   });

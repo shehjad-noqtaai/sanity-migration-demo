@@ -13,24 +13,36 @@ interface AemNode {
   "sling:resourceType"?: string;
   "jcr:uuid"?: string;
 }
+interface RegistryFieldWire {
+  name: string;
+  type?: string;
+  itemFields?: RegistryFieldWire[];
+}
 /**
- * Registry entry as written on disk. Supports two shapes for back-compat:
- *   - Legacy: `fields: string[]` — names only.
- *   - Current: `fields: Array<{name, type}>` — names + Sanity type, required
- *     for HTML → Portable Text coercion on `array-of-blocks` fields.
+ * Registry entry as written on disk. Supports three shapes for back-compat:
+ *   - Legacy: `fields: string[]` — names only, no coercion downstream.
+ *   - Flat typed: `fields: Array<{name, type}>` — top-level coercion only.
+ *   - Tree typed (current): `fields: Array<{name, type, itemFields?}>` —
+ *     nested array-of-object members carry their own field types, so
+ *     coercion walks into multifield items (variableColumn > columnContents
+ *     > columnText richtext etc.).
  * Entries are normalized into {@link NormalizedRegistryEntry} at load.
  */
 interface RegistryEntry {
   resourceType: string;
   sanityType: string;
-  fields?: Array<string | { name: string; type?: string }>;
+  fields?: Array<string | RegistryFieldWire>;
+}
+interface FieldTypeNode {
+  type: string;
+  itemFields?: Map<string, FieldTypeNode>;
 }
 interface NormalizedRegistryEntry {
   resourceType: string;
   sanityType: string;
   fieldNames: string[];
-  /** `name → sanity type`. Missing for legacy string[] entries. */
-  fieldTypes: Map<string, string>;
+  /** `name → type (+ nested itemFields)`. Empty for legacy string[] entries. */
+  fieldTypes: Map<string, FieldTypeNode>;
 }
 interface RawFile {
   jcrPath: string;
@@ -137,21 +149,34 @@ function loadRegistry(path: string): Map<string, NormalizedRegistryEntry> {
 
 function normalizeRegistryEntry(e: RegistryEntry): NormalizedRegistryEntry {
   const fieldNames: string[] = [];
-  const fieldTypes = new Map<string, string>();
-  for (const f of e.fields ?? []) {
-    if (typeof f === "string") {
-      fieldNames.push(f);
-      continue;
-    }
-    fieldNames.push(f.name);
-    if (f.type) fieldTypes.set(f.name, f.type);
-  }
+  const fieldTypes = buildFieldTypeTree(e.fields, fieldNames);
   return {
     resourceType: e.resourceType,
     sanityType: e.sanityType,
     fieldNames,
     fieldTypes,
   };
+}
+
+function buildFieldTypeTree(
+  fields: RegistryEntry["fields"],
+  collectNames?: string[],
+): Map<string, FieldTypeNode> {
+  const out = new Map<string, FieldTypeNode>();
+  for (const f of fields ?? []) {
+    if (typeof f === "string") {
+      collectNames?.push(f);
+      continue;
+    }
+    collectNames?.push(f.name);
+    if (!f.type) continue;
+    const node: FieldTypeNode = { type: f.type };
+    if (f.itemFields?.length) {
+      node.itemFields = buildFieldTypeTree(f.itemFields);
+    }
+    out.set(f.name, node);
+  }
+  return out;
 }
 
 function normalizeExceptionKey(v: string): string {
@@ -342,73 +367,63 @@ function htmlStringToPortableText(
 }
 
 /**
- * In-place coercion: any top-level field whose declared Sanity type is
- * `array-of-blocks` and whose ingested value is a string is parsed as HTML
- * and replaced with Portable Text blocks. AEM's `cq/gui/components/authoring/dialog/richtext`
- * dialog fields land as HTML strings; Sanity expects PT arrays. Without
- * this step the Studio rejects the field with "value is string, expected
- * array".
+ * In-place coercion: for every field the registry declares a type on,
+ * coerce the ingested AEM value to match that type. Walks nested
+ * array-of-object members using the registry's `itemFields` tree so
+ * multifield items (e.g. `variableColumn.columnContents[].columnText`)
+ * get the same treatment as top-level fields.
  *
- * Scope is intentionally flat — nested array-of-object members get
- * pass-through behavior because the registry flattens field lists and
- * doesn't preserve nesting. If nested richtext starts appearing in real
- * AEM content, thread structured field metadata through instead of
- * broadening the detection here.
+ * AEM's JCR is schemaless on dialog inputs — `.infinity.json` serializes
+ * every authored value as a JSON string regardless of widget type:
+ *   - richtext → HTML string   → Portable Text blocks (`array-of-blocks`)
+ *   - numberfield → `"10"`     → `number`
+ *   - checkbox  → `"true"`     → `boolean`
+ *
+ * Keep-original contract: if parsing fails (NaN number, unrecognized
+ * boolean literal, HTML parser error), leave the original value in place
+ * so the mismatch surfaces as a Studio validation error rather than
+ * being silently overwritten with a fake value.
  */
-function coerceRichTextFields(
+function coerceFieldTypes(
   inline: Record<string, unknown>,
-  fieldTypes: Map<string, string>,
+  fieldTypes: Map<string, FieldTypeNode>,
   jcrPath: string,
 ): void {
   if (fieldTypes.size === 0) return;
-  for (const [name, type] of fieldTypes) {
-    if (type !== "array-of-blocks") continue;
+  for (const [name, node] of fieldTypes) {
     const v = inline[name];
-    if (typeof v !== "string") continue;
-    const blocks = htmlStringToPortableText(v, `${jcrPath}::${name}`);
-    if (blocks === null) continue;
-    inline[name] = blocks;
-  }
-}
-
-/**
- * In-place coercion: string → number / boolean on fields whose declared
- * Sanity type requires a scalar. AEM's JCR is schemaless on dialog inputs,
- * so `.infinity.json` serializes numberfield and checkbox values as JSON
- * strings (`"10"`, `"true"`) even when the Sanity schema wants `number`
- * or `boolean`. Without this coercion the Studio rejects those fields with
- * "Expected type Number, got String" / "Expected type Boolean, got String".
- *
- * Keep-original contract: if parsing fails (NaN, unrecognized boolean
- * literal), leave the string in place rather than silently substituting a
- * fake value. Downstream validation catches truly bad data; we don't
- * paper over authoring mistakes.
- *
- * Same flat-only scope as {@link coerceRichTextFields} — nested multifield
- * items fall through. If AEM content starts using number/boolean inside
- * nested objects, carry nested field types in the registry before
- * broadening here.
- */
-function coerceScalarFields(
-  inline: Record<string, unknown>,
-  fieldTypes: Map<string, string>,
-): void {
-  if (fieldTypes.size === 0) return;
-  for (const [name, type] of fieldTypes) {
-    const v = inline[name];
-    if (typeof v !== "string") continue;
-    if (type === "number") {
+    if (node.type === "array-of-blocks") {
+      if (typeof v !== "string") continue;
+      const blocks = htmlStringToPortableText(v, `${jcrPath}::${name}`);
+      if (blocks !== null) inline[name] = blocks;
+      continue;
+    }
+    if (node.type === "number") {
+      if (typeof v !== "string") continue;
       const n = Number(v);
       if (Number.isFinite(n)) inline[name] = n;
       continue;
     }
-    if (type === "boolean") {
-      // AEM checkbox serializes as the literal strings "true" / "false".
-      // Don't overreach into "1"/"yes"/"on" until real data demands it —
-      // the keep-original contract means an unrecognized string just
-      // surfaces as a Studio validation error, not silent data loss.
+    if (node.type === "boolean") {
+      if (typeof v !== "string") continue;
       if (v === "true") inline[name] = true;
       else if (v === "false") inline[name] = false;
+      continue;
+    }
+    if (node.type === "array-of-object" && node.itemFields && Array.isArray(v)) {
+      // Recurse into each multifield item. We trust the authored shape
+      // already produces object items (transformInline / the multifield
+      // coercion upstream guarantee this); non-object members are skipped.
+      for (let i = 0; i < v.length; i++) {
+        const item = v[i];
+        if (item && typeof item === "object" && !Array.isArray(item)) {
+          coerceFieldTypes(
+            item as Record<string, unknown>,
+            node.itemFields,
+            `${jcrPath}::${name}[${i}]`,
+          );
+        }
+      }
     }
   }
 }
@@ -504,8 +519,7 @@ function collectPageBuilder(
       };
       const inline = transformInline(frame.node, frame.jcrPath, inlineCtx);
       splitAemFileUploadDamPaths(inline, entry.fieldNames);
-      coerceRichTextFields(inline, entry.fieldTypes, frame.jcrPath);
-      coerceScalarFields(inline, entry.fieldTypes);
+      coerceFieldTypes(inline, entry.fieldTypes, frame.jcrPath);
       out.push({
         _type: entry.sanityType,
         _key: stableKey(asString(frame.node["jcr:uuid"]), frame.jcrPath),

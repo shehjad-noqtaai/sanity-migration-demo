@@ -77,7 +77,7 @@ AEM's JCR is schemaless on dialog inputs — every authored value arrives in `.i
 - **`number`** — `Number(v)`; kept as-is on `NaN`.
 - **`boolean`** — `"true"` / `"false"` literal strings only; kept as-is otherwise so unrecognized values surface in Studio validation rather than being silently remapped.
 
-Coercion runs top-level only — nested multifield members fall through. Legacy `fields: string[]` registry entries skip every coercion step (pass-through); regenerate the registry via `migrate:schema` to opt in.
+Coercion walks the registry tree recursively — nested `array-of-object` items (e.g. `variableColumn.columnContents[]` rows) get the same treatment as top-level fields via the `itemFields` entries. Legacy `fields: string[]` registry entries skip every coercion step (pass-through); regenerate the registry via `migrate:schema` to opt in.
 
 ## Reports
 
