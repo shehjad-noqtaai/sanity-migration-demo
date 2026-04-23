@@ -238,11 +238,26 @@ async function walk(
     const resourceType = child["sling:resourceType"];
     const entry = lookup(resourceType);
 
-    // Transparent `items` wrapper — AEM often uses literal `items` nodes to
-    // group children; they have no resourceType. Walk through them.
-    if (!entry && !resourceType && key === "items") {
-      await walk(child, ctx, out, currentGroup);
-      continue;
+    // Transparent wrapper handling. Two patterns show up in real AEM dialogs:
+    //  1. Literal `items` grouping node — walk its children directly.
+    //  2. A named wrapper (e.g. outer `content`, `columns`, `column`) that
+    //     lacks `sling:resourceType` but nests an `items` child. David's
+    //     Bridal `aem-integration/components/content` is the motivating
+    //     example: every structural level omits the
+    //     `cq/gui/components/authoring/dialog` / granite container markup,
+    //     so without this descent we'd stop at the first child and emit a
+    //     single placeholder string instead of the real richtext + option
+    //     fields buried several levels down.
+    if (!entry && !resourceType) {
+      if (key === "items") {
+        await walk(child, ctx, out, currentGroup);
+        continue;
+      }
+      const itemsChild = child["items"];
+      if (itemsChild && typeof itemsChild === "object" && !Array.isArray(itemsChild)) {
+        await walk(itemsChild as DialogNode, ctx, out, currentGroup);
+        continue;
+      }
     }
 
     if (!entry) {
