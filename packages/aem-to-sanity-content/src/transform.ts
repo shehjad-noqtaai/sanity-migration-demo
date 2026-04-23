@@ -80,6 +80,18 @@ const JCR_METADATA = new Set<string>([
   "sling:resourceSuperType",
 ]);
 
+/**
+ * Dialog-runtime metadata that AEM writes alongside authored values but
+ * that have no Sanity schema counterpart. Dropped during `transformInline`
+ * the same way JCR metadata is.
+ *
+ * - `textIsRich`: a hint AEM adds next to richtext fields so the runtime
+ *   knows to render them as rich HTML. We already convert those fields to
+ *   Portable Text via `coerceFieldTypes`; the flag is noise that would
+ *   otherwise surface in the Studio as "Unknown field found".
+ */
+const AEM_DIALOG_RUNTIME_KEYS = new Set<string>(["textIsRich"]);
+
 const MAX_DEPTH = 512;
 
 /**
@@ -485,7 +497,7 @@ function transformInline(node: AemNode, jcrPath: string, ctx: TransformContext):
   ctx.visited.add(node);
 
   for (const [key, value] of Object.entries(node)) {
-    if (JCR_METADATA.has(key)) continue;
+    if (JCR_METADATA.has(key) || AEM_DIALOG_RUNTIME_KEYS.has(key)) continue;
     if (isChildNode(value)) {
       const outKey = sanityPropertyKeyFromAemChild(value, key);
       if (!isValidSanityAttributeKey(outKey)) continue;
@@ -656,7 +668,7 @@ function diffProps(node: AemNode, entry: NormalizedRegistryEntry | undefined): A
   const expected = new Set(entry.fieldNames);
   const out: Array<{ prop: string; value: unknown }> = [];
   for (const [key, value] of Object.entries(node)) {
-    if (JCR_METADATA.has(key)) continue;
+    if (JCR_METADATA.has(key) || AEM_DIALOG_RUNTIME_KEYS.has(key)) continue;
     if (expected.has(key)) continue;
     if (typeof value === "object" && value !== null && !Array.isArray(value)) continue;
     out.push({ prop: key, value });

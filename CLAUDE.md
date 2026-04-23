@@ -54,6 +54,8 @@ AEM's JCR is schemaless on dialog inputs — `.infinity.json` serializes every a
 - **`boolean`** → `"true"` / `"false"` literal strings only.
 - **`array-of-object`** → recurses into each item using the field's `itemFields` subtree, so nested richtext / number / boolean (e.g. `variableColumn.columnContents[].columnText`) are coerced the same as top-level fields. If the AEM value is a plain object instead of an array (named-key multifield — e.g. `colorCarousel.colors: { weddingDresses: {...}, ... }`), `Object.values` materializes it in authored order before recursing. The same principle applies to `splitAemFileUploadDamPaths`: nested field names are collected from the registry tree so `{base}AemPath` moves work at any depth.
 
+**Dialog-runtime metadata.** AEM writes bookkeeping sidecars next to authored fields (e.g. `textIsRich: "true"` beside richtext values). These have no Sanity counterpart and would surface as "Unknown field found" warnings if not dropped. Maintained as a narrow allowlist (`AEM_DIALOG_RUNTIME_KEYS` in `transform.ts`) — add new leaks there as they appear; never substitute a blanket heuristic.
+
 **When adding a new coerced type:**
 1. Extend `coerceScalarFields` (or `coerceRichTextFields` if shape-heavy) in `packages/aem-to-sanity-content/src/transform.ts`.
 2. Keep the **keep-original-on-failure** contract. Unrecognized values should surface as Studio validation errors, not silent data loss.

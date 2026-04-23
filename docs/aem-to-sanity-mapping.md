@@ -55,6 +55,8 @@ AEM's JCR is schemaless on dialog inputs: `.infinity.json` serializes everything
 
 **Map-shaped multifields.** AEM stores multifield rows in two shapes: the canonical ordered form (child keys `item0` / `item1` / ...) and a named-key form where each row lives under a meaningful key (e.g. `colors: { weddingDresses: {...}, bridesmaidDresses: {...} }` on `color-carousel`). The ordered form is materialized during `transformInline` by `deepCoerceAemMultifieldMapsToArrays`; the named-key form is materialized during `coerceFieldTypes` whenever the registry declares a field as `array-of-object` but the value is a plain object — `Object.values` preserves authored order (JSON key order as emitted by AEM).
 
+**Dialog-runtime metadata.** AEM writes bookkeeping flags next to authored fields that have no Sanity counterpart — e.g. `textIsRich: "true"` sits alongside every richtext value so the AEM runtime knows to render it as HTML. These are dropped during `transformInline` (`AEM_DIALOG_RUNTIME_KEYS` in `transform.ts`) so they don't surface in the Studio as "Unknown field found". Add new entries to that set as more leaks show up; they should stay a narrow allowlist, not a blanket string-value filter.
+
 ### Richtext → Portable Text
 
 Both richtext variants — `cq/gui/components/authoring/dialog/richtext` (legacy) and `granite/ui/components/coral/foundation/form/richtext` (Coral) — map to `array-of-blocks`. When the ingested value is a string, `aem-transform` parses it as HTML via `@portabletext/block-tools` (with `jsdom` as the DOM):
