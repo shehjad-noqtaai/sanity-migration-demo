@@ -371,6 +371,48 @@ function coerceRichTextFields(
   }
 }
 
+/**
+ * In-place coercion: string → number / boolean on fields whose declared
+ * Sanity type requires a scalar. AEM's JCR is schemaless on dialog inputs,
+ * so `.infinity.json` serializes numberfield and checkbox values as JSON
+ * strings (`"10"`, `"true"`) even when the Sanity schema wants `number`
+ * or `boolean`. Without this coercion the Studio rejects those fields with
+ * "Expected type Number, got String" / "Expected type Boolean, got String".
+ *
+ * Keep-original contract: if parsing fails (NaN, unrecognized boolean
+ * literal), leave the string in place rather than silently substituting a
+ * fake value. Downstream validation catches truly bad data; we don't
+ * paper over authoring mistakes.
+ *
+ * Same flat-only scope as {@link coerceRichTextFields} — nested multifield
+ * items fall through. If AEM content starts using number/boolean inside
+ * nested objects, carry nested field types in the registry before
+ * broadening here.
+ */
+function coerceScalarFields(
+  inline: Record<string, unknown>,
+  fieldTypes: Map<string, string>,
+): void {
+  if (fieldTypes.size === 0) return;
+  for (const [name, type] of fieldTypes) {
+    const v = inline[name];
+    if (typeof v !== "string") continue;
+    if (type === "number") {
+      const n = Number(v);
+      if (Number.isFinite(n)) inline[name] = n;
+      continue;
+    }
+    if (type === "boolean") {
+      // AEM checkbox serializes as the literal strings "true" / "false".
+      // Don't overreach into "1"/"yes"/"on" until real data demands it —
+      // the keep-original contract means an unrecognized string just
+      // surfaces as a Studio validation error, not silent data loss.
+      if (v === "true") inline[name] = true;
+      else if (v === "false") inline[name] = false;
+    }
+  }
+}
+
 function deepCoerceAemMultifieldMapsToArrays(val: unknown): unknown {
   if (val === null || typeof val !== "object") return val;
   if (Array.isArray(val)) {
@@ -463,6 +505,7 @@ function collectPageBuilder(
       const inline = transformInline(frame.node, frame.jcrPath, inlineCtx);
       splitAemFileUploadDamPaths(inline, entry.fieldNames);
       coerceRichTextFields(inline, entry.fieldTypes, frame.jcrPath);
+      coerceScalarFields(inline, entry.fieldTypes);
       out.push({
         _type: entry.sanityType,
         _key: stableKey(asString(frame.node["jcr:uuid"]), frame.jcrPath),

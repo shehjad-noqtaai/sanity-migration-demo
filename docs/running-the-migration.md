@@ -241,7 +241,13 @@ Reads every entry in `aem-content-roots`, fetches `{root}.infinity.json` from AE
 
 Walks each raw JCR tree, maps `sling:resourceType` values via `content-type-registry.json`, and emits one `page` doc per input file with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key` (from `jcr:uuid` or path SHA1). Unknown resource types and nodes listed in `aem-component-exceptions` are skipped but noted in the audit.
 
-**Type-aware coercion.** AEM's `cq/gui/components/authoring/dialog/richtext` dialog fields store their value as an HTML string in JCR. Sanity expects those fields as Portable Text (`array-of-blocks`). Transform reads each mapped block's registry `fields` entries and, for any field declared as `array-of-blocks` whose ingested value is a string, runs the HTML through `@portabletext/block-tools` (via `jsdom` as the parser) to produce Portable Text blocks — strong / em / underline / code / lists / `link` annotations are preserved. `_key`s are derived from a SHA1 of `{jcrPath}::{fieldName}:{counter}` so re-runs produce byte-identical clean docs (preserves the deterministic-diff invariant). On parser failure the original string is kept intact; no content is dropped silently.
+**Type-aware coercion.** AEM's JCR is schemaless on dialog inputs — every authored value lands in `.infinity.json` as a JSON string regardless of what the dialog widget was. The emitted Sanity schemas declare proper types (`number`, `boolean`, `array-of-blocks`), so without coercion the Studio rejects ingested values with "Expected type X, got String". Transform reads each mapped block's registry `fields` entries and coerces at ingest (top-level fields only; nested multifield members fall through):
+
+- **`array-of-blocks`** — AEM `cq/gui/components/authoring/dialog/richtext` / Coral richtext values arrive as HTML strings. Converted to Portable Text via `@portabletext/block-tools` (with `jsdom` as the DOM). Decorators (`strong`, `em`, `underline`, `strike-through`, `code`), styles (`normal`, `h1`–`h4`, `blockquote`), lists (`bullet`, `number`), and `<a href>` annotations are preserved. `_key`s are derived from a SHA1 of `{jcrPath}::{fieldName}:{counter}` so re-runs produce byte-identical clean docs. On parser failure the original string is kept intact.
+- **`number`** — coerced via `Number(v)`; kept as-is on `NaN`. AEM numberfield values land as `"10"` etc.
+- **`boolean`** — coerced when the value is the literal string `"true"` or `"false"`; kept as-is otherwise. AEM checkbox values land as `"true"` / `"false"`.
+
+Legacy `content-type-registry.json` files without `fields[].type` skip every coercion step — regenerate via `pnpm migrate:schema` to opt in.
 
 | Flag / env | Effect |
 | --- | --- |

@@ -43,11 +43,25 @@ When you change how any artifact is generated, **re-run the relevant stage again
 
 `/apps/.../image` would collide with Sanity's built-in `image` type. `resolveSanityTypeNames` (in `packages/aem-to-sanity-schema/src/naming.ts`) applies an `aem` prefix at emission time so the on-disk schema, the content registry, `pageBuilder.of[]`, and ingested document `_type` values all agree — no Studio-side rename, no orphaned content. Don't reintroduce per-import renames in `sanitize.ts`; it's a defense-in-depth pass for hand-authored schemas only.
 
-## HTML → Portable Text
+## Type-aware coercion at transform
 
-AEM's `cq/gui/components/authoring/dialog/richtext` dialog fields serialize as HTML strings in JCR. The schema emitter correctly declares them as `array-of-blocks`; `aem-transform` reads the registry's per-field type and converts HTML to Portable Text via `@portabletext/block-tools` (parsed through `jsdom`). Decorators (`strong`/`em`/`underline`/`strike-through`/`code`), styles (`normal`/`h1`–`h4`/`blockquote`), lists (`bullet`/`number`), and `<a href>` annotations are preserved. `_key`s are SHA1-seeded for deterministic diffs.
+AEM's JCR is schemaless on dialog inputs — `.infinity.json` serializes every authored value as a **JSON string** regardless of what the dialog widget was (numberfield → `"10"`, checkbox → `"true"` / `"false"`, richtext → HTML string). The emitted Sanity schemas declare proper types, so without coercion the Studio rejects every ingested value with "Expected type X, got String".
 
-If a new richtext-shaped field surfaces that isn't declared as `array-of-blocks`, fix it at the schema emitter layer (make sure the dialog's `sling:resourceType` is mapped correctly in `packages/aem-to-sanity-schema/src/mapping-table.ts`) — don't paper over with per-field coercion in the transform.
+`content-type-registry.json` records each field's Sanity type (`fields: Array<{name, type}>`). `aem-transform` reads those types and coerces at ingest:
+
+- **`array-of-blocks`** → Portable Text via `@portabletext/block-tools` + `jsdom`. Decorators / styles / lists / `link` annotations preserved. `_key`s SHA1-seeded for deterministic diffs.
+- **`number`** → `Number(v)`; kept as-is on `NaN`.
+- **`boolean`** → `"true"` / `"false"` literal strings only.
+
+**Scope is top-level only** — nested multifield members fall through because the registry flattens field lists. If nested typed values surface in real AEM content, carry structured nesting in the registry before broadening here.
+
+**When adding a new coerced type:**
+1. Extend `coerceScalarFields` (or `coerceRichTextFields` if shape-heavy) in `packages/aem-to-sanity-content/src/transform.ts`.
+2. Keep the **keep-original-on-failure** contract. Unrecognized values should surface as Studio validation errors, not silent data loss.
+3. Document it in the generated mapping doc — add prose under the "Type-aware coercion at transform" section in `packages/aem-to-sanity-schema/src/docs.ts`, then regenerate `docs/aem-to-sanity-mapping.md`.
+4. Update the mirror blurbs in `packages/aem-to-sanity-content/README.md`, `docs/running-the-migration.md` § 4b, and `docs/run.md` § 4b.
+
+If the issue is actually a wrong Sanity type (not a coercion gap), fix it at the schema emitter layer — check that the dialog's `sling:resourceType` is mapped correctly in `packages/aem-to-sanity-schema/src/mapping-table.ts`. Don't paper over schema-layer bugs with per-field coercion in the transform.
 
 ## Running verification
 

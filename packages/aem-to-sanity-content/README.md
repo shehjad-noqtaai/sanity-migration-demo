@@ -71,9 +71,13 @@ MIGRATION_DRY_RUN=false pnpm aem-import                  # commit docs
 
 ## Type-aware coercion (transform)
 
-`aem-transform` reads each mapped block's `fields: [{name, type}]` from `content-type-registry.json` and, when a field's declared Sanity type is `array-of-blocks`, converts the AEM HTML string value into Portable Text via `@portabletext/block-tools` (parsed through `jsdom`). This is what matches AEM's `cq/gui/components/authoring/dialog/richtext` storage shape to Sanity's editor. Decorators (`strong`, `em`, `underline`, `strike-through`, `code`), styles (`normal`, `h1`–`h4`, `blockquote`), lists (`bullet`, `number`), and `link` annotations are preserved. Keys are derived from a SHA1 of `{jcrPath}::{field}:{counter}` so re-runs produce byte-identical clean docs.
+AEM's JCR is schemaless on dialog inputs — every authored value arrives in `.infinity.json` as a JSON string, no matter what the dialog widget was. `aem-transform` reads each mapped block's `fields: [{name, type}]` from `content-type-registry.json` and coerces ingested string values into the Sanity-expected scalar:
 
-Legacy `fields: string[]` registry entries skip the coercion (pass-through) so older registries still work — regenerate the registry via `migrate:schema` to opt in.
+- **`array-of-blocks`** (richtext) — converted to Portable Text via `@portabletext/block-tools` (parsed through `jsdom`). Decorators (`strong`, `em`, `underline`, `strike-through`, `code`), styles (`normal`, `h1`–`h4`, `blockquote`), lists (`bullet`, `number`), and `link` annotations are preserved. Keys are derived from a SHA1 of `{jcrPath}::{field}:{counter}` so re-runs produce byte-identical clean docs.
+- **`number`** — `Number(v)`; kept as-is on `NaN`.
+- **`boolean`** — `"true"` / `"false"` literal strings only; kept as-is otherwise so unrecognized values surface in Studio validation rather than being silently remapped.
+
+Coercion runs top-level only — nested multifield members fall through. Legacy `fields: string[]` registry entries skip every coercion step (pass-through); regenerate the registry via `migrate:schema` to opt in.
 
 ## Reports
 

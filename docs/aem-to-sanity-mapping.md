@@ -47,22 +47,33 @@ When a dialog node has `sling:resourceType`: `granite/ui/components/coral/founda
 3. **Schema** — `aem-to-sanity-schema` maps multifield → Sanity `array` of objects. The array field uses that inner `field.name` for `defineField({ name })`, uses the multifield’s `fieldLabel` for Studio titles, and emits row object titles from `fieldLabel` (see `multifieldArrayPropertyName` / multifield handling in `mapper.ts`).
 4. **Content** — `aem-transform` (`aem-to-sanity-content`) inlines components, then `deepCoerceAemMultifieldMapsToArrays` turns any object whose keys are exclusively `itemN` / numeric indices into a JSON **array** so it matches Sanity `array` types. Scalar keys still use dialog `name` when the JCR sibling key differs (`sanityPropertyKeyFromAemChild` in `transform.ts`).
 
-## Richtext → Portable Text (dialog + transform)
+## Type-aware coercion at transform
 
-Both richtext variants — `cq/gui/components/authoring/dialog/richtext` (legacy) and `granite/ui/components/coral/foundation/form/richtext` (Coral) — map to Sanity's Portable Text:
+AEM's JCR is schemaless on dialog inputs: `.infinity.json` serializes everything authored through a dialog widget as a **JSON string**, regardless of what the dialog thinks the type is. A numberfield storing `10` lands as `"10"`; a checkbox lands as `"true"` / `"false"`; a richtext widget lands as an HTML string. The emitted Sanity schemas declare proper types (`number`, `boolean`, `array-of-blocks`), so without coercion the Studio rejects every ingested value with "Expected type X, got String".
 
-**Schema** — `aem-to-sanity-schema` emits the field as `array-of-blocks`, i.e. `defineField({ type: "array", of: [{ type: "block" }] })`. The field's `type` is recorded as `array-of-blocks` in `content-type-registry.json` under the component's `fields` list.
+`content-type-registry.json` records each field's Sanity type (`fields: Array<{name, type}>`) so `aem-transform` can coerce on the way in. Scope is intentionally **top-level only** — nested multifield members fall through because the registry flattens field lists without preserving nesting. If nested typed values surface in real AEM content, thread structured field metadata through the registry before broadening here.
 
-**Content** — AEM stores authored richtext as an **HTML string** in the JCR property (e.g. `"<p>Hello <strong>world</strong></p>\r\n<p>&nbsp;</p>"`). `aem-transform` reads each mapped block's registry field types and, for any field declared as `array-of-blocks` whose ingested value is a string, converts the HTML to Portable Text via `@portabletext/block-tools` (using `jsdom` as the parser):
+### Richtext → Portable Text
+
+Both richtext variants — `cq/gui/components/authoring/dialog/richtext` (legacy) and `granite/ui/components/coral/foundation/form/richtext` (Coral) — map to `array-of-blocks`. When the ingested value is a string, `aem-transform` parses it as HTML via `@portabletext/block-tools` (with `jsdom` as the DOM):
 
 - Decorators preserved: `strong`, `em`, `underline`, `strike-through`, `code`.
 - Styles preserved: `normal`, `h1`–`h4`, `blockquote`.
 - Lists preserved: `bullet`, `number`.
 - `<a href="...">` preserved as a `link` annotation with an `href` field.
 - `_key`s derived from SHA1 of `{jcrPath}::{fieldName}:{counter}` so re-runs produce byte-identical clean docs (deterministic-diff invariant).
-- Parser failure leaves the original string in place and is recorded in the audit — no silent data loss.
+- Parser failure leaves the original string in place — no silent data loss.
 
-Legacy `content-type-registry.json` files that carry `fields: string[]` (no type info) still load, but the transform falls back to pass-through for richtext — Studio will reject those values as "expected array". Regenerate the registry via `pnpm migrate:schema` to opt in.
+### Number and boolean
+
+AEM stores numberfield values as strings (`"10"`) and checkbox values as literal `"true"` / `"false"` strings. `aem-transform` coerces when the declared Sanity type is `number` or `boolean`:
+
+- `number` → `Number(v)`; kept as-is on `NaN`.
+- `boolean` → `true` when value is the literal string `"true"`, `false` when `"false"`; kept as-is otherwise. Unrecognized literals surface as Studio validation errors rather than being silently remapped (e.g. `"yes"`, `"1"`, `""` are not assumed).
+
+### Legacy registries
+
+`content-type-registry.json` files written before type-info was recorded (`fields: string[]`) still load, but every coercion step is skipped — Studio will reject the values. Regenerate via `pnpm migrate:schema` to opt in.
 
 ## Authoring dialog file upload (`cq/gui/components/authoring/dialog/fileupload`)
 

@@ -85,7 +85,7 @@ The four stages are independent CLIs chained through on-disk output; you can re-
 ### 4b. `transform`
 **What this does:** Walks each raw JCR tree under `output/raw/`, maps `sling:resourceType` values via `content-type-registry.json`, and emits one Sanity `page` doc per input into `output/clean/` — with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key`, so re-runs upsert instead of duplicating. Unknown types and entries in `aem-component-exceptions` are skipped but recorded in `output/transform-report.json`. Purely local — no AEM or Sanity calls.
 
-AEM richtext fields (`cq/gui/components/authoring/dialog/richtext`) are stored as HTML strings in JCR; transform reads each field's declared Sanity type from the registry and, when the type is `array-of-blocks`, converts the HTML to Portable Text via `@portabletext/block-tools` so the Studio accepts the value. Deterministic `_key`s preserve clean diffs across re-runs.
+AEM's JCR serializes every authored dialog value as a JSON string; transform reads each field's declared Sanity type from the registry and coerces on the way in. `array-of-blocks` fields (richtext) are converted to Portable Text via `@portabletext/block-tools`; `number` fields are parsed via `Number(v)`; `boolean` fields are parsed from the literal strings `"true"` / `"false"`. Values that can't be coerced cleanly are left in place so they surface as Studio validation errors rather than being silently remapped. Deterministic `_key`s preserve clean diffs across re-runs.
 
 ### 4c. `assets`
 **What this does:** Scans `output/clean/` for `/content/dam/...` references and moves the binaries from AEM DAM into the Sanity Media Library in five phases:
