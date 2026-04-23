@@ -250,6 +250,81 @@ async function uploadToMediaLibrary(
   }
 }
 
+/**
+ * Dedup lookup: find an asset previously uploaded by this pipeline via its
+ * `aspects.aemSource.damPath` stamp. The aspect also caches `assetInstanceId`
+ * so we don't have to probe the parent's versions field to find a linkable
+ * instance. Returns null if the aspect isn't deployed yet, no asset matches,
+ * or the stamp is missing the cached instance id (older uploads).
+ */
+async function findExistingByAemPath(
+  mlId: string,
+  token: string,
+  apiVersion: string,
+  damPath: string,
+): Promise<{ assetId: string; assetInstanceId: string } | null> {
+  const url = `https://api.sanity.io/v${apiVersion}/media-libraries/${mlId}/query`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `*[_type == "sanity.asset" && aspects.aemSource.damPath == $damPath][0]{_id, "assetInstanceId": aspects.aemSource.assetInstanceId}`,
+        params: { damPath },
+      }),
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { result?: { _id?: string; assetInstanceId?: string } };
+    const hit = body.result;
+    if (!hit?._id || !hit.assetInstanceId) return null;
+    return { assetId: hit._id, assetInstanceId: hit.assetInstanceId };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Stamp `aspects.aemSource = {damPath, assetInstanceId}` on the parent asset
+ * doc so future runs can dedup via `findExistingByAemPath`. Best-effort: logs
+ * and returns on failure (typically because the aspect hasn't been deployed
+ * yet via `sanity media deploy-aspect aemSource`).
+ */
+async function stampAemSourceAspect(
+  mlId: string,
+  token: string,
+  apiVersion: string,
+  assetId: string,
+  damPath: string,
+  assetInstanceId: string,
+): Promise<void> {
+  const url = `https://api.sanity.io/v${apiVersion}/media-libraries/${mlId}/mutate`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mutations: [
+          {
+            patch: {
+              id: assetId,
+              setIfMissing: { aspects: {} },
+              set: { "aspects.aemSource": { damPath, assetInstanceId } },
+            },
+          },
+        ],
+      }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(
+        `    aspect-stamp failed for ${damPath}: HTTP ${res.status} — ${text.slice(0, 200)}`,
+      );
+    }
+  } catch (err) {
+    console.error(`    aspect-stamp error for ${damPath}: ${(err as Error).message}`);
+  }
+}
+
 async function lookupExistingAsset(
   mlId: string,
   token: string,
@@ -470,6 +545,45 @@ async function main(): Promise<void> {
 
   const manifest = loadManifest(manifestFile);
 
+  // ── Phase 0: dedup via aemSource aspect ──────────────────────────────
+  // For damPaths not already resolved by the local manifest, query the ML for
+  // `aspects.aemSource.damPath == $damPath`. A hit populates the manifest
+  // with both ids so phases 1 (download) and 2 (upload) skip the asset
+  // entirely. Misses (no match or aspect undeployed) fall through.
+  // `aspectStamped` tracks which paths already carry the aspect stamp, so
+  // phase 2 only backfills the ones that don't.
+  const aspectStamped = new Set<string>();
+  if (!dryRun) {
+    const mlId = mustEnv("SANITY_MEDIA_LIBRARY_ID");
+    const token = mustEnv("SANITY_TOKEN");
+    const apiVersion = process.env.SANITY_API_VERSION ?? "2025-02-19";
+    console.error(c.bold("\n── 0. Check Media Library for existing assets ──"));
+    let hits = 0;
+    let n = 0;
+    for (const damPath of sortedPaths) {
+      n++;
+      const hit = await findExistingByAemPath(mlId, token, apiVersion, damPath);
+      if (hit) {
+        hits++;
+        aspectStamped.add(damPath);
+        const existing = manifest[damPath];
+        manifest[damPath] = {
+          ...(existing ?? { damPath }),
+          damPath,
+          mediaLibraryAssetId: hit.assetId,
+          linkedAssetInstanceId: hit.assetInstanceId,
+          status: "uploaded",
+          uploadedAt: existing?.uploadedAt ?? new Date().toISOString(),
+        };
+        writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
+        console.error(`  ${c.dim(`${n}/${sortedPaths.length}`)} ${c.green("reuse ")} ${damPath}  ${c.dim(hit.assetId)}`);
+      } else {
+        console.error(`  ${c.dim(`${n}/${sortedPaths.length}`)} ${c.dim("new   ")} ${damPath}`);
+      }
+    }
+    console.error(c.dim(`  ${hits}/${sortedPaths.length} reused from existing Media Library aspects`));
+  }
+
   // ── Phase 1: download ────────────────────────────────────────────────
   if (!uploadOnly) {
     console.error(c.bold("\n── 1. Download from AEM DAM ──"));
@@ -479,6 +593,10 @@ async function main(): Promise<void> {
       const existing = manifest[damPath];
       if (existing?.cachedFile && existsSync(existing.cachedFile)) {
         console.error(`  ${c.dim(`${n}/${sortedPaths.length}`)} ${c.dim("cached ")} ${damPath}`);
+        continue;
+      }
+      if (existing?.mediaLibraryAssetId && existing.linkedAssetInstanceId) {
+        console.error(`  ${c.dim(`${n}/${sortedPaths.length}`)} ${c.dim("skip  ")} ${damPath}  ${c.dim("(already in ML)")}`);
         continue;
       }
       console.error(`  ${c.dim(`${n}/${sortedPaths.length}`)} ${c.dim("→      ")} ${damPath}`);
@@ -507,11 +625,34 @@ async function main(): Promise<void> {
       }
       if (entry.mediaLibraryAssetId && entry.linkedAssetInstanceId) {
         console.error(`  ${c.dim(`${n}/${sortedPaths.length}`)} ${c.dim("up✓   ")} ${damPath}  ${c.dim(entry.mediaLibraryAssetId)}`);
+        if (!aspectStamped.has(damPath)) {
+          await stampAemSourceAspect(
+            mlId,
+            uploadToken,
+            apiVersion,
+            entry.mediaLibraryAssetId,
+            damPath,
+            entry.linkedAssetInstanceId,
+          );
+          aspectStamped.add(damPath);
+        }
         continue;
       }
       console.error(`  ${c.dim(`${n}/${sortedPaths.length}`)} ${c.dim("↑     ")} ${damPath}`);
       manifest[damPath] = await uploadToMediaLibrary(entry, mlId, uploadToken, apiVersion);
       writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
+      const uploaded = manifest[damPath];
+      if (uploaded.mediaLibraryAssetId && uploaded.linkedAssetInstanceId && !aspectStamped.has(damPath)) {
+        await stampAemSourceAspect(
+          mlId,
+          uploadToken,
+          apiVersion,
+          uploaded.mediaLibraryAssetId,
+          damPath,
+          uploaded.linkedAssetInstanceId,
+        );
+        aspectStamped.add(damPath);
+      }
     }
   }
 
