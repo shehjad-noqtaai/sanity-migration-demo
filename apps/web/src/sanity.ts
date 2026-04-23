@@ -18,12 +18,25 @@ if (!projectId) {
   );
 }
 
+/**
+ * In dev, route every Sanity API call through the Vite server's `/sanity-api`
+ * proxy so the browser never issues a cross-origin request directly to
+ * `*.apicdn.sanity.io`. That avoids needing to register `http://localhost:4321`
+ * as a CORS origin on every Sanity project the demo points at. In prod the
+ * client talks to the CDN subdomain directly (the default behavior).
+ */
+const proxyHost =
+  import.meta.env.DEV && typeof window !== "undefined"
+    ? `${window.location.origin}/sanity-api`
+    : undefined;
+
 export const sanity: SanityClient = createClient({
   projectId,
   dataset,
   apiVersion: "2024-01-01",
   useCdn: true,
   perspective: "published",
+  ...(proxyHost ? { apiHost: proxyHost, useProjectHostname: false } : {}),
 });
 
 const builder = imageUrlBuilder(sanity);

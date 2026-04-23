@@ -10,7 +10,9 @@ Mirrors the data-fetching pattern of the `hydrogen-sanity` package — read the 
 pnpm -F web dev          # http://localhost:4321
 ```
 
-Env plumbing: `vite.config.ts` loads `apps/web/.env` first, then falls back to `examples/davids-bridal/.env` so the demo picks up the same project / dataset the migration pipeline writes to. Only `SANITY_PROJECT_ID` and `SANITY_DATASET` are exposed to the client; no tokens (reads are public-perspective).
+Env plumbing: `vite.config.ts` loads `apps/web/.env` first, then falls back to `examples/davids-bridal/.env` so the demo picks up the same project / dataset the migration pipeline writes to. Only `SANITY_PROJECT_ID` and `SANITY_DATASET` are exposed to the client.
+
+**Private datasets.** Every Sanity API call goes through the Vite dev server's `/sanity-api/*` proxy (see `vite.config.ts`). When `SANITY_TOKEN` is present in the server env, the proxy attaches `Authorization: Bearer <token>` to outbound requests so the dev preview reads private datasets without shipping the token to the browser. Public datasets work without a token — the proxy just rewrites the path. The proxy also sidesteps the CORS registration you'd otherwise need for `http://localhost:4321` on each Sanity project.
 
 ## Layout
 
