@@ -121,19 +121,38 @@ interface LinkResponse {
 async function runInParallel<T>(
   items: readonly T[],
   concurrency: number,
-  worker: (item: T, index: number) => Promise<void>,
+  worker: (item: T, index: number, workerId: number) => Promise<void>,
 ): Promise<void> {
   if (items.length === 0) return;
   const n = Math.max(1, Math.min(concurrency, items.length));
   let cursor = 0;
-  const runners = Array.from({ length: n }, async () => {
-    while (true) {
-      const i = cursor++;
-      if (i >= items.length) return;
-      await worker(items[i]!, i);
-    }
-  });
+  const runners: Promise<void>[] = [];
+  // Worker ids are 1-indexed and stable for the whole phase so operators
+  // can track a single worker's run of tasks through the log — same id
+  // tag shows up on every line that worker emits.
+  for (let id = 1; id <= n; id++) {
+    runners.push(
+      (async () => {
+        while (true) {
+          const i = cursor++;
+          if (i >= items.length) return;
+          await worker(items[i]!, i, id);
+        }
+      })(),
+    );
+  }
   await Promise.all(runners);
+}
+
+/**
+ * Short, fixed-width worker label for log lines (`w1`, `w2`, … `w12`).
+ * Padded so the columns after it stay aligned regardless of 1- or 2-digit
+ * ids; picked up from `ASSET_CONCURRENCY` so higher counts still render
+ * neatly.
+ */
+function workerLabel(id: number, total: number): string {
+  const width = String(total).length;
+  return `w${String(id).padStart(width, "0")}`;
 }
 
 function assetConcurrency(): number {
@@ -636,7 +655,8 @@ async function main(): Promise<void> {
     const phase0 = startTimer();
     let hits = 0;
     let done = 0;
-    await runInParallel(sortedPaths, concurrency, async (damPath) => {
+    await runInParallel(sortedPaths, concurrency, async (damPath, _i, workerId) => {
+      const w = c.dim(workerLabel(workerId, concurrency));
       const hit = await findExistingByAemPath(mlId, token, apiVersion, damPath);
       done++;
       if (hit) {
@@ -652,9 +672,9 @@ async function main(): Promise<void> {
           uploadedAt: existing?.uploadedAt ?? new Date().toISOString(),
         };
         writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
-        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${c.green("reuse ")} ${damPath}  ${c.dim(hit.assetId)}`);
+        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.green("reuse ")} ${damPath}  ${c.dim(hit.assetId)}`);
       } else {
-        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${c.dim("new   ")} ${damPath}`);
+        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.dim("new   ")} ${damPath}`);
       }
     });
     console.error(c.dim(`  ${hits}/${sortedPaths.length} reused from existing Media Library aspects`));
@@ -681,16 +701,17 @@ async function main(): Promise<void> {
     );
     const phase1 = startTimer();
     let done = 0;
-    await runInParallel(sortedPaths, concurrency, async (damPath) => {
+    await runInParallel(sortedPaths, concurrency, async (damPath, _i, workerId) => {
+      const w = c.dim(workerLabel(workerId, concurrency));
       const existing = manifest[damPath];
       if (existing?.cachedFile && existsSync(existing.cachedFile)) {
         done++;
-        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${c.dim("cached ")} ${damPath}`);
+        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.dim("cached ")} ${damPath}`);
         return;
       }
       if (existing?.mediaLibraryAssetId && existing.linkedAssetInstanceId) {
         done++;
-        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${c.dim("skip  ")} ${damPath}  ${c.dim("(already in ML)")}`);
+        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.dim("skip  ")} ${damPath}  ${c.dim("(already in ML)")}`);
         return;
       }
       const entry = await downloadOne(damPath, assetsDir, config.baseUrl, config.auth);
@@ -698,7 +719,7 @@ async function main(): Promise<void> {
       writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
       done++;
       const marker = entry.status === "failed-download" ? c.yellow("fail  ") : c.dim("↓      ");
-      console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${marker} ${damPath}`);
+      console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${marker} ${damPath}`);
     });
     phaseTimings.phase1 = phase1.elapsedMs();
   }
@@ -724,16 +745,17 @@ async function main(): Promise<void> {
     const uploadToken = mustEnv("SANITY_TOKEN");
     const apiVersion = process.env.SANITY_API_VERSION ?? "2025-02-19";
     let done = 0;
-    await runInParallel(sortedPaths, uploadConcurrency, async (damPath) => {
+    await runInParallel(sortedPaths, uploadConcurrency, async (damPath, _i, workerId) => {
+      const w = c.dim(workerLabel(workerId, uploadConcurrency));
       const entry = manifest[damPath];
       if (!entry?.cachedFile) {
         done++;
-        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${c.yellow("skip  ")} ${damPath}  ${c.dim("(no local file)")}`);
+        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.yellow("skip  ")} ${damPath}  ${c.dim("(no local file)")}`);
         return;
       }
       if (entry.mediaLibraryAssetId && entry.linkedAssetInstanceId) {
         done++;
-        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${c.dim("up✓   ")} ${damPath}  ${c.dim(entry.mediaLibraryAssetId)}`);
+        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.dim("up✓   ")} ${damPath}  ${c.dim(entry.mediaLibraryAssetId)}`);
         if (!aspectStamped.has(damPath)) {
           await stampAemSourceAspect(
             mlId,
@@ -752,7 +774,7 @@ async function main(): Promise<void> {
       const uploaded = manifest[damPath];
       done++;
       const marker = uploaded.status === "failed-upload" ? c.yellow("fail  ") : c.dim("↑     ");
-      console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${marker} ${damPath}`);
+      console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${marker} ${damPath}`);
       if (uploaded.mediaLibraryAssetId && uploaded.linkedAssetInstanceId && !aspectStamped.has(damPath)) {
         await stampAemSourceAspect(
           mlId,
@@ -792,16 +814,17 @@ async function main(): Promise<void> {
     }
     const apiVersion = process.env.SANITY_API_VERSION ?? "2025-02-19";
     let done = 0;
-    await runInParallel(sortedPaths, linkConcurrency, async (damPath) => {
+    await runInParallel(sortedPaths, linkConcurrency, async (damPath, _i, workerId) => {
+      const w = c.dim(workerLabel(workerId, linkConcurrency));
       const entry = manifest[damPath];
       if (!entry?.mediaLibraryAssetId || !entry.linkedAssetInstanceId) {
         done++;
-        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${c.yellow("skip  ")} ${damPath}  ${c.dim("(no ML ids)")}`);
+        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.yellow("skip  ")} ${damPath}  ${c.dim("(no ML ids)")}`);
         return;
       }
       if (entry.linkedRef && entry.sanityRef) {
         done++;
-        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${c.dim("ln✓   ")} ${damPath}  ${c.dim(entry.linkedRef)}`);
+        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.dim("ln✓   ")} ${damPath}  ${c.dim(entry.linkedRef)}`);
         return;
       }
       manifest[damPath] = await linkToDataset(entry, projectId, dataset, mlId, linkToken, apiVersion);
@@ -810,7 +833,7 @@ async function main(): Promise<void> {
       const linked = manifest[damPath];
       const marker = linked.status === "failed-link" ? c.yellow("fail  ") : c.dim("⚭     ");
       const suffix = linked.linkedRef ? `  ${c.dim(linked.linkedRef)}` : "";
-      console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${marker} ${damPath}${suffix}`);
+      console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${marker} ${damPath}${suffix}`);
     });
   }
   phaseTimings.phase3 = phase3.elapsedMs();
