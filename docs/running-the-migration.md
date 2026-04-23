@@ -246,6 +246,7 @@ Walks each raw JCR tree, maps `sling:resourceType` values via `content-type-regi
 - **`array-of-blocks`** — AEM `cq/gui/components/authoring/dialog/richtext` / Coral richtext values arrive as HTML strings. Converted to Portable Text via `@portabletext/block-tools` (with `jsdom` as the DOM). Decorators (`strong`, `em`, `underline`, `strike-through`, `code`), styles (`normal`, `h1`–`h4`, `blockquote`), lists (`bullet`, `number`), and `<a href>` annotations are preserved. `_key`s are derived from a SHA1 of `{jcrPath}::{fieldName}:{counter}` so re-runs produce byte-identical clean docs. On parser failure the original string is kept intact.
 - **`number`** — coerced via `Number(v)`; kept as-is on `NaN`. AEM numberfield values land as `"10"` etc.
 - **`boolean`** — coerced when the value is the literal string `"true"` or `"false"`; kept as-is otherwise. AEM checkbox values land as `"true"` / `"false"`.
+- **`array-of-object`** — recurses into nested multifield items. Handles both AEM shapes: the ordered `item0`/`item1` form (materialized earlier in `transformInline`) and the named-key form (e.g. `colorCarousel.colors: { weddingDresses: {...}, bridesmaidDresses: {...} }`) — materialized here by taking `Object.values` of the keyed map in authored order.
 
 Legacy `content-type-registry.json` files without `fields[].type` skip every coercion step — regenerate via `pnpm migrate:schema` to opt in.
 

@@ -172,7 +172,14 @@ function buildFieldTypeTree(
     if (!f.type) continue;
     const node: FieldTypeNode = { type: f.type };
     if (f.itemFields?.length) {
-      node.itemFields = buildFieldTypeTree(f.itemFields);
+      // Recurse with the same collector so nested member names (e.g.
+      // `fileReference` / `fileReferenceAemPath` inside a multifield item)
+      // also land in the flat `fieldNames` list. `splitAemFileUploadDamPaths`
+      // uses that list to find `*AemPath` pairs at any depth during its
+      // recursive walk; without nested names the split never moves the
+      // DAM string off the asset field and the downstream link rewrite
+      // has nothing to fill in.
+      node.itemFields = buildFieldTypeTree(f.itemFields, collectNames);
     }
     out.set(f.name, node);
   }
@@ -410,12 +417,32 @@ function coerceFieldTypes(
       else if (v === "false") inline[name] = false;
       continue;
     }
-    if (node.type === "array-of-object" && node.itemFields && Array.isArray(v)) {
-      // Recurse into each multifield item. We trust the authored shape
-      // already produces object items (transformInline / the multifield
-      // coercion upstream guarantee this); non-object members are skipped.
-      for (let i = 0; i < v.length; i++) {
-        const item = v[i];
+    if (node.type === "array-of-object" && node.itemFields) {
+      // Materialize keyed-map variants before recursing. AEM's `itemN` /
+      // numeric-index multifield shape is coerced earlier by
+      // `deepCoerceAemMultifieldMapsToArrays`, but some AEM widgets (e.g.
+      // the color-carousel's `colors`) store each row under a meaningful
+      // named key (`weddingDresses`, `bridesmaidDresses`, …) instead. The
+      // registry says the target is `array-of-object`; honor that by
+      // flattening the keyed map's values into an array in JSON iteration
+      // order (which mirrors the authored order in AEM). Truncation
+      // sentinels are skipped — they stay opaque for downstream audit.
+      let items: unknown[] | null = null;
+      if (Array.isArray(v)) {
+        items = v;
+      } else if (
+        v !== null &&
+        typeof v === "object" &&
+        !(v as { __truncated?: unknown }).__truncated
+      ) {
+        items = Object.values(v as Record<string, unknown>).filter(
+          (item) => item !== null && typeof item === "object" && !Array.isArray(item),
+        );
+        inline[name] = items;
+      }
+      if (!items) continue;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         if (item && typeof item === "object" && !Array.isArray(item)) {
           coerceFieldTypes(
             item as Record<string, unknown>,

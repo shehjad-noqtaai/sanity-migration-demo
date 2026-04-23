@@ -40,6 +40,8 @@ AEM's JCR is schemaless on dialog inputs: \`.infinity.json\` serializes everythi
 
 \`content-type-registry.json\` records each field's Sanity type as a tree (\`fields: Array<{name, type, itemFields?}>\`) so \`aem-transform\` can coerce at any depth. Nested array-of-object members carry their own field types under \`itemFields\`; the coercion pass recurses into every multifield item, so richtext / number / boolean inside a \`variableColumn.columnContents[]\` row is treated the same as a top-level field.
 
+**Map-shaped multifields.** AEM stores multifield rows in two shapes: the canonical ordered form (child keys \`item0\` / \`item1\` / ...) and a named-key form where each row lives under a meaningful key (e.g. \`colors: { weddingDresses: {...}, bridesmaidDresses: {...} }\` on \`color-carousel\`). The ordered form is materialized during \`transformInline\` by \`deepCoerceAemMultifieldMapsToArrays\`; the named-key form is materialized during \`coerceFieldTypes\` whenever the registry declares a field as \`array-of-object\` but the value is a plain object — \`Object.values\` preserves authored order (JSON key order as emitted by AEM).
+
 ### Richtext → Portable Text
 
 Both richtext variants — \`cq/gui/components/authoring/dialog/richtext\` (legacy) and \`granite/ui/components/coral/foundation/form/richtext\` (Coral) — map to \`array-of-blocks\`. When the ingested value is a string, \`aem-transform\` parses it as HTML via \`@portabletext/block-tools\` (with \`jsdom\` as the DOM):

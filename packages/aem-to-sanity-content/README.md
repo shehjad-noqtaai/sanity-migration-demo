@@ -77,7 +77,9 @@ AEM's JCR is schemaless on dialog inputs — every authored value arrives in `.i
 - **`number`** — `Number(v)`; kept as-is on `NaN`.
 - **`boolean`** — `"true"` / `"false"` literal strings only; kept as-is otherwise so unrecognized values surface in Studio validation rather than being silently remapped.
 
-Coercion walks the registry tree recursively — nested `array-of-object` items (e.g. `variableColumn.columnContents[]` rows) get the same treatment as top-level fields via the `itemFields` entries. Legacy `fields: string[]` registry entries skip every coercion step (pass-through); regenerate the registry via `migrate:schema` to opt in.
+Coercion walks the registry tree recursively — nested `array-of-object` items (e.g. `variableColumn.columnContents[]` rows) get the same treatment as top-level fields via the `itemFields` entries. AEM stores multifield rows in two shapes: canonical ordered (`item0`/`item1`/…) and named-key (`colors: {weddingDresses: {...}, ...}`). Both are materialized into proper arrays — the ordered form by `deepCoerceAemMultifieldMapsToArrays` during `transformInline`, the named-key form by `coerceFieldTypes` when the registry declares the field as `array-of-object` but the value is a plain object. `Object.values` preserves authored order.
+
+Legacy `fields: string[]` registry entries skip every coercion step (pass-through); regenerate the registry via `migrate:schema` to opt in.
 
 ## Reports
 
