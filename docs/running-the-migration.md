@@ -226,10 +226,21 @@ Walks each raw JCR tree, maps `sling:resourceType` values via `content-type-regi
 
 > **Scope decision (@shehjadkhan 2026-04-22):** assets go to the Sanity **Media Library** (org-scoped), NOT the dataset's Content Lake. Each asset is uploaded once into the Media Library and then **linked** into the target dataset via the Global Document Reference (GDR) endpoint. The dataset holds a small linked asset document whose `_id` becomes the `asset._ref` inside content docs.
 
-Scans `output/clean/` for `/content/dam/...` references, downloads each asset from AEM, and runs four phases:
+#### One-time: deploy the `aemSource` aspect
 
+`aem-assets` stamps every uploaded asset with an `aemSource` aspect (`damPath` + cached `assetInstanceId`) so subsequent runs can dedup by origin JCR path instead of re-uploading. Deploy the aspect schema once per Media Library before the first live run:
+
+```bash
+pnpm --filter studio exec sanity media deploy-aspect aemSource
+```
+
+If this step is skipped, uploads still succeed — the stamp mutations fail gracefully (logged, not fatal) and the dedup pre-check in phase 0 returns no hits. Once deployed, running `aem-assets` once backfills the aspect on any prior-uploaded assets whose ids are still in the local manifest.
+
+Scans `output/clean/` for `/content/dam/...` references, downloads each asset from AEM, and runs five phases:
+
+0. **Dedup lookup** — GROQ `*[_type=="sanity.asset" && aspects.aemSource.damPath == $damPath][0]` against the Media Library. A hit populates the manifest with both ids so phases 1+2 skip that asset entirely — no re-download from AEM, no re-upload to ML. Same content reused across pages/runs links to the same ML asset.
 1. **Download** from AEM DAM → `output/assets/<flattened-path>` (on-disk cache, resumable).
-2. **Upload** to Media Library — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload` returns `{asset: {_id}, assetInstance: {_id}}`. The parent `asset._id` is recorded as `mediaLibraryAssetId`; the versioned `assetInstance._id` as `linkedAssetInstanceId`.
+2. **Upload** to Media Library — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload` returns `{asset: {_id}, assetInstance: {_id}}`. The parent `asset._id` is recorded as `mediaLibraryAssetId`; the versioned `assetInstance._id` as `linkedAssetInstanceId`. Immediately after a successful upload (or when skipping an already-uploaded entry whose aspect isn't set yet), the pipeline patches `aspects.aemSource = {damPath, assetInstanceId}` onto the parent via `POST /media-libraries/{mlId}/mutate`.
 3. **Link** to dataset — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Returns `{document: {_id, media: {_ref}, ...}}`. `document._id` is the dataset-local `_ref` that goes into content docs (Pattern A: `{_type:'image', asset:{_ref:'<linked-ref>'}}` — Studio-compatible).
 4. **Rewrite** clean docs in place so every `/content/dam/...` string becomes the linked asset ref object.
 
