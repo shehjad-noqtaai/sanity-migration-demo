@@ -98,6 +98,9 @@ function Header({ title }: { title?: string }) {
           >
             Inspiration
           </a>
+          <a href="/faq" className="hover:text-[color:var(--color-primary)] transition-colors">
+            FAQ
+          </a>
         </nav>
         {title ? (
           <p className="label-eyebrow hidden truncate md:block max-w-[24rem]">{title}</p>

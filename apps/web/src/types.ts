@@ -213,6 +213,77 @@ export interface IconGridBlock extends BaseBlock {
   removeBottomPadding?: string | boolean;
 }
 
+export interface FaqHubNestedLink {
+  _key: string;
+  text?: string;
+  link?: string;
+}
+
+export interface FaqHubSection {
+  _key: string;
+  sectionTitle?: string;
+  fileReference?: SanityImageRef;
+  fileReferenceAemPath?: string;
+  nestedLinks?: FaqHubNestedLink[];
+}
+
+export interface FaqHubBlock extends BaseBlock {
+  _type: "faqHub";
+  headline1?: string;
+  headline2?: string;
+  description?: PortableTextBlock[];
+  sections?: FaqHubSection[];
+  buttons?: PromoButton[];
+  removeTopPadding?: boolean;
+  removeBottomPadding?: boolean;
+}
+
+/**
+ * AEM `box` widget — generic rich-text container. Carries the answer
+ * HTML on its `text` field. Used inside `expander` items.
+ */
+export interface AemBoxLike {
+  _key: string;
+  text?: string;
+  align?: string;
+  fontFamily?: string;
+  fontWeight?: string;
+}
+
+export interface ExpanderItem {
+  _key: string;
+  content?: AemBoxLike;
+  /** AEM stores the box content under variable keys like `content_1747537251_c`. */
+  [contentKey: string]: unknown;
+}
+
+export interface ExpanderBlock extends BaseBlock {
+  _type: "expander";
+  /** First item lives under `box`; subsequent items under `item_*` keys. */
+  box?: ExpanderItem;
+  expandedItems?: string[];
+  [itemKey: string]: unknown;
+}
+
+export interface QuoteBlock extends BaseBlock {
+  _type: "quote";
+  quote?: PortableTextBlock[];
+  align?: "left" | "center" | "right";
+  size?: string;
+  theme?: string;
+  backgroundColor?: string;
+  quotationMarksEnabled?: boolean;
+}
+
+export interface ResourcesColumnListBlock extends BaseBlock {
+  _type: "resourcesColumnList";
+  removeTopPadding?: boolean;
+  removeBottomPadding?: boolean;
+  /** AEM nests one item under the static key `resources-column-item`. */
+  "resources-column-item"?: { _key: string; content?: AemBoxLike; [k: string]: unknown };
+  [columnKey: string]: unknown;
+}
+
 /**
  * Fallback shape for any block this demo doesn't have a dedicated
  * renderer for. Kept separate from the discriminated union so TypeScript
@@ -230,7 +301,11 @@ export type PageBlock =
   | HeroVideoBannerBlock
   | GalleryBlock
   | ProductCarouselBlock
-  | IconGridBlock;
+  | IconGridBlock
+  | FaqHubBlock
+  | ExpanderBlock
+  | QuoteBlock
+  | ResourcesColumnListBlock;
 
 export interface PageDoc {
   _id: string;
