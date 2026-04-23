@@ -34,6 +34,23 @@ When a dialog node has \`sling:resourceType\`: \`granite/ui/components/coral/fou
 3. **Schema** — \`aem-to-sanity-schema\` maps multifield → Sanity \`array\` of objects. The array field uses that inner \`field.name\` for \`defineField({ name })\`, uses the multifield’s \`fieldLabel\` for Studio titles, and emits row object titles from \`fieldLabel\` (see \`multifieldArrayPropertyName\` / multifield handling in \`mapper.ts\`).
 4. **Content** — \`aem-transform\` (\`aem-to-sanity-content\`) inlines components, then \`deepCoerceAemMultifieldMapsToArrays\` turns any object whose keys are exclusively \`itemN\` / numeric indices into a JSON **array** so it matches Sanity \`array\` types. Scalar keys still use dialog \`name\` when the JCR sibling key differs (\`sanityPropertyKeyFromAemChild\` in \`transform.ts\`).
 
+## Richtext → Portable Text (dialog + transform)
+
+Both richtext variants — \`cq/gui/components/authoring/dialog/richtext\` (legacy) and \`granite/ui/components/coral/foundation/form/richtext\` (Coral) — map to Sanity's Portable Text:
+
+**Schema** — \`aem-to-sanity-schema\` emits the field as \`array-of-blocks\`, i.e. \`defineField({ type: "array", of: [{ type: "block" }] })\`. The field's \`type\` is recorded as \`array-of-blocks\` in \`content-type-registry.json\` under the component's \`fields\` list.
+
+**Content** — AEM stores authored richtext as an **HTML string** in the JCR property (e.g. \`"<p>Hello <strong>world</strong></p>\\r\\n<p>&nbsp;</p>"\`). \`aem-transform\` reads each mapped block's registry field types and, for any field declared as \`array-of-blocks\` whose ingested value is a string, converts the HTML to Portable Text via \`@portabletext/block-tools\` (using \`jsdom\` as the parser):
+
+- Decorators preserved: \`strong\`, \`em\`, \`underline\`, \`strike-through\`, \`code\`.
+- Styles preserved: \`normal\`, \`h1\`–\`h4\`, \`blockquote\`.
+- Lists preserved: \`bullet\`, \`number\`.
+- \`<a href="...">\` preserved as a \`link\` annotation with an \`href\` field.
+- \`_key\`s derived from SHA1 of \`{jcrPath}::{fieldName}:{counter}\` so re-runs produce byte-identical clean docs (deterministic-diff invariant).
+- Parser failure leaves the original string in place and is recorded in the audit — no silent data loss.
+
+Legacy \`content-type-registry.json\` files that carry \`fields: string[]\` (no type info) still load, but the transform falls back to pass-through for richtext — Studio will reject those values as "expected array". Regenerate the registry via \`pnpm migrate:schema\` to opt in.
+
 ## Authoring dialog file upload (\`cq/gui/components/authoring/dialog/fileupload\`)
 
 When \`fileReferenceParameter\` is present (e.g. \`./fileReference\`), AEM stores the DAM path on that property in page JSON (often \`/content/dam/...\`). The widget \`name\` (e.g. \`./video\`) is not where the path is persisted.
