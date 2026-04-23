@@ -91,7 +91,16 @@ Links inside paragraphs are `primary`, no underline by default, underline on hov
 
 ### Category chip (new, unique to DB)
 
-Used for "Shop by category" tiles. A round circular thumbnail on top (aspect `1/1`), centered label below. Background of the chip is `accent-*` tinted per category, chosen so a 2-tile combo feels intentional rather than random.
+Used for "Shop by category" tiles. A round circular thumbnail on top (aspect `1/1`), centered label below.
+
+Fill hierarchy (resolved by `tileColor` in `blocks/ColorCarousel.tsx`):
+
+1. **Image** — if `fileReference` is present, the chip shows the image crop.
+2. **Authored hex** — else the item's `hexValue` field if it passes a hex regex.
+3. **Name-derived hex** — else a small name→hex map (`Red`, `Green`, `Blue`, `Pink`, `Neutral`, `Ivory`, `Navy`, etc.) tuned to read well at chip size against `surface-cream`. This covers AEM authoring gaps where the hex wasn't stamped.
+4. **`surface-muted`** — final fallback.
+
+Every chip carries a 1px inset black/5 ring so white / near-white tiles remain visible against the cream section background without a hard border.
 
 ### Product / image card
 
