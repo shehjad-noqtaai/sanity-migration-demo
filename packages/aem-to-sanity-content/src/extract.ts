@@ -8,6 +8,7 @@ import {
   createColors,
   fetchInfinityTree,
   resolveConfig,
+  startTimer,
   type AmbiguousResolution,
 } from "aem-to-sanity-core";
 
@@ -90,6 +91,7 @@ function categorize(err: unknown): FailureCategory {
 }
 
 async function main(): Promise<void> {
+  const timer = startTimer();
   const c = createColors({ stream: process.stderr });
   const config = resolveConfig(process.env);
   const outputDir = resolve(process.env.OUTPUT_DIR ?? "./output");
@@ -218,6 +220,7 @@ async function main(): Promise<void> {
   }
   console.error(`Report:      ${c.dim(reportFile)}`);
   if (notFound.length > 0) console.error(`404 log:     ${c.dim(notFoundLog)} ${c.dim(`(${notFound.length} entries)`)}`);
+  console.error(`Elapsed:     ${c.dim(timer.elapsed())}`);
 
   if (failures.length > 0) {
     console.error("");

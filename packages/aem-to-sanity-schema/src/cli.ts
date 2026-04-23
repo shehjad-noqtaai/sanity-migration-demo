@@ -9,12 +9,14 @@ import {
   fetchInfinityJson,
   logStartupBanner,
   resolveConfig,
+  startTimer,
   type DialogNode,
   type SanityRuntimeSummary,
 } from "aem-to-sanity-core";
 import { migrateSchemas } from "./api.ts";
 
 async function main(): Promise<void> {
+  const timer = startTimer();
   const config = resolveConfig(process.env);
 
   // `--verbose` / `-v` elevates log level to `debug`, which surfaces the
@@ -114,6 +116,7 @@ async function main(): Promise<void> {
   logger.info(`Failed:              ${failed}`);
   logger.info(`Unmapped AEM types:  ${unmapped}`);
   logger.info(`Report:              ${c.dim(reportFile)}`);
+  logger.info(`Elapsed:             ${c.dim(timer.elapsed())}`);
   logger.info(sep);
 
   if (s.failures > 0) {
