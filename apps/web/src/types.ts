@@ -118,6 +118,102 @@ export interface VariableColumnBlock extends BaseBlock {
 }
 
 /**
+ * Sanity file ref (video, etc). Same shape as image but `_type: "file"`.
+ */
+export interface SanityFileRef {
+  _type: "file";
+  asset: { _type: "reference"; _ref: string };
+}
+
+export interface SanityVideoPlayback {
+  _id: string;
+  _key: string;
+  policy?: "public" | "signed";
+}
+
+/**
+ * Themed video hero with up to three overlay text lines and an optional
+ * still-image poster. AEM authors choose which line acts as the
+ * headline via `tagLevel`; we render line two as the prominent headline
+ * by convention (matches what production renders).
+ */
+export interface HeroVideoBannerBlock extends BaseBlock {
+  _type: "heroVideoBanner";
+  fileReference?: SanityFileRef;
+  fileReferenceAemPath?: string;
+  thumbnail?: SanityImageRef;
+  lineOneText?: string;
+  lineTwoText?: string;
+  lineThreeText?: string;
+  lineOneTextColorHex?: string;
+  lineTwoTextColorHex?: string;
+  lineThreeTextColorHex?: string;
+  textAlign?: "left" | "center" | "right";
+  contentPosition?: "left" | "center" | "right";
+  textBackgroundColor?: string;
+  textColor?: string;
+  fullWidth?: boolean;
+  autoPlay?: boolean;
+  loopVideo?: boolean;
+  playWithSound?: boolean;
+  showSoundIcon?: boolean;
+  buttonHeightDesktop?: number;
+  tagLevel?: string;
+}
+
+/**
+ * UGC / curated gallery widget. Production embeds a third-party feed
+ * (Crowdriff) via `galleryTag` (raw HTML); we render the headline and
+ * a placeholder grid since the script doesn't run inside this preview.
+ */
+export interface GalleryBlock extends BaseBlock {
+  _type: "gallery";
+  headline1?: string;
+  headline2?: string;
+  galleryTag?: string;
+  theme?: string;
+  removeTopPadding?: boolean;
+  removeBottomPadding?: boolean;
+}
+
+/**
+ * Server-rendered product strip on production (catalog feed). The
+ * authored block carries layout metadata only — actual products come
+ * from the product service. We render the headline + a styled slot
+ * placeholder so the page rhythm is preserved.
+ */
+export interface ProductCarouselBlock extends BaseBlock {
+  _type: "productCarousel";
+  headline1?: string;
+  headline2?: string;
+  description?: PortableTextBlock[];
+  columns?: string;
+  layoutWidth?: string;
+  mobileLayout?: string;
+  theme?: string;
+  removeTopPadding?: boolean;
+  removeBottomPadding?: boolean;
+}
+
+/**
+ * Multi-icon row (e.g. measurement tips, value props). On the
+ * inspiration page the actual icons aren't on the top-level block
+ * (they live nested in a way our flat schema doesn't surface yet).
+ * We render headline + a placeholder column count so the section
+ * still occupies its intended footprint.
+ */
+export interface IconGridBlock extends BaseBlock {
+  _type: "iconGrid";
+  headline1?: string;
+  headline2?: string;
+  columns?: string;
+  textAlign?: "left" | "center" | "right";
+  theme?: string;
+  removeTopPadding?: string | boolean;
+  removeBottomPadding?: string | boolean;
+}
+
+/**
  * Fallback shape for any block this demo doesn't have a dedicated
  * renderer for. Kept separate from the discriminated union so TypeScript
  * can narrow the known `_type`s cleanly in the dispatcher switch.
@@ -130,7 +226,11 @@ export type PageBlock =
   | PromoBlock
   | HrBlock
   | ColorCarouselBlock
-  | VariableColumnBlock;
+  | VariableColumnBlock
+  | HeroVideoBannerBlock
+  | GalleryBlock
+  | ProductCarouselBlock
+  | IconGridBlock;
 
 export interface PageDoc {
   _id: string;
