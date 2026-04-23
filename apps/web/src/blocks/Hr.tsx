@@ -26,7 +26,7 @@ export function Hr({ block }: { block: HrBlock }) {
 
   return (
     <div
-      className={`${pad} ${isTransparent ? "" : "bg-[color:var(--color-surface-container-low)]"} `}
+      className={`${pad} ${isTransparent ? "" : "bg-[color:var(--color-surface-cream)]"} `}
     />
   );
 }

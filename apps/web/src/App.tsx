@@ -58,15 +58,16 @@ export function App() {
 }
 
 function Header({ title }: { title?: string }) {
-  // Floating, glassy header per DESIGN.md §2 "Glass & Gradient".
+  // Clean white chrome, hairline bottom divider — matches the production
+  // DB header treatment (bg-white + border-b-gray-200).
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-[color:var(--color-surface)]/75">
-      <div className="mx-auto flex max-w-[88rem] items-center justify-between px-6 py-5 md:px-10">
-        <a href="/" className="font-display text-xl tracking-wide">
-          Ethereal Atelier
+    <header className="sticky top-0 z-50 border-b border-[color:var(--color-outline)] bg-[color:var(--color-surface)]">
+      <div className="mx-auto flex max-w-[88rem] items-center justify-between px-6 py-4 md:px-10">
+        <a href="/" className="text-lg font-semibold tracking-tight text-[color:var(--color-on-surface)]">
+          David's Bridal
         </a>
         {title ? (
-          <p className="label-caps hidden truncate md:block">{title}</p>
+          <p className="label-eyebrow hidden truncate md:block">{title}</p>
         ) : null}
       </div>
     </header>
@@ -75,11 +76,11 @@ function Header({ title }: { title?: string }) {
 
 function Footer() {
   return (
-    <footer className="bg-[color:var(--color-surface-container-low)] py-16">
+    <footer className="bg-[color:var(--color-surface-cream)] py-12">
       <div className="mx-auto max-w-[88rem] px-6 md:px-10">
-        <p className="label-caps mb-3">Migrated from AEM</p>
-        <p className="font-display text-2xl">
-          A preview of the home page content model, rendered with the Ethereal Atelier system.
+        <p className="label-eyebrow mb-2">Migrated from AEM</p>
+        <p className="text-lg text-[color:var(--color-on-surface)]">
+          Preview of the home page content model, rendered against Sanity.
         </p>
       </div>
     </footer>
@@ -97,10 +98,10 @@ function StatusScreen({
 }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-      <p className="label-caps mb-3">Ethereal Atelier</p>
-      <h1 className="font-display text-3xl md:text-4xl">{title}</h1>
+      <p className="label-eyebrow mb-3">David's Bridal</p>
+      <h1 className="text-3xl md:text-4xl font-normal text-[color:var(--color-on-surface)]">{title}</h1>
       <p
-        className={`mt-3 font-body text-sm ${tone === "error" ? "text-[color:var(--color-error)]" : "text-[color:var(--color-on-surface-variant)]"}`}
+        className={`mt-3 text-sm ${tone === "error" ? "text-[color:var(--color-error)]" : "text-[color:var(--color-on-surface-muted)]"}`}
       >
         {detail}
       </p>

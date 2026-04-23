@@ -3,10 +3,10 @@ import type { VariableColumnBlock, VariableColumnItem } from "../types.ts";
 import { PortableText } from "./PortableText.tsx";
 
 /**
- * Variable column — multi-item storytelling block. Columns render as full-
- * width "chapters" on mobile, then fan out into a breathable grid on
- * desktop. No dividers between columns (DESIGN.md §5 "negative space
- * rule"); white space carries the separation.
+ * Variable column — multi-item editorial row. Production DB uses these
+ * for "From our blog" / "Shop the look" / "Real stories" strips: full-
+ * width on mobile, 2-4 columns on desktop, cards on `surface` with soft
+ * corners. Separation is whitespace; no hairlines or shadow stacks.
  */
 export function VariableColumn({ block }: { block: VariableColumnBlock }) {
   const items = block.columnContents ?? [];
@@ -14,21 +14,19 @@ export function VariableColumn({ block }: { block: VariableColumnBlock }) {
 
   return (
     <section
-      className={`bg-[color:var(--color-surface-container-lowest)] ${block.removeTopPadding ? "pt-4" : "pt-20 md:pt-28"} ${block.removeBottomPadding ? "pb-4" : "pb-20 md:pb-28"}`}
+      className={`bg-[color:var(--color-surface)] ${block.removeTopPadding ? "pt-4" : "pt-16 md:pt-20"} ${block.removeBottomPadding ? "pb-4" : "pb-16 md:pb-20"}`}
     >
       <div className="mx-auto max-w-[88rem] px-6 md:px-10">
         {block.headline1 || block.headline2 ? (
-          <div className="mb-14 md:mb-20">
-            {block.headline1 ? (
-              <p className="label-caps mb-2">{block.headline1}</p>
-            ) : null}
+          <div className="mb-10 md:mb-14">
+            {block.headline1 ? <p className="label-eyebrow mb-2">{block.headline1}</p> : null}
             {block.headline2 ? (
-              <h2 className="font-display text-3xl md:text-5xl leading-[1.1] tracking-[-0.01em] max-w-3xl">
+              <h2 className="text-3xl md:text-[2.5rem] font-normal leading-[1.1] max-w-3xl text-[color:var(--color-on-surface)]">
                 {block.headline2}
               </h2>
             ) : null}
             {block.description ? (
-              <div className="mt-6 max-w-2xl">
+              <div className="mt-4 max-w-2xl text-[color:var(--color-on-surface-muted)]">
                 <PortableText value={block.description} />
               </div>
             ) : null}
@@ -36,7 +34,7 @@ export function VariableColumn({ block }: { block: VariableColumnBlock }) {
         ) : null}
 
         <div
-          className={`grid gap-10 md:gap-16 ${cols >= 4 ? "md:grid-cols-4" : cols === 3 ? "md:grid-cols-3" : cols === 2 ? "md:grid-cols-2" : "md:grid-cols-1"}`}
+          className={`grid gap-8 md:gap-10 ${cols >= 4 ? "md:grid-cols-4" : cols === 3 ? "md:grid-cols-3" : cols === 2 ? "md:grid-cols-2" : "md:grid-cols-1"}`}
         >
           {items.map((item) => (
             <Column key={item._key} item={item} />
@@ -54,33 +52,35 @@ function Column({ item }: { item: VariableColumnItem }) {
       {img ? (
         <a
           href={item.imageLink ?? "#"}
-          className="overflow-hidden rounded-[2px] bg-[color:var(--color-surface-container-low)]"
+          className="overflow-hidden rounded-lg bg-[color:var(--color-surface-muted)]"
         >
           <img
             src={img}
             alt={item.headline ?? ""}
-            className="aspect-[4/5] h-auto w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
+            className="aspect-[4/5] h-auto w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
             loading="lazy"
           />
         </a>
       ) : null}
       {item.headline ? (
-        <h3 className="mt-6 font-display text-2xl leading-tight">{item.headline}</h3>
+        <h3 className="mt-5 text-xl font-medium leading-tight text-[color:var(--color-on-surface)]">
+          {item.headline}
+        </h3>
       ) : null}
       {item.columnText ? (
-        <div className="mt-3">
+        <div className="mt-2 text-[color:var(--color-on-surface-muted)]">
           <PortableText value={item.columnText} />
         </div>
       ) : null}
       {item.cta && item.cta.length > 0 ? (
-        <div className="mt-5 flex flex-wrap gap-4">
+        <div className="mt-4 flex flex-wrap gap-3">
           {item.cta.map((cta) =>
             cta.type === "button" ? (
               <a
                 key={cta._key}
                 href={cta.link ?? "#"}
                 aria-label={cta.ariaLabel}
-                className="cta-satin inline-flex items-center px-5 py-2.5 font-body text-sm font-medium"
+                className="cta-primary inline-flex items-center"
               >
                 {cta.text}
               </a>
@@ -89,7 +89,7 @@ function Column({ item }: { item: VariableColumnItem }) {
                 key={cta._key}
                 href={cta.link ?? "#"}
                 aria-label={cta.ariaLabel}
-                className="relative font-body text-sm text-[color:var(--color-primary)] after:absolute after:left-0 after:-bottom-0.5 after:h-px after:w-full after:bg-[color:var(--color-primary)] after:transition-all after:duration-300 hover:after:w-0"
+                className="text-sm font-medium text-[color:var(--color-primary)] underline underline-offset-4 decoration-transparent hover:decoration-[color:var(--color-primary)] transition-colors duration-200"
               >
                 {cta.text}
               </a>

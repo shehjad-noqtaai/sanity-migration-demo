@@ -8,10 +8,10 @@ import type { UnknownBlock as UnknownBlockType } from "../types.ts";
  */
 export function UnknownBlock({ block }: { block: UnknownBlockType }) {
   return (
-    <section className="bg-[color:var(--color-surface-container-low)] py-12">
+    <section className="bg-[color:var(--color-surface-cream)] py-10">
       <div className="mx-auto max-w-[88rem] px-6 md:px-10">
-        <p className="label-caps mb-2">Unstyled block</p>
-        <p className="font-body text-sm text-[color:var(--color-on-surface-variant)]">
+        <p className="label-eyebrow mb-2">Unstyled block</p>
+        <p className="text-sm text-[color:var(--color-on-surface-muted)]">
           <code>_type: "{String(block._type)}"</code> — no dedicated renderer yet.
         </p>
       </div>
