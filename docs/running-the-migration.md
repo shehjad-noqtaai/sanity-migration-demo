@@ -52,6 +52,7 @@ cp examples/davids-bridal/.env.example examples/davids-bridal/.env
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
 | `MIGRATION_DRY_RUN` | optional | `aem-assets` and `aem-import` are dry-run unless this is explicitly set to `false`. Default (unset): dry-run. |
 | `MIGRATION_LINK_ONLY` | optional | `aem-assets` only. `true` ⇔ passing `--link-only`. Skips phases 1 + 2 (download + upload) and relies on phase 0 to find assets already in the Media Library. See § 4c. |
+| `ASSET_CONCURRENCY` | optional | `aem-assets` only. Number of parallel workers used across phases 0 (ML dedup), 1 (AEM download), 2 (ML upload), 3 (dataset link). Default: `4`. Dedup in phase 0 guarantees each DAM path is processed by exactly one worker, so the shared manifest is never contended at the same key. |
 | `MIGRATION_DISCARD_DRAFTS` | optional | `aem-import` only. `true` ⇔ passing `--discard-drafts`. Deletes `drafts.{id}` alongside each published `createOrReplace` so the Studio shows the freshly-imported content instead of a stale draft from a prior run. Opt-in — destroys authored in-progress edits. |
 | `AEM_VERBOSE` | optional | `true` ⇔ passing `--verbose`. Elevates the CLI logger to `debug` so every AEM GET is logged. |
 | `SANITY_PROJECT_ID` | required for writes | Only read when `MIGRATION_DRY_RUN=false`. |
@@ -280,6 +281,8 @@ Scans `output/clean/` for `/content/dam/...` references, downloads each asset fr
 2. **Upload** to Media Library — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload` returns `{asset: {_id}, assetInstance: {_id}}`. The parent `asset._id` is recorded as `mediaLibraryAssetId`; the versioned `assetInstance._id` as `linkedAssetInstanceId`. Immediately after a successful upload (or when skipping an already-uploaded entry whose aspect isn't set yet), the pipeline patches `aspects.aemSource = {damPath, assetInstanceId}` onto the parent via `POST /media-libraries/{mlId}/mutate`.
 3. **Link** to dataset — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Returns `{document: {_id, media: {_ref}, ...}}`. `document._id` is the dataset-local `_ref` that goes into content docs (Pattern A: `{_type:'image', asset:{_ref:'<linked-ref>'}}` — Studio-compatible).
 4. **Rewrite** clean docs in place so every `/content/dam/...` string becomes the linked asset ref object.
+
+Phases 0, 1, 2, and 3 all run with a work-stealing pool sized by `ASSET_CONCURRENCY` (default `4`). Phase 0's ML dedup pre-pass guarantees each DAM path is only handled by one worker in phases 1–3, so the shared `manifest` is never contended at the same key. The manifest file is written via synchronous `writeFileSync` + `JSON.stringify`, which are atomic relative to the single-threaded event loop — no lock needed as long as this stays sync. Output is logged in completion order (`{done}/{total}`) rather than start order, so progress tracks actual throughput.
 
 Maintains `output/assets/manifest.json` — per-DAM-path record with `damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef`. Re-runs skip each phase that's already complete. Entry shape:
 

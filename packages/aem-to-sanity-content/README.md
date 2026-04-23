@@ -89,6 +89,10 @@ Legacy `fields: string[]` registry entries skip every coercion step (pass-throug
 
 Every CLI appends an `Elapsed:` line to its summary. `aem-assets` also reports per-phase durations (`phase 0 (ML dedup)` / `phase 1 (download)` / `phase 2 (upload)` / `phase 3 (link)` / `phase 4 (rewrite)`), which lets you see at a glance whether a slow run is bottlenecked on AEM fetches, ML uploads, or the dataset link API.
 
+## Parallelism in aem-assets
+
+Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (default `4`). Phase 0's ML dedup pre-pass resolves every DAM path that already lives in the Media Library, so the downstream phases only touch each DAM path with a single worker — the shared `manifest` is never contended at the same key, and no locks are needed. The manifest file is persisted via synchronous `writeFileSync` + `JSON.stringify`, both atomic relative to the single-threaded event loop. If that ever moves to async `writeFile`, a serial lock becomes mandatory. Output is logged in completion order so progress reflects actual throughput.
+
 ## Reports
 
 - `output/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.

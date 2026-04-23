@@ -64,6 +64,15 @@ AEM's JCR is schemaless on dialog inputs — `.infinity.json` serializes every a
 
 If the issue is actually a wrong Sanity type (not a coercion gap), fix it at the schema emitter layer — check that the dialog's `sling:resourceType` is mapped correctly in `packages/aem-to-sanity-schema/src/mapping-table.ts`. Don't paper over schema-layer bugs with per-field coercion in the transform.
 
+## aem-assets parallelism
+
+Phases 0–3 of `aem-assets` run with a work-stealing pool sized by `ASSET_CONCURRENCY` (default `4`). Safety invariants — preserve these when touching that code:
+
+1. **Phase 0 is the dedup gate.** It populates the manifest for every DAM path already in the ML before any other phase touches it. Phases 1–3 skip entries that phase 0 already resolved, so the same DAM path is never processed twice across workers.
+2. **Each damPath is owned by exactly one worker at a time.** The pool hands each list index out once; there is no fan-out per item. So mutations to `manifest[damPath]` and `aspectStamped.add(damPath)` from different workers always target distinct keys — no lock needed.
+3. **Manifest persistence stays synchronous.** `writeFileSync` + `JSON.stringify` are atomic relative to the single-threaded event loop. If this is ever moved to async `writeFile`, a serial lock (or in-memory batching with a single write at the end of the phase) becomes mandatory — otherwise interleaved writes will corrupt the file.
+4. **Don't skip the dedup pass.** Running phases 1–3 in parallel without phase 0 would re-download / re-upload duplicate DAM paths and race on the same manifest keys. Phase 0 must stay enabled whenever concurrency > 1.
+
 ## Drafts shadow imports
 
 The Studio edits `drafts.{id}` whenever one exists. `aem-import` by default only writes the published `{id}`, so a stale draft keeps shadowing fresh migration output — the operator sees old content after a "successful" re-import and gets confused. For migration re-runs, pass `--discard-drafts` (or set `MIGRATION_DISCARD_DRAFTS=true`). When diagnosing "I re-ran the import and nothing changed in the Studio", check for a shadowing draft first.
