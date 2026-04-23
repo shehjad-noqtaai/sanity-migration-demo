@@ -63,7 +63,21 @@ pnpm aem-import                                          # dry run
 MIGRATION_DRY_RUN=false pnpm aem-import                  # commit docs
 ```
 
-`--overwrite` on `aem-extract` re-fetches roots that already exist on disk. `--include <resourceTypes>` on `aem-transform` restricts the walk to a comma-separated allow-list. `aem-assets` processes one file at a time (sequential, low memory) and is resumable via `manifest.json`; pass `--upload-only` to skip re-downloading or `--no-rewrite` to skip the in-place rewrite of `clean/*.json`.
+`--overwrite` on `aem-extract` re-fetches roots that already exist on disk. `--include <resourceTypes>` on `aem-transform` restricts the walk to a comma-separated allow-list. `aem-assets` processes one file at a time (sequential, low memory) and is resumable via `manifest.json`; flags:
+
+- `--upload-only` — skip phase 1 (download from AEM); assumes local cache is populated.
+- `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup finds assets already in the Media Library and links them into the dataset. Useful for re-runs, for iterating on link/rewrite logic without re-hitting AEM, or when assets were pushed out-of-band. Mutually exclusive with `--upload-only`. See § *aem-assets — Media Library flow* below for the caveat about the `aemSource` aspect.
+- `--no-rewrite` — skip the in-place rewrite of `clean/*.json`.
+
+## Type-aware coercion (transform)
+
+AEM's JCR is schemaless on dialog inputs — every authored value arrives in `.infinity.json` as a JSON string, no matter what the dialog widget was. `aem-transform` reads each mapped block's `fields: [{name, type}]` from `content-type-registry.json` and coerces ingested string values into the Sanity-expected scalar:
+
+- **`array-of-blocks`** (richtext) — converted to Portable Text via `@portabletext/block-tools` (parsed through `jsdom`). Decorators (`strong`, `em`, `underline`, `strike-through`, `code`), styles (`normal`, `h1`–`h4`, `blockquote`), lists (`bullet`, `number`), and `link` annotations are preserved. Keys are derived from a SHA1 of `{jcrPath}::{field}:{counter}` so re-runs produce byte-identical clean docs.
+- **`number`** — `Number(v)`; kept as-is on `NaN`.
+- **`boolean`** — `"true"` / `"false"` literal strings only; kept as-is otherwise so unrecognized values surface in Studio validation rather than being silently remapped.
+
+Coercion runs top-level only — nested multifield members fall through. Legacy `fields: string[]` registry entries skip every coercion step (pass-through); regenerate the registry via `migrate:schema` to opt in.
 
 ## Reports
 
@@ -75,12 +89,17 @@ MIGRATION_DRY_RUN=false pnpm aem-import                  # commit docs
 
 ## aem-assets — Media Library flow (@shehjadkhan 2026-04-22)
 
-`aem-assets` runs four phases. Dry-run default stops after phase 1 (local download).
+`aem-assets` runs five phases. Dry-run default stops after phase 1 (local download).
 
+0. **Dedup against the Media Library** — GROQ on `aspects.aemSource.damPath`. A hit populates the manifest with both ids so phases 1+2 skip entirely for that asset. Requires the `aemSource` aspect to be deployed once per ML. Skipped on dry-run by default; `--link-only` forces it to run (safe, read-only).
 1. **Download** AEM DAM binary → local cache in `output/assets/`.
 2. **Upload to Media Library** — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload`. Response `{asset: {_id}, assetInstance: {_id}}` captures the parent asset id and the versioned instance id (both needed for step 3). Uses `SANITY_TOKEN` — a project robot token works for this step.
 3. **Link to dataset** — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Response `{document: {_id, media: {_ref}, ...}}` — `document._id` is the dataset-local asset ref that goes into docs. **Requires a personal auth token** (`SANITY_ML_LINK_TOKEN`) because the endpoint rejects project robot tokens with `401 Invalid non-global session`.
 4. **Rewrite clean docs** in place — every `/content/dam/...` string becomes `{_type:'image'|'file', asset:{_ref:'<linked-ref>'}}`. Pattern A (Studio-compatible), matches existing doc shape.
+
+### `--link-only` mode
+
+Runs phase 0, skips phases 1 + 2, runs phases 3 + 4. Use when assets are already in the ML (from an earlier run or pushed out-of-band). Any DAM path that phase 0 can't find in the ML is reported up front and ends up in the phase-4 `unresolved` summary. Phase 0's lookup only finds assets that this pipeline previously stamped — assets uploaded through the Studio UI without the `aemSource` aspect won't resolve by DAM path.
 
 Manifest entry shape (`output/assets/manifest.json`):
 

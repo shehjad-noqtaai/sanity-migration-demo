@@ -516,6 +516,19 @@ async function main(): Promise<void> {
   const manifestFile = join(assetsDir, "manifest.json");
   const dryRun = process.env.MIGRATION_DRY_RUN !== "false";
   const uploadOnly = process.argv.includes("--upload-only");
+  // `--link-only` is for re-runs where assets already live in the Sanity
+  // Media Library. Phase 0's aspect lookup (`aspects.aemSource.damPath`)
+  // recovers the ML ids; download (phase 1) and upload (phase 2) are skipped
+  // entirely. Useful when AEM is slow, when the operator has already pushed
+  // assets out-of-band, or when iterating on link/rewrite logic without
+  // re-hitting AEM every run.
+  const linkOnly =
+    process.argv.includes("--link-only") ||
+    process.env.MIGRATION_LINK_ONLY === "true";
+  if (linkOnly && uploadOnly) {
+    console.error("--link-only and --upload-only are mutually exclusive.");
+    process.exit(2);
+  }
   const skipRewrite = process.argv.includes("--no-rewrite");
 
   mkdirSync(assetsDir, { recursive: true });
@@ -534,8 +547,13 @@ async function main(): Promise<void> {
   }
   const sortedPaths = [...damPaths].sort();
 
+  const modeLabel = linkOnly
+    ? " [link-only: skip download + upload]"
+    : uploadOnly
+      ? " [upload-only: skip download]"
+      : "";
   console.error(
-    `[assets] ${c.green(sortedPaths.length)} unique asset(s) across ${c.green(cleanFiles.length)} page(s)`,
+    `[assets] ${c.green(sortedPaths.length)} unique asset(s) across ${c.green(cleanFiles.length)} page(s)${c.dim(modeLabel)}`,
   );
   if (dryRun) {
     console.error(c.dim("DRY RUN — set MIGRATION_DRY_RUN=false to upload + link + rewrite"));
@@ -552,8 +570,14 @@ async function main(): Promise<void> {
   // entirely. Misses (no match or aspect undeployed) fall through.
   // `aspectStamped` tracks which paths already carry the aspect stamp, so
   // phase 2 only backfills the ones that don't.
+  //
+  // Normally skipped under dry-run (no creds assumed). Under `--link-only`
+  // we always run it: the whole point of that mode is to discover which DAM
+  // paths already live in the ML, so dry-run + link-only becomes "preview
+  // which assets would be linked" — still read-only against Sanity, but
+  // now useful.
   const aspectStamped = new Set<string>();
-  if (!dryRun) {
+  if (!dryRun || linkOnly) {
     const mlId = mustEnv("SANITY_MEDIA_LIBRARY_ID");
     const token = mustEnv("SANITY_TOKEN");
     const apiVersion = process.env.SANITY_API_VERSION ?? "2025-02-19";
@@ -582,10 +606,21 @@ async function main(): Promise<void> {
       }
     }
     console.error(c.dim(`  ${hits}/${sortedPaths.length} reused from existing Media Library aspects`));
+    if (linkOnly && hits < sortedPaths.length) {
+      // In link-only mode, a phase-0 miss means the asset has no counterpart
+      // in the ML — there's nothing for phases 3-4 to link. Call it out up
+      // front so the operator can decide to re-run without `--link-only` or
+      // to stamp the missing aspects out-of-band.
+      console.error(
+        c.yellow(
+          `  ${sortedPaths.length - hits} asset(s) are not in the Media Library — they'll be left unresolved in clean docs.`,
+        ),
+      );
+    }
   }
 
   // ── Phase 1: download ────────────────────────────────────────────────
-  if (!uploadOnly) {
+  if (!uploadOnly && !linkOnly) {
     console.error(c.bold("\n── 1. Download from AEM DAM ──"));
     let n = 0;
     for (const damPath of sortedPaths) {
@@ -607,6 +642,12 @@ async function main(): Promise<void> {
   }
 
   // ── Phase 2: upload to Media Library ────────────────────────────────
+  if (linkOnly) {
+    console.error(
+      c.bold("\n── 2. Upload to Sanity Media Library ──") +
+        c.dim(" (skipped: --link-only)"),
+    );
+  } else {
   console.error(c.bold("\n── 2. Upload to Sanity Media Library ──"));
   if (dryRun) {
     const toUpload = sortedPaths.filter((p) => manifest[p]?.cachedFile && !manifest[p]?.mediaLibraryAssetId);
@@ -655,6 +696,7 @@ async function main(): Promise<void> {
       }
     }
   }
+  } // end of !linkOnly upload block
 
   // ── Phase 3: link to project dataset ────────────────────────────────
   console.error(c.bold("\n── 3. Link to project dataset ──"));

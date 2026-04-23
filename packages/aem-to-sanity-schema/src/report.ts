@@ -6,9 +6,22 @@ export type Outcome =
       status: "success";
       path: string;
       sanityTypeName: string;
+      /**
+       * Friendly Studio title — the string rendered in array pickers,
+       * Page Builder rows, etc. Sourced from AEM `jcr:title` with a
+       * title-cased `sanityTypeName` fallback; always non-empty.
+       */
+      schemaTitle: string;
       outputFile: string;
       /** Names of the fields that landed on the emitted Sanity type. */
       fieldNames: string[];
+      /**
+       * Fields with their Sanity type (e.g. `{name: "description", type:
+       * "array-of-blocks"}`). The content registry writes this shape so
+       * `aem-transform` can coerce AEM values to the target type at ingest
+       * time — e.g. HTML strings → Portable Text on `array-of-blocks` fields.
+       */
+      fields: Array<{ name: string; type: string }>;
       unmapped: UnmappedField[];
       renamed: RenamedField[];
     }

@@ -33,13 +33,22 @@ Each tool loads `.env` from its own cwd, which is why the two files live in diff
 
 ```bash
 pnpm --filter example-davids-bridal migrate:schema
+pnpm --filter example-davids-bridal migrate:schema --verbose  # + per-request AEM GET logs
 ```
 
 **What this does:** Reads every AEM component path listed in `examples/davids-bridal/aem-component-paths`, fetches each component's `_cq_dialog.infinity.json` from AEM, and converts those Granite UI dialogs into Sanity object schemas.
 
+At startup the CLI prints a runtime banner summarizing the AEM env it's about to hit (base URL, auth kind — with password masked and bearer tokens shown as length + 4-char prefix) plus a Sanity preflight check (project id, dataset, token presence — the schema stage never calls Sanity, this is a config confirmation).
+
+Flags / env vars:
+- `--verbose` / `-v` (or `AEM_VERBOSE=true`) — elevates the logger to `debug` level. Surfaces every `GET {url}` the AEM fetcher issues, including Sling `.N.json` depth-fallback retries.
+- `--continue-on-auth` (or `AEM_CONTINUE_ON_AUTH=true`) — treat per-component 401/403 as per-path ACL skips and keep going, as long as at least one component succeeds. Existing behavior.
+
+Component type-name resolution happens up front via `resolveSanityTypeNames` (in `aem-to-sanity-schema/naming.ts`): any AEM path whose base name collides with a Sanity built-in (`image`, `file`, `slug`, `text`, etc.) is emitted with an `aem` prefix (so `/apps/aem-integration/components/image` → `aemImage.ts`). The same resolved name is written into the content registry and the `pageBuilder.of[]` array, so ingested documents will carry a `_type` that matches the Studio-registered schema name with no Studio-side renaming needed.
+
 Outputs land under `examples/davids-bridal/output/`:
-- `schemas/*.ts` — one Sanity object type per AEM component.
-- `schemas/pageBuilder.ts` — array type listing every emitted block.
+- `schemas/*.ts` — one Sanity object type per AEM component. Each carries a non-empty preview title (AEM `jcr:title` → title-cased type name → raw type name fallback) so Page Builder rows never render as "Untitled".
+- `schemas/pageBuilder.ts` — array type listing every emitted block. Each member is emitted as `defineArrayMember({ type, title })` so the "+ Add" menu and row previews render friendly labels even before the row has any data.
 - `schemas/page.ts` — minimal `page` document type (`title`, `slug`, `pageBuilder`).
 - `schemas/index.ts` — barrel that exports `allSchemaTypes` for `defineConfig`.
 - `content-type-registry.json` — `sling:resourceType` → Sanity type mapping, consumed by stage 3.
@@ -76,6 +85,8 @@ The four stages are independent CLIs chained through on-disk output; you can re-
 ### 4b. `transform`
 **What this does:** Walks each raw JCR tree under `output/raw/`, maps `sling:resourceType` values via `content-type-registry.json`, and emits one Sanity `page` doc per input into `output/clean/` — with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key`, so re-runs upsert instead of duplicating. Unknown types and entries in `aem-component-exceptions` are skipped but recorded in `output/transform-report.json`. Purely local — no AEM or Sanity calls.
 
+AEM's JCR serializes every authored dialog value as a JSON string; transform reads each field's declared Sanity type from the registry and coerces on the way in. `array-of-blocks` fields (richtext) are converted to Portable Text via `@portabletext/block-tools`; `number` fields are parsed via `Number(v)`; `boolean` fields are parsed from the literal strings `"true"` / `"false"`. Values that can't be coerced cleanly are left in place so they surface as Studio validation errors rather than being silently remapped. Deterministic `_key`s preserve clean diffs across re-runs.
+
 ### 4c. `assets`
 **What this does:** Scans `output/clean/` for `/content/dam/...` references and moves the binaries from AEM DAM into the Sanity Media Library in five phases:
 1. **Dedup** against the Media Library via the `aemSource.damPath` aspect.
@@ -85,6 +96,11 @@ The four stages are independent CLIs chained through on-disk output; you can re-
 5. **Rewrite** clean docs in place so every DAM path becomes a proper `{_type:'image', asset:{_ref:...}}` object.
 
 Maintains `output/assets/manifest.json` so re-runs skip phases already complete. **Dry-run by default** — without `MIGRATION_DRY_RUN=false` only the download cache is populated; nothing is uploaded or linked.
+
+Flags:
+- `--upload-only` — skip phase 1 (download). Assumes the local cache already exists.
+- `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup resolves existing assets by `aemSource.damPath`; phases 3 + 4 run as normal. Dry-run + `--link-only` = preview of which DAM paths would be linked vs. missing from the ML. Mutually exclusive with `--upload-only`. Intended for re-runs against an ML that already has the binaries (either from a prior pipeline run or stamped out-of-band). Any DAM path without an ML hit stays unresolved in `/content/dam/*` form and surfaces in `output/assets-report.json → rewrite.unresolved`.
+- `--no-rewrite` — skip phase 4 (in-place rewrite of `clean/*.json`).
 
 ### 4d. `import`
 **What this does:** Reads every file under `output/clean/` and commits the docs into your Sanity dataset via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Because `_id` values are derived from JCR paths, re-runs upsert rather than duplicate. **Dry-run by default** — prints what it *would* write until you set `MIGRATION_DRY_RUN=false`.

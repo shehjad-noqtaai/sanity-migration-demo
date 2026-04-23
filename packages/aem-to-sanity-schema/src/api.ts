@@ -9,11 +9,12 @@ import {
 } from "aem-to-sanity-core";
 import {
   flattenSchemaFieldNames,
+  flattenSchemaFields,
   mapDialog,
   type NodeFetcher,
 } from "./mapper.ts";
-import { emitSchemaFile } from "./emitter.ts";
-import { componentPathToTypeName } from "./naming.ts";
+import { emitSchemaFile, resolveSchemaTitle } from "./emitter.ts";
+import { resolveSanityTypeNames } from "./naming.ts";
 import { Report } from "./report.ts";
 import { auditUnmappedTypes } from "./audit.ts";
 import {
@@ -122,6 +123,15 @@ export async function migrateSchemas(
 
   const report = new Report();
 
+  // Resolve every component path to its final Sanity type name up front. This
+  // is the single source of truth for naming across every downstream artifact
+  // (emitted schema file, pageBuilder.of[], content registry, ingested
+  // document `_type`). Doing it here — rather than leaving the Studio's
+  // `sanitizeSchemaTypes` to rename reserved names at import time — is what
+  // prevents ingested data from showing up as "Untitled" with an unknown-type
+  // warning because its `_type` no longer matches the live schema.
+  const typeNameByPath = resolveSanityTypeNames(componentPaths);
+
   let authFailures = 0;
   let successes = 0;
 
@@ -136,6 +146,7 @@ export async function migrateSchemas(
         logger,
         writeAemSnapshot,
         regenerateCommand,
+        typeName: typeNameByPath.get(p)!,
       }),
     concurrency,
     (r) => {
@@ -161,16 +172,21 @@ export async function migrateSchemas(
 
   const reportFile = join(outputDir, "cache", "migration-report.json");
   await report.write(reportFile);
-  const successTypeNames = report.results
-    .filter((r): r is Extract<typeof r, { status: "success" }> => r.status === "success")
-    .map((r) => r.sanityTypeName);
+  const successResults = report.results.filter(
+    (r): r is Extract<typeof r, { status: "success" }> => r.status === "success",
+  );
+  const successTypeNames = successResults.map((r) => r.sanityTypeName);
+  const successMembers = successResults.map((r) => ({
+    name: r.sanityTypeName,
+    title: r.schemaTitle,
+  }));
 
   let pageBuilderFile: string | undefined;
   let pageFile: string | undefined;
   if (emitPageBuilder) {
     const pb = await writePageBuilderArtifacts({
       schemasDir,
-      componentTypeNames: successTypeNames,
+      componentMembers: successMembers,
       exclude: pageBuilderExclude,
       logger,
     });
@@ -234,6 +250,8 @@ interface ProcessOneDeps {
   logger?: Logger;
   writeAemSnapshot: boolean;
   regenerateCommand?: string;
+  /** Final Sanity type name resolved by `resolveSanityTypeNames` for this path. */
+  typeName: string;
 }
 
 /**
@@ -257,9 +275,15 @@ async function processOne(
   componentPath: string,
   deps: ProcessOneDeps,
 ): Promise<{ authFailure: boolean; success: boolean }> {
-  const { fetcher, outputDir, schemasDir, report, writeAemSnapshot, regenerateCommand } =
-    deps;
-  const typeName = componentPathToTypeName(componentPath);
+  const {
+    fetcher,
+    outputDir,
+    schemasDir,
+    report,
+    writeAemSnapshot,
+    regenerateCommand,
+    typeName,
+  } = deps;
 
   let dialog: DialogNode;
   let schemaTitle: string | undefined;
@@ -349,8 +373,10 @@ async function processOne(
     status: "success",
     path: componentPath,
     sanityTypeName: typeName,
+    schemaTitle: resolveSchemaTitle(typeName, schemaTitle),
     outputFile,
     fieldNames: flattenSchemaFieldNames(mapped.fields),
+    fields: flattenSchemaFields(mapped.fields),
     unmapped: mapped.unmapped,
     renamed: mapped.renamed,
   });

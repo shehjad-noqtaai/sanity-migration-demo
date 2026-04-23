@@ -8,6 +8,7 @@ export type { EmitInput } from "./emitter.ts";
 export {
   mapDialog,
   flattenSchemaFieldNames,
+  flattenSchemaFields,
   AEM_FILE_UPLOAD_PATH_FIELD_SUFFIX,
 } from "./mapper.ts";
 export type {
@@ -18,8 +19,10 @@ export type {
   CommonFieldProps,
 } from "./mapper.ts";
 export {
+  RESERVED_SANITY_TYPE_NAMES,
   componentPathToTypeName,
   displayTitleFromAemComponentJcrTitle,
+  resolveSanityTypeNames,
   toCamelCase,
   toTitleCase,
 } from "./naming.ts";
@@ -41,10 +44,12 @@ export {
 export { writeContentRegistry } from "./content-registry.ts";
 export type {
   RegistryEntry as ContentRegistryEntry,
+  RegistryField as ContentRegistryField,
   WriteContentRegistryOptions,
   WriteContentRegistryResult,
 } from "./content-registry.ts";
 export type {
+  PageBuilderMember,
   WritePageBuilderArtifactsOptions,
   WritePageBuilderArtifactsResult,
 } from "./pagebuilder.ts";

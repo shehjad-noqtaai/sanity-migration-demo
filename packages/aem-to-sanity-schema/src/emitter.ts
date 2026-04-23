@@ -27,9 +27,11 @@ export interface EmitInput {
 export async function emitSchemaFile(input: EmitInput): Promise<string> {
   const { typeName, sourcePath, fields, groups } = input;
   const regenerateCommand = input.regenerateCommand ?? "pnpm migrate:schema";
-  const title = input.schemaTitle?.trim()
-    ? displayTitleFromAemComponentJcrTitle(input.schemaTitle.trim())
-    : toTitleCase(typeName);
+  // Belt-and-suspenders: the preview row in Page Builder / array pickers
+  // should always render as the component name, never "Untitled". Guarantee
+  // a non-empty title by layering three fallbacks (AEM jcr:title →
+  // title-cased type name → the raw type name).
+  const title = resolveSchemaTitle(typeName, input.schemaTitle);
   const titleLiteral = JSON.stringify(title);
 
   const groupsLiteral =
@@ -53,6 +55,19 @@ ${fields.map((f) => renderField(f, 2)).join(",\n")}
 `;
 
   return prettier.format(src, { parser: "typescript" });
+}
+
+export function resolveSchemaTitle(
+  typeName: string,
+  schemaTitle: string | undefined,
+): string {
+  const fromJcr = schemaTitle?.trim()
+    ? displayTitleFromAemComponentJcrTitle(schemaTitle.trim())
+    : "";
+  if (fromJcr) return fromJcr;
+  const titleCased = toTitleCase(typeName).trim();
+  if (titleCased) return titleCased;
+  return typeName;
 }
 
 function stringifyGroups(

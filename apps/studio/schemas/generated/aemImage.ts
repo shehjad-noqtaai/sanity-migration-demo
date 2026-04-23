@@ -4,8 +4,8 @@ import { defineField, defineType } from "sanity";
  * Generated from AEM component: /apps/aem-integration/components/image
  * DO NOT EDIT BY HAND — regenerate via `pnpm migrate:schema`.
  */
-export const image = defineType({
-  name: "image",
+export const aemImage = defineType({
+  name: "aemImage",
   title: "Image",
   type: "object",
   preview: {

@@ -71,12 +71,24 @@ importers:
 
   packages/aem-to-sanity-content:
     dependencies:
+      '@portabletext/block-tools':
+        specifier: ^5.1.1
+        version: 5.1.1(@types/react@19.2.14)
+      '@portabletext/schema':
+        specifier: ^2.1.1
+        version: 2.1.1
+      '@types/jsdom':
+        specifier: ^28.0.1
+        version: 28.0.1
       aem-to-sanity-core:
         specifier: workspace:*
         version: link:../aem-to-sanity-core
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
+      jsdom:
+        specifier: ^29.0.2
+        version: 29.0.2(@noble/hashes@2.2.0)
     devDependencies:
       '@sanity/client':
         specifier: ^7.21.0
@@ -1693,6 +1705,10 @@ packages:
     resolution: {integrity: sha512-h104Kh26rR8tm+a3Qkc5S4VLYint3FE48as7+/5oCEcKR2idC/pF1G6AhIXKI+eHPJa/3J9i5z0Al47IeGHPkA==}
     engines: {node: '>=12'}
 
+  '@portabletext/block-tools@5.1.1':
+    resolution: {integrity: sha512-/ixD5N6AZW9JC6pk7rW/nIUVQOvLELSMGylDZs+dSyvwmKcBTKOuyh6Hd77y7tHShwPQOsuJzWqSv9mO41SnLg==}
+    engines: {node: '>=20.19 <22 || >=22.12'}
+
   '@portabletext/editor@6.6.2':
     resolution: {integrity: sha512-GFRnB8/LZe4veGl8w/cpozs7QwqkMeR8cJ4oNLUUl+A6p4s9feLYVuXBKch+V0WuNtdAWVVHV1WF5t+a8z4cnQ==}
     engines: {node: '>=20.19 <22 || >=22.12'}
@@ -2277,6 +2293,9 @@ packages:
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
 
+  '@types/jsdom@28.0.1':
+    resolution: {integrity: sha512-GJq2QE4TAZ5ajSoCasn5DOFm8u1mI3tIFvM5tIq3W5U/RTB6gsHwc6Yhpl91X9VSDOUVblgXmG+2+sSvFQrdlw==}
+
   '@types/linkify-it@5.0.0':
     resolution: {integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==}
 
@@ -2305,6 +2324,9 @@ packages:
 
   '@types/react@19.2.14':
     resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
+
+  '@types/tough-cookie@4.0.5':
+    resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -4712,6 +4734,9 @@ packages:
   undici-types@7.19.2:
     resolution: {integrity: sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg==}
 
+  undici-types@7.25.0:
+    resolution: {integrity: sha512-AXNgS1Byr27fTI+2bsPEkV9CxkT8H6xNyRI68b3TatlZo3RkzlqQBLL+w7SmGPVpokjHbcuNVQUWE7FRTg+LRA==}
+
   undici@6.25.0:
     resolution: {integrity: sha512-ZgpWDC5gmNiuY9CnLVXEH8rl50xhRCuLNA97fAUnKi8RRuV4E6KG31pDTsLVUKnohJE0I3XDrTeEydAXRw47xg==}
     engines: {node: '>=18.17'}
@@ -6838,6 +6863,16 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
+  '@portabletext/block-tools@5.1.1(@types/react@19.2.14)':
+    dependencies:
+      '@portabletext/html': 1.0.1
+      '@portabletext/sanity-bridge': 3.0.0(@types/react@19.2.14)
+      '@portabletext/schema': 2.1.1
+      '@sanity/types': 5.21.0(@types/react@19.2.14)
+    transitivePeerDependencies:
+      - '@types/react'
+      - supports-color
+
   '@portabletext/editor@6.6.2(@types/react@19.2.14)(react@19.2.5)':
     dependencies:
       '@portabletext/html': 1.0.1
@@ -7656,6 +7691,13 @@ snapshots:
     dependencies:
       '@types/unist': 2.0.11
 
+  '@types/jsdom@28.0.1':
+    dependencies:
+      '@types/node': 25.6.0
+      '@types/tough-cookie': 4.0.5
+      parse5: 7.3.0
+      undici-types: 7.25.0
+
   '@types/linkify-it@5.0.0': {}
 
   '@types/markdown-it@14.1.2':
@@ -7682,6 +7724,8 @@ snapshots:
   '@types/react@19.2.14':
     dependencies:
       csstype: 3.2.3
+
+  '@types/tough-cookie@4.0.5': {}
 
   '@types/trusted-types@2.0.7':
     optional: true
@@ -10216,6 +10260,8 @@ snapshots:
   ufo@1.6.3: {}
 
   undici-types@7.19.2: {}
+
+  undici-types@7.25.0: {}
 
   undici@6.25.0: {}
 
