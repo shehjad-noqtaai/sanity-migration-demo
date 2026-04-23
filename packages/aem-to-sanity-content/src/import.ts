@@ -2,7 +2,7 @@
 import "dotenv/config";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { createColors } from "aem-to-sanity-core";
+import { createColors, startTimer } from "aem-to-sanity-core";
 
 interface SanityDoc {
   _id: string;
@@ -25,6 +25,7 @@ function requireEnv(name: string): string {
 }
 
 async function main(): Promise<void> {
+  const timer = startTimer();
   const c = createColors({ stream: process.stderr });
   const outputDir = resolve(process.env.OUTPUT_DIR ?? "./output");
   const cleanDir = join(outputDir, "cache", "clean");
@@ -98,6 +99,7 @@ async function main(): Promise<void> {
   if (discardDrafts && !dryRun) {
     console.error(`${c.dim("Drafts discarded:")} ${c.green(draftsDiscarded)}`);
   }
+  console.error(`${c.dim("Elapsed:         ")} ${c.dim(timer.elapsed())}`);
 }
 
 interface SanityTransactionLike {

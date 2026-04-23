@@ -28,7 +28,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, extname, join, resolve } from "node:path";
-import { createColors, resolveConfig, type AuthMode } from "aem-to-sanity-core";
+import { createColors, formatDuration, resolveConfig, startTimer, type AuthMode } from "aem-to-sanity-core";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -508,6 +508,7 @@ function loadManifest(file: string): Manifest {
 // ── Main ─────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
+  const totalTimer = startTimer();
   const c = createColors({ stream: process.stderr });
   const config = resolveConfig(process.env);
   const outputDir = resolve(process.env.OUTPUT_DIR ?? "./output");
@@ -577,11 +578,13 @@ async function main(): Promise<void> {
   // which assets would be linked" — still read-only against Sanity, but
   // now useful.
   const aspectStamped = new Set<string>();
+  const phaseTimings: Record<string, number> = {};
   if (!dryRun || linkOnly) {
     const mlId = mustEnv("SANITY_MEDIA_LIBRARY_ID");
     const token = mustEnv("SANITY_TOKEN");
     const apiVersion = process.env.SANITY_API_VERSION ?? "2025-02-19";
     console.error(c.bold("\n── 0. Check Media Library for existing assets ──"));
+    const phase0 = startTimer();
     let hits = 0;
     let n = 0;
     for (const damPath of sortedPaths) {
@@ -617,11 +620,13 @@ async function main(): Promise<void> {
         ),
       );
     }
+    phaseTimings.phase0 = phase0.elapsedMs();
   }
 
   // ── Phase 1: download ────────────────────────────────────────────────
   if (!uploadOnly && !linkOnly) {
     console.error(c.bold("\n── 1. Download from AEM DAM ──"));
+    const phase1 = startTimer();
     let n = 0;
     for (const damPath of sortedPaths) {
       n++;
@@ -639,6 +644,7 @@ async function main(): Promise<void> {
       manifest[damPath] = { ...existing, ...entry };
       writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
     }
+    phaseTimings.phase1 = phase1.elapsedMs();
   }
 
   // ── Phase 2: upload to Media Library ────────────────────────────────
@@ -649,6 +655,7 @@ async function main(): Promise<void> {
     );
   } else {
   console.error(c.bold("\n── 2. Upload to Sanity Media Library ──"));
+  const phase2 = startTimer();
   if (dryRun) {
     const toUpload = sortedPaths.filter((p) => manifest[p]?.cachedFile && !manifest[p]?.mediaLibraryAssetId);
     console.error(c.dim(`  would upload ${toUpload.length} asset(s) — skipped (dry run)`));
@@ -696,10 +703,12 @@ async function main(): Promise<void> {
       }
     }
   }
+  phaseTimings.phase2 = phase2.elapsedMs();
   } // end of !linkOnly upload block
 
   // ── Phase 3: link to project dataset ────────────────────────────────
   console.error(c.bold("\n── 3. Link to project dataset ──"));
+  const phase3 = startTimer();
   if (dryRun) {
     const toLink = sortedPaths.filter((p) => manifest[p]?.mediaLibraryAssetId && !manifest[p]?.linkedRef);
     console.error(c.dim(`  would link ${toLink.length} asset(s) — skipped (dry run)`));
@@ -732,12 +741,14 @@ async function main(): Promise<void> {
       writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
     }
   }
+  phaseTimings.phase3 = phase3.elapsedMs();
 
   // ── Phase 4: rewrite clean docs in place ────────────────────────────
   let patched = 0;
   const rewriteStats: RewriteStats = { rewrites: 0, unresolved: new Set() };
   if (!skipRewrite && !dryRun) {
     console.error(c.bold("\n── 4. Rewrite clean docs ──"));
+    const phase4 = startTimer();
     for (const file of cleanFiles) {
       const filePath = join(cleanDir, file);
       const doc = JSON.parse(readFileSync(filePath, "utf8")) as unknown;
@@ -745,6 +756,7 @@ async function main(): Promise<void> {
       writeFileSync(filePath, JSON.stringify(doc, null, 2) + "\n");
       patched++;
     }
+    phaseTimings.phase4 = phase4.elapsedMs();
   }
 
   // ── Summary ─────────────────────────────────────────────────────────
@@ -805,6 +817,21 @@ async function main(): Promise<void> {
     }
   }
   console.error(`Manifest:   ${c.dim(manifestFile)}`);
+  const phaseLabels: Record<string, string> = {
+    phase0: "phase 0 (ML dedup)",
+    phase1: "phase 1 (download)",
+    phase2: "phase 2 (upload)",
+    phase3: "phase 3 (link)",
+    phase4: "phase 4 (rewrite)",
+  };
+  const phaseLines = Object.entries(phaseTimings)
+    .filter(([, ms]) => ms !== undefined)
+    .map(([k, ms]) => `${phaseLabels[k] ?? k} ${formatDuration(ms)}`)
+    .join("  ");
+  if (phaseLines) {
+    console.error(c.dim(`Per phase:  ${phaseLines}`));
+  }
+  console.error(`Elapsed:    ${c.dim(totalTimer.elapsed())}`);
 }
 
 main().catch((err) => {

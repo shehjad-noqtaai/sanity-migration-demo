@@ -168,7 +168,7 @@ On start-up the CLI prints a banner summarizing what it's connecting to: AEM env
 | `migration-report.json` | Pass/fail per component (including the resolved `sanityTypeName` and friendly `schemaTitle`) + unmapped props inventory. |
 | `audit/unmapped-examples.json` | Real-world examples per unmapped AEM type. Feed these back into `mapping-table.ts` when adding new mappings. |
 
-Re-run any time — output is deterministic, so `git diff` shows only real changes.
+Re-run any time — output is deterministic, so `git diff` shows only real changes. Each CLI appends an `Elapsed:` line to its summary (and `aem-assets` prints a `Per phase:` breakdown) so you can see where time is going across runs.
 
 ### Type-name resolution (reserved-name handling)
 

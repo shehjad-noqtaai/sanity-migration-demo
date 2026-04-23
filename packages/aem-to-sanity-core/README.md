@@ -7,6 +7,7 @@ Shared primitives for the AEM → Sanity migration toolkit:
 - Config schema + resolver (no dotenv side-effects — pass your own env)
 - Logger
 - `logStartupBanner(logger, config, opts)` — print a masked, human-readable summary of the AEM config at CLI start. Basic auth shows the username only; bearer tokens render as `(len=N, prefix=abcd…)`. Optional `opts.sanity` adds a Sanity preflight block (project id / dataset / token presence) without ever reading the token value itself.
+- `startTimer()` / `formatDuration(ms)` — tiny monotonic timer (via `performance.now`) + human-readable duration formatter (`"1.2s"`, `"2m 3.4s"`). Used by every CLI to append `Elapsed:` to its summary; `aem-assets` also uses it for per-phase breakdowns (dedup / download / upload / link / rewrite).
 - Filesystem helpers (swappable output writers)
 
 Depended on by `aem-to-sanity-schema` and `aem-to-sanity-content`.

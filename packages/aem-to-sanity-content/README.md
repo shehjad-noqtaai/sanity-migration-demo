@@ -85,6 +85,10 @@ Coercion walks the registry tree recursively — nested `array-of-object` items 
 
 Legacy `fields: string[]` registry entries skip every coercion step (pass-through); regenerate the registry via `migrate:schema` to opt in.
 
+## Timing
+
+Every CLI appends an `Elapsed:` line to its summary. `aem-assets` also reports per-phase durations (`phase 0 (ML dedup)` / `phase 1 (download)` / `phase 2 (upload)` / `phase 3 (link)` / `phase 4 (rewrite)`), which lets you see at a glance whether a slow run is bottlenecked on AEM fetches, ML uploads, or the dataset link API.
+
 ## Reports
 
 - `output/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.

@@ -3,7 +3,7 @@ import "dotenv/config";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { createColors } from "aem-to-sanity-core";
+import { createColors, startTimer } from "aem-to-sanity-core";
 import { htmlToBlocks } from "@portabletext/block-tools";
 import { compileSchema, defineSchema, type Schema } from "@portabletext/schema";
 import { JSDOM } from "jsdom";
@@ -694,6 +694,7 @@ function derivePageTitle(tree: AemNode, slug: string | undefined, jcrPath: strin
 }
 
 function main(): void {
+  const timer = startTimer();
   const c = createColors({ stream: process.stderr });
   const outputDir = resolve(process.env.OUTPUT_DIR ?? "./output");
   const registryFile = resolve(getFlag("--registry") ?? "./content-type-registry.json");
@@ -781,6 +782,7 @@ function main(): void {
   console.error(
     `Findings:  ${report.summary.totalFindings > 0 ? c.yellow(report.summary.totalFindings) : c.green(0)}  ${c.dim(`→ ${reportFile}`)}`,
   );
+  console.error(`Elapsed:   ${c.dim(timer.elapsed())}`);
 }
 
 function getFlag(name: string): string | undefined {
