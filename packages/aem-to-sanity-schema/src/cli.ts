@@ -7,6 +7,7 @@ import {
   createColors,
   createLogger,
   fetchInfinityJson,
+  loadContainerConfig,
   logStartupBanner,
   resolveConfig,
   startTimer,
@@ -58,6 +59,19 @@ async function main(): Promise<void> {
   const exceptions = await readExceptionList(exceptionsFile);
   const filtered = applyComponentExceptions(componentPaths, exceptions);
 
+  // AEM containers — components whose children are dropped in via the page
+  // editor (cq:isContainer) rather than a dialog multifield. Optional file;
+  // missing file → no container behavior.
+  const containersFile = resolve(
+    process.env.AEM_COMPONENT_CONTAINERS_FILE ?? "./aem-component-containers.json",
+  );
+  const containers = loadContainerConfig({ file: containersFile });
+  if (containers.size > 0) {
+    logger.info(
+      `Applied ${containers.size} container entr${containers.size === 1 ? "y" : "ies"} from ${containersFile}`,
+    );
+  }
+
   if (filtered.length === 0) {
     logger.error(
       `No component paths in ${config.componentPathsFile} after applying exceptions.`,
@@ -99,6 +113,7 @@ async function main(): Promise<void> {
     logger,
     docsOutputFile: "./docs/aem-to-sanity-mapping.md",
     continueOnAuth,
+    containers,
   });
 
   const s = report.summary();

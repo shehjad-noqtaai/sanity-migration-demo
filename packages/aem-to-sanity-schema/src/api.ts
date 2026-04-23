@@ -4,6 +4,7 @@ import {
   AemFetchError,
   writeJson,
   writeTextFile,
+  type ContainerConfig,
   type DialogNode,
   type Logger,
 } from "aem-to-sanity-core";
@@ -12,6 +13,7 @@ import {
   flattenSchemaFieldNames,
   mapDialog,
   type NodeFetcher,
+  type SanityField,
 } from "./mapper.ts";
 import { emitSchemaFile, resolveSchemaTitle } from "./emitter.ts";
 import { resolveSanityTypeNames } from "./naming.ts";
@@ -87,6 +89,17 @@ export interface MigrateSchemasOptions {
   continueOnAuth?: boolean;
   /** Threshold for the `continueOnAuth` circuit breaker. Default: 5. */
   authCircuitBreakerThreshold?: number;
+  /**
+   * Map of `sling:resourceType` → `{ childrenField }` for AEM container
+   * components whose children are dropped in via the editor (not via a
+   * dialog multifield). For each listed component, the emitter appends a
+   * synthetic `childrenField`-named `pageBuilder` array so authors can nest
+   * blocks inside the container, and the content transform descends into
+   * its child nodes with `sling:resourceType` at migration time.
+   *
+   * Empty / omitted → no container behavior (current default).
+   */
+  containers?: ContainerConfig;
 }
 
 export interface MigrateSchemasResult {
@@ -120,6 +133,8 @@ export async function migrateSchemas(
   const continueOnAuth = opts.continueOnAuth ?? false;
   const authCircuitBreakerThreshold = opts.authCircuitBreakerThreshold ?? 5;
   const schemasDir = opts.schemasDir ?? join(outputDir, "schemas");
+  const containers = opts.containers ?? new Map();
+  const effectiveJcrPrefix = opts.jcrPrefix ?? "/apps/";
 
   const report = new Report();
 
@@ -147,6 +162,7 @@ export async function migrateSchemas(
         writeAemSnapshot,
         regenerateCommand,
         typeName: typeNameByPath.get(p)!,
+        containerEntry: containers.get(resourceTypeFromPath(p, effectiveJcrPrefix)),
       }),
     concurrency,
     (r) => {
@@ -252,6 +268,19 @@ interface ProcessOneDeps {
   regenerateCommand?: string;
   /** Final Sanity type name resolved by `resolveSanityTypeNames` for this path. */
   typeName: string;
+  /** Container behavior opted in for this component (via `containers` config). */
+  containerEntry?: { childrenField: string };
+}
+
+/**
+ * Strip `jcrPrefix` (default `/apps/`) from a component path to derive the
+ * AEM `sling:resourceType` key used by the container config map and the
+ * content-type registry. Mirrors the same logic in `content-registry.ts`.
+ */
+function resourceTypeFromPath(componentPath: string, jcrPrefix: string): string {
+  return componentPath.startsWith(jcrPrefix)
+    ? componentPath.slice(jcrPrefix.length)
+    : componentPath.replace(/^\/+/, "");
 }
 
 /**
@@ -334,6 +363,23 @@ async function processOne(
       message: (err as Error).message,
     });
     return { authFailure: false, success: false };
+  }
+
+  if (deps.containerEntry) {
+    const { childrenField } = deps.containerEntry;
+    // If the dialog already declared a field by this name (unlikely but
+    // possible if a component author reused the name), skip the synthetic
+    // append — the dialog-declared field wins. Otherwise tack it on the
+    // end so dialog-authored fields come first in the Studio UI.
+    const clashes = mapped.fields.some((f) => f.name === childrenField);
+    if (!clashes) {
+      const container: SanityField = {
+        name: childrenField,
+        title: "Items",
+        type: "container-children",
+      };
+      mapped.fields.push(container);
+    }
   }
 
   let contents: string;

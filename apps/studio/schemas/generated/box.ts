@@ -166,5 +166,6 @@ export const box = defineType({
       type: "image",
       group: "backgroundImage",
     }),
+    defineField({ name: "items", title: "Items", type: "pageBuilder" }),
   ],
 });

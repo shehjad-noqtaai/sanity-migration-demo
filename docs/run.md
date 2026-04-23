@@ -85,6 +85,10 @@ The four stages are independent CLIs chained through on-disk output; you can re-
 ### 4b. `transform`
 **What this does:** Walks each raw JCR tree under `output/raw/`, maps `sling:resourceType` values via `content-type-registry.json`, and emits one Sanity `page` doc per input into `output/clean/` — with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key`, so re-runs upsert instead of duplicating. Unknown types and entries in `aem-component-exceptions` are skipped but recorded in `output/transform-report.json`. Purely local — no AEM or Sanity calls.
 
+Any `sling:resourceType` that isn't in the registry is also printed to the console at the end of the run — hit count, example path, and a paste-ready `/apps/...` line. New pages bringing new components show up here as action items: paste the lines into `aem-component-paths`, re-run `migrate:schema` + `transform` + `import`, and the dropped content comes through on the next pass.
+
+AEM **container** components (cq:isContainer=true — drop-zone children, not dialog multifields) are declared in `aem-component-containers.json` (default path). Listed types get a synthetic pageBuilder-typed `items` array appended at schema emission, and the transform walker descends into each container's direct child nodes with `sling:resourceType`, recursively emitting them as pageBuilder blocks under that field — so expander → box → content nests exactly like AEM structures it. See running-the-migration § 1c-quater for the config shape.
+
 AEM's JCR serializes every authored dialog value as a JSON string; transform reads each field's declared Sanity type from the registry and coerces on the way in. `array-of-blocks` fields (richtext) are converted to Portable Text via `@portabletext/block-tools`; `number` fields are parsed via `Number(v)`; `boolean` fields are parsed from the literal strings `"true"` / `"false"`. Values that can't be coerced cleanly are left in place so they surface as Studio validation errors rather than being silently remapped. Deterministic `_key`s preserve clean diffs across re-runs.
 
 ### 4c. `assets`

@@ -47,6 +47,7 @@ cp examples/davids-bridal/.env.example examples/davids-bridal/.env
 | `AEM_COMPONENT_PATHS_FILE` | optional | File listing component JCR paths to migrate (one per line, `#` for comments). Default: `./aem-component-paths`. |
 | `AEM_CONTENT_ROOTS_FILE` | optional | File listing content roots to walk during extraction. Default: `./aem-content-roots`. See `aem-content-roots.example` for syntax. |
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | optional | File listing `sling:resourceType` values to skip during transform. Default: `./aem-component-exceptions`. |
+| `AEM_COMPONENT_CONTAINERS_FILE` | optional | JSON file mapping `sling:resourceType` → `{ childrenField }` for AEM container components whose drop-zone children should become a nested `pageBuilder` array. Default: `./aem-component-containers.json`. Missing file → no container behavior. |
 | `AEM_MAX_RESPONSE_MB` | optional | Cap per-fetch payload size during extract. Pages exceeding this are recorded as `tooLarge` failures. |
 | `OUTPUT_DIR` | optional | Where schemas, reports, and audit live. Default: `./output`. |
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
@@ -108,6 +109,26 @@ Each line becomes a Sanity page doc with its slug derived from the last segment.
 ### 1c-ter. Component exceptions — `examples/davids-bridal/aem-component-exceptions`
 
 Consumed by `aem-transform`. One `sling:resourceType` (or `apps/...` prefix) per line; matching nodes and their subtrees are skipped. Use this for decorative wrappers or AEM-only utilities that don't belong in Sanity.
+
+### 1c-quater. Container components — `examples/davids-bridal/aem-component-containers.json`
+
+Consumed by both `migrate:schema` and `aem-transform`. Declares which components are AEM "containers" — ones whose children are dropped in via the page editor (cq:isContainer=true) rather than declared as a dialog multifield. Example:
+
+```json
+{
+  "aem-integration/components/expander": { "childrenField": "items" },
+  "aem-integration/components/container": { "childrenField": "items" },
+  "aem-integration/components/column-layout": { "childrenField": "items" },
+  "aem-integration/components/box": { "childrenField": "items" }
+}
+```
+
+For each listed resource type:
+
+- **Schema emission** appends a synthetic `defineField({ name: childrenField, title: "Items", type: "pageBuilder" })` to the component so the Studio palette inside the container matches the top-level page builder — every block type is droppable. The field is appended last so dialog-authored fields keep their declared order. Name collisions with dialog fields (same-name field already declared) leave the dialog field untouched and skip the synthetic append.
+- **Content transform** descends into the container node's direct child keys that themselves carry a `sling:resourceType`, recursively emits each as a pageBuilder block (same `_type` / `_key` / coercion pipeline as top-level blocks), and stores the array under `childrenField`. Containers nest: an expander containing boxes containing content paragraphs all roundtrip. Children without `sling:resourceType` stay inline on the container (that's how multifields keep working).
+
+Missing file → container behavior stays off. Malformed JSON or invalid entries are a hard error (fail loudly rather than silently drop child content).
 
 ### 1d. Resource-type registry — `output/content-type-registry.json`
 
@@ -258,7 +279,9 @@ Legacy `content-type-registry.json` files without `fields[].type` skip every coe
 | `--include type1,type2` | Restrict to a comma-separated allow-list of `sling:resourceType` values. |
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | Path to exceptions file. Default: `./aem-component-exceptions`. |
 
-**Outputs:** `output/clean/*.json` (one per page, containing the transformed doc) and `output/transform-report.json` (unknown resource types, unknown props per component, transform bails — with first-N example paths per finding).
+**Outputs:** `output/clean/*.json` (one per page, containing the transformed doc) and `output/transform-report.json` (unknown resource types with hit counts, unknown props per component, transform bails — with first-N example paths per finding).
+
+**Unmapped components, surfaced in the console.** At the end of each `aem-transform` run, any `sling:resourceType` that doesn't resolve to a Sanity type is printed directly to stderr as a ranked list — `<hits>× <resourceType>  /apps/<resourceType>`, plus one example JCR path per type. Those `/apps/...` lines are paste-ready for `aem-component-paths`; add them, re-run `migrate:schema` to emit schemas, then rerun `transform` + `import` to pick up the content that was dropped. The page root (`aem-integration/components/page`) and `wcm/foundation/components/responsivegrid` wrapper are hidden from this list — they're structural passthroughs the walker recurses through, not missing schemas. (They still appear in `transform-report.json` for completeness.)
 
 ### 4c. `aem-assets` — upload DAM → Media Library → link to dataset
 

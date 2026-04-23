@@ -31,5 +31,6 @@ export const columnLayout = defineType({
         'TODO: no Sanity mapping for AEM resource type "unknown". Falling back to string.',
       type: "string",
     }),
+    defineField({ name: "items", title: "Items", type: "pageBuilder" }),
   ],
 });

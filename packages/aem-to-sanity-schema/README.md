@@ -32,4 +32,6 @@ Reserved-name handling: `resolveSanityTypeNames` (exported from this package) ma
 
 Content registry carries Sanity types: each entry's `fields` is `Array<{name, type}>`, not just names. `aem-transform` reads those types to coerce AEM values into the exact Sanity shape — for example, HTML strings on `array-of-blocks` fields (AEM's `cq/gui/components/authoring/dialog/richtext`) are converted into Portable Text at ingest. Legacy `fields: string[]` registries are still read, minus the coercion.
 
+Container components are declared in `aem-component-containers.json` (override with `AEM_COMPONENT_CONTAINERS_FILE`). For each listed `sling:resourceType`, the emitter appends a synthetic `defineField({ name: childrenField, type: "pageBuilder" })` so the Studio palette inside the container mirrors the top-level page builder. The content transform consumes the same file to recursively emit drop-zone children (cq:isContainer pattern: JCR keys whose values are nodes carrying their own `sling:resourceType`) as nested pageBuilder blocks. Missing file → no container behavior.
+
 > Status: scaffold. See repo root for the refactor plan.

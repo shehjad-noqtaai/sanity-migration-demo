@@ -35,6 +35,7 @@ export type SanityField =
   | (CommonFieldProps & FileField)
   | (CommonFieldProps & RichTextField)
   | (CommonFieldProps & ArrayOfObjectField)
+  | (CommonFieldProps & ContainerChildrenField)
   | (CommonFieldProps & PlaceholderField);
 
 export interface CommonFieldProps {
@@ -87,6 +88,16 @@ interface ArrayOfObjectField {
   itemFields: SanityField[];
   /** AEM multifield `fieldLabel` → Sanity array member `title` (repeating row). */
   itemTitle?: string;
+}
+/**
+ * Drop-zone array on an AEM container component (e.g. `expander`, `container`,
+ * `column-layout`). Emitted as a field of type `"pageBuilder"` so the Studio
+ * palette inside the container matches the top-level page builder. Populated
+ * at content-transform time by walking the container's child component nodes
+ * — NOT by coerceFieldTypes, which doesn't touch this type string.
+ */
+interface ContainerChildrenField {
+  type: "container-children";
 }
 interface PlaceholderField {
   type: "placeholder";

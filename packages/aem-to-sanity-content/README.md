@@ -85,6 +85,21 @@ Coercion walks the registry tree recursively — nested `array-of-object` items 
 
 Legacy `fields: string[]` registry entries skip every coercion step (pass-through); regenerate the registry via `migrate:schema` to opt in.
 
+## Container components
+
+AEM "container" components (cq:isContainer=true) carry two shapes in one JCR node: authored dialog fields *plus* drop-zone children that are themselves full component instances (e.g. the keys on an `expander` include both `theme` / `singleExpansion` dialog values AND `item_1657754806454`-style child `box` components). Declare those resource types in `aem-component-containers.json` (override with `AEM_COMPONENT_CONTAINERS_FILE`):
+
+```json
+{
+  "aem-integration/components/expander":     { "childrenField": "items" },
+  "aem-integration/components/box":          { "childrenField": "items" },
+  "aem-integration/components/column-layout":{ "childrenField": "items" },
+  "aem-integration/components/container":    { "childrenField": "items" }
+}
+```
+
+Transform then does the right thing: dialog fields go through the normal inline + coercion path, while direct child keys with `sling:resourceType` are recursively emitted as pageBuilder blocks under `childrenField`. Nesting works — expander > box > content roundtrips. On the schema side, `migrate:schema` appends a matching `type: "pageBuilder"` field so the Studio palette inside the container matches the top-level page builder (any block is droppable).
+
 ## Timing
 
 Every CLI appends an `Elapsed:` line to its summary. `aem-assets` also reports per-phase durations (`phase 0 (ML dedup)` / `phase 1 (download)` / `phase 2 (upload)` / `phase 3 (link)` / `phase 4 (rewrite)`), which lets you see at a glance whether a slow run is bottlenecked on AEM fetches, ML uploads, or the dataset link API.
@@ -97,7 +112,7 @@ Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (de
 
 - `output/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.
 - `output/extract-404.log` — one `<jcrPath>\t<fullUrl>` per 404 (only written when 404s occur).
-- `output/transform-report.json` — unknown `sling:resourceType`s, unknown properties per mapped component, transform bails (max-depth or cycle).
+- `output/transform-report.json` — unknown `sling:resourceType`s (with hit counts and example paths), unknown properties per mapped component, transform bails (max-depth or cycle). `aem-transform` also echoes unmapped types to the console at the end of the run as a paste-ready `/apps/...` list (the page root and `responsivegrid` wrapper are hidden — they're always passthroughs, never missing schemas). Add the listed paths to `aem-component-paths`, then re-run `migrate:schema` → `transform` → `import` so the new component's content stops being dropped.
 - `output/assets-report.json` — asset download/upload/link counts, failures.
 - `output/assets/manifest.json` — per-asset state (damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef + sanityRef). Drives resumability for all four phases: download, upload to Media Library, GDR link to dataset, doc rewrite.
 

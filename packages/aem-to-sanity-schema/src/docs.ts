@@ -34,6 +34,26 @@ When a dialog node has \`sling:resourceType\`: \`granite/ui/components/coral/fou
 3. **Schema** — \`aem-to-sanity-schema\` maps multifield → Sanity \`array\` of objects. The array field uses that inner \`field.name\` for \`defineField({ name })\`, uses the multifield’s \`fieldLabel\` for Studio titles, and emits row object titles from \`fieldLabel\` (see \`multifieldArrayPropertyName\` / multifield handling in \`mapper.ts\`).
 4. **Content** — \`aem-transform\` (\`aem-to-sanity-content\`) inlines components, then \`deepCoerceAemMultifieldMapsToArrays\` turns any object whose keys are exclusively \`itemN\` / numeric indices into a JSON **array** so it matches Sanity \`array\` types. Scalar keys still use dialog \`name\` when the JCR sibling key differs (\`sanityPropertyKeyFromAemChild\` in \`transform.ts\`).
 
+## Container components (\`cq:isContainer\`)
+
+Some AEM components are containers: authors drop child components into them via the page editor instead of declaring the children as a dialog multifield. The canonical examples are \`aem-integration/components/expander\`, \`container\`, \`column-layout\`, and \`box\`. Their JCR nodes mix dialog values (\`theme\`, \`singleExpansion\`, …) with child keys like \`item_1657754806454\`, each of which is itself a full component instance with its own \`sling:resourceType\`.
+
+AEM marks these with \`cq:isContainer=true\` in component definitions, but that flag isn't in the dialog payload — so the migration mirrors it explicitly in \`aem-component-containers.json\` (override via \`AEM_COMPONENT_CONTAINERS_FILE\`):
+
+\`\`\`json
+{
+  "aem-integration/components/expander":     { "childrenField": "items" },
+  "aem-integration/components/box":          { "childrenField": "items" },
+  "aem-integration/components/column-layout":{ "childrenField": "items" },
+  "aem-integration/components/container":    { "childrenField": "items" }
+}
+\`\`\`
+
+- **Schema side:** \`migrate:schema\` appends \`defineField({ name: childrenField, title: "Items", type: "pageBuilder" })\` to each listed component so the palette inside the container matches the top-level page builder. Name collisions with a dialog-declared field skip the append (dialog field wins).
+- **Content side:** \`aem-transform\` descends into the container node's direct child keys that themselves carry a \`sling:resourceType\`, recursively emits each as a pageBuilder block (full \`_type\` / \`_key\` / coercion pipeline), and stores the array under \`childrenField\`. Children without \`sling:resourceType\` stay inline on the container so multifield handling keeps working.
+
+Containers nest without special-casing — expander → box → content → Portable Text roundtrips through the same recursive call. Missing file → container behavior stays off. Malformed JSON / invalid entries are a hard error so a typo doesn't silently drop children.
+
 ## Type-aware coercion at transform
 
 AEM's JCR is schemaless on dialog inputs: \`.infinity.json\` serializes everything authored through a dialog widget as a **JSON string**, regardless of what the dialog thinks the type is. A numberfield storing \`10\` lands as \`"10"\`; a checkbox lands as \`"true"\` / \`"false"\`; a richtext widget lands as an HTML string. The emitted Sanity schemas declare proper types (\`number\`, \`boolean\`, \`array-of-blocks\`), so without coercion the Studio rejects every ingested value with "Expected type X, got String".
