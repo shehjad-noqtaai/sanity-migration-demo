@@ -315,6 +315,44 @@ async function uploadToMediaLibrary(
 }
 
 /**
+ * Verify an asset still exists in the Media Library by id. Returns `true`
+ * if the doc is there, `false` if the ML confirmed it's missing, and
+ * `unknown` on any transport error — callers treat `unknown` conservatively
+ * (don't clobber local state on a network blip).
+ *
+ * Used by phase 0's staleness gate: when the aspect-based dedup can't find
+ * a damPath but the manifest claims an `mediaLibraryAssetId`, we need a
+ * second signal before deciding the manifest is stale (the aspect might
+ * simply not be stamped on an asset that still exists).
+ */
+async function assetDocExists(
+  mlId: string,
+  token: string,
+  apiVersion: string,
+  assetId: string,
+): Promise<"exists" | "missing" | "unknown"> {
+  const url = `https://api.sanity.io/v${apiVersion}/media-libraries/${mlId}/query`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: `defined(*[_id == $id][0]._id)`,
+        params: { id: assetId },
+      }),
+    });
+    if (!res.ok) return "unknown";
+    const body = (await res.json()) as { result?: unknown };
+    return body.result === true ? "exists" : "missing";
+  } catch {
+    return "unknown";
+  }
+}
+
+/**
  * Dedup lookup: find an asset previously uploaded by this pipeline via its
  * `aspects.aemSource.damPath` stamp. The aspect also caches `assetInstanceId`
  * so we don't have to probe the parent's versions field to find a linkable
@@ -655,14 +693,15 @@ async function main(): Promise<void> {
     const phase0 = startTimer();
     let hits = 0;
     let done = 0;
+    let staleCleared = 0;
     await runInParallel(sortedPaths, concurrency, async (damPath, _i, workerId) => {
       const w = c.dim(workerLabel(workerId, concurrency));
+      const existing = manifest[damPath];
       const hit = await findExistingByAemPath(mlId, token, apiVersion, damPath);
-      done++;
       if (hit) {
+        done++;
         hits++;
         aspectStamped.add(damPath);
-        const existing = manifest[damPath];
         manifest[damPath] = {
           ...(existing ?? { damPath }),
           damPath,
@@ -673,11 +712,62 @@ async function main(): Promise<void> {
         };
         writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
         console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.green("reuse ")} ${damPath}  ${c.dim(hit.assetId)}`);
-      } else {
-        console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.dim("new   ")} ${damPath}`);
+        return;
       }
+      // No aspect hit. If the manifest claims an assetId, verify it — a
+      // stale ID (ML wiped, manual delete, etc.) would otherwise cause
+      // phase 2 to short-circuit "already uploaded" and phase 3 to trust
+      // a dead linkedRef. Both lead to a successful-looking run that
+      // writes nothing to the ML.
+      if (existing?.mediaLibraryAssetId) {
+        const check = await assetDocExists(
+          mlId,
+          token,
+          apiVersion,
+          existing.mediaLibraryAssetId,
+        );
+        done++;
+        if (check === "missing") {
+          staleCleared++;
+          // Preserve the local download cache; drop every ML/dataset ref.
+          manifest[damPath] = {
+            damPath,
+            cachedFile: existing.cachedFile,
+            mimeType: existing.mimeType,
+            fileSize: existing.fileSize,
+            downloadedAt: existing.downloadedAt,
+            status: "cached",
+          };
+          writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
+          console.error(
+            `  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.yellow("stale ")} ${damPath}  ${c.dim("(cleared — asset gone from ML)")}`,
+          );
+          return;
+        }
+        if (check === "exists") {
+          // Asset is in the ML but missing the aspect stamp — likely an
+          // older upload that predated the aspect. Keep the manifest's
+          // IDs so phase 2 skips upload; phase 2 will attempt to backfill
+          // the stamp.
+          console.error(
+            `  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.dim("present")} ${damPath}  ${c.dim("(aspect stamp missing)")}`,
+          );
+          return;
+        }
+        // `unknown`: transport error. Err on the side of preserving state;
+        // a later run on a healthy network will re-check.
+        console.error(
+          `  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.yellow("probe? ")} ${damPath}  ${c.dim("(ML check failed; keeping manifest state)")}`,
+        );
+        return;
+      }
+      done++;
+      console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.dim("new   ")} ${damPath}`);
     });
-    console.error(c.dim(`  ${hits}/${sortedPaths.length} reused from existing Media Library aspects`));
+    const summary = staleCleared > 0
+      ? c.dim(`  ${hits}/${sortedPaths.length} reused, `) + c.yellow(`${staleCleared} stale manifest entry(ies) cleared`) + c.dim(" — phases 2-3 will re-upload + re-link.")
+      : c.dim(`  ${hits}/${sortedPaths.length} reused from existing Media Library aspects`);
+    console.error(summary);
     if (linkOnly && hits < sortedPaths.length) {
       // In link-only mode, a phase-0 miss means the asset has no counterpart
       // in the ML — there's nothing for phases 3-4 to link. Call it out up
