@@ -119,13 +119,26 @@ pnpm --filter studio exec sanity media deploy-aspect aemSource
 
 ---
 
-## 5. (Optional) Run the whole pipeline in one shot
+## 5. Run the whole pipeline in one shot
+
+The `migrate` script chains every stage end-to-end, with `--discard-drafts` on import so re-runs reflect immediately in the Studio:
+
+```bash
+pnpm --filter example-davids-bridal migrate
+```
+
+**What this does:** runs in order — `migrate:schema` → `extract` → `transform` → `assets` (full download + upload + link) → `import --discard-drafts`. Each stage's `Elapsed:` line surfaces along the way. Use this for "blow away and re-run" workflows on a dataset only the pipeline writes to.
+
+For more granular variants:
+
+- `pnpm --filter example-davids-bridal migrate:content` — content stages only, **no** `--discard-drafts` (preserves any in-progress author edits).
+- `pnpm --filter example-davids-bridal migrate:all` — schema + typegen only.
+
+Or via Turbo with input-hash caching for the pure emit stages:
 
 ```bash
 pnpm turbo run migrate:schema typegen migrate:content --filter=example-davids-bridal
 ```
-
-**What this does:** Turbo executes the three top-level tasks in the order declared in `turbo.json` (schema → typegen → content). Pure emit steps are cached against input hashes so unchanged inputs skip re-running; network-dependent tasks (`extract`, `assets`, `import`) are marked `"cache": false` and always execute.
 
 ---
 

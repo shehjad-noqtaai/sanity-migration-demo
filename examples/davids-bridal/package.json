@@ -14,6 +14,7 @@
     "import": "aem-import",
     "migrate:content": "pnpm run extract && pnpm run transform && pnpm run assets && pnpm run import",
     "migrate:all": "pnpm run migrate:schema && pnpm run typegen",
+    "migrate": "pnpm run migrate:schema && pnpm run extract && pnpm run transform && pnpm run assets && pnpm run import -- --discard-drafts",
     "wipe:media-library": "tsx ../../scripts/wipe-media-library.ts"
   },
   "devDependencies": {

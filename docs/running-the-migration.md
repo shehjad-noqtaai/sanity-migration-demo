@@ -335,6 +335,19 @@ AEM's `.infinity.json` truncates the tree at depth ~5, inserting path-string mar
 ## 5. Orchestrated — one command for the full pipeline
 
 ```bash
+pnpm --filter example-davids-bridal migrate
+```
+
+Chains `migrate:schema` → `extract` → `transform` → `assets` → `import --discard-drafts` in a single shell. Each stage's `Elapsed:` line surfaces as it runs, so timing breakdowns are visible without parsing logs after the fact. Use this for "blow away and re-run" workflows on datasets only the pipeline writes to — `--discard-drafts` is destructive of in-progress author edits.
+
+More granular variants:
+
+- `pnpm --filter example-davids-bridal migrate:content` — content stages only, no `--discard-drafts`.
+- `pnpm --filter example-davids-bridal migrate:all` — schema + typegen only.
+
+Or via Turbo with input-hash caching for the pure emit stages:
+
+```bash
 pnpm turbo run migrate:schema typegen migrate:content --filter=example-davids-bridal
 ```
 
