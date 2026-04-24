@@ -47,6 +47,20 @@ When a dialog node has `sling:resourceType`: `granite/ui/components/coral/founda
 3. **Schema** — `aem-to-sanity-schema` maps multifield → Sanity `array` of objects. The array field uses that inner `field.name` for `defineField({ name })`, uses the multifield’s `fieldLabel` for Studio titles, and emits row object titles from `fieldLabel` (see `multifieldArrayPropertyName` / multifield handling in `mapper.ts`).
 4. **Content** — `aem-transform` (`aem-to-sanity-content`) inlines components, then `deepCoerceAemMultifieldMapsToArrays` turns any object whose keys are exclusively `itemN` / numeric indices into a JSON **array** so it matches Sanity `array` types. Scalar keys still use dialog `name` when the JCR sibling key differs (`sanityPropertyKeyFromAemChild` in `transform.ts`).
 
+## Named slots (auto-discovered)
+
+Some AEM components embed a **single named child component** under a fixed JCR key — e.g. `aem-integration/components/media-paragraph` has a `content` child whose own `sling:resourceType` is `aem-integration/components/content`. That's not a dialog field, and it's not a `cq:isContainer` drop-zone either; it's a named slot. The dialog itself doesn't describe it, so the shape only shows up in authored content.
+
+`migrate:schema` runs a post-extract scan of `output/cache/raw/*.json` (the output of `aem-extract`) and records every `parentResourceType → slotKey → childResourceType` combo it sees. For each one it appends a `defineField({ name: slotKey, type: childTypeName })` to the parent schema so the Studio shows the slot as a first-class typed field rather than flagging it as an "Unknown field found".
+
+- **First run has no raw content** → scan returns empty, no slot fields emitted. Run `aem-extract` then re-run `migrate:schema`; the second pass picks up every slot.
+- **Dialog field with the same name** → dialog field wins; slot synthesis skipped.
+- **Container parents** (listed in `aem-component-containers.json`) skip slot synthesis entirely — their drop-zone children are already claimed by `childrenField`, and author-generated JCR keys like `item_1657754806454` would otherwise pollute the schema with one defineField per instance.
+- **Multiple child types** seen at the same slot → skipped + warned; the pipeline won't guess which type to reference. Transform still writes the nested block under the JCR key so data isn't lost; the Studio keeps flagging "Unknown field" until a human authors the field.
+- **Unmapped child type** (not in `aem-component-paths`) → skipped + warned. Add the path to the list, re-run `migrate:schema`.
+
+The content transform always emits nested child components under their JCR key (single-object under the slot key, same `_type` + `_key` + coercion pipeline as top-level blocks), regardless of whether the schema has a matching `slot-reference` field yet. So data flows correctly on the first run; the second `migrate:schema` upgrades "Unknown field" warnings to typed fields in the Studio.
+
 ## Container components (`cq:isContainer`)
 
 Some AEM components are containers: authors drop child components into them via the page editor instead of declaring the children as a dialog multifield. The canonical examples are `aem-integration/components/expander`, `container`, `column-layout`, and `box`. Their JCR nodes mix dialog values (`theme`, `singleExpansion`, …) with child keys like `item_1657754806454`, each of which is itself a full component instance with its own `sling:resourceType`.

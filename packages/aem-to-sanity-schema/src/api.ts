@@ -437,6 +437,21 @@ async function processOne(
     for (const [slotKey, slotEntry] of deps.slotMap) {
       if (existingNames.has(slotKey)) continue;
       if (slotEntry.childTypes.size === 0) continue;
+      // Skip AEM-author-generated keys: `item_1657754806454`,
+      // `content_1747537251_c`, `promo_1234_copy`. Any underscore followed
+      // by a run of digits is the AEM page-editor's "new instance id"
+      // stamp — emitting a schema field per instance would produce one
+      // defineField per author-drop, which is noise, not content model.
+      // If the parent is a real container the config file handles this;
+      // this regex is defense-in-depth when the config is missing (or
+      // when someone adds a new container and forgets to register it).
+      if (/_\d+/.test(slotKey)) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} has author-generated slot key "${slotKey}" ` +
+            `(child type ${[...slotEntry.childTypes.keys()][0]}). Looks like a cq:isContainer drop-zone — add this component to aem-component-containers.json.`,
+        );
+        continue;
+      }
       if (slotEntry.childTypes.size > 1) {
         deps.logger?.warn(
           `slot-discovery: ${componentPath} slot "${slotKey}" carries ${slotEntry.childTypes.size} child types — ` +
