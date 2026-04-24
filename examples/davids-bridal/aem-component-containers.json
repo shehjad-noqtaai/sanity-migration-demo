@@ -2,5 +2,6 @@
   "aem-integration/components/expander": { "childrenField": "items" },
   "aem-integration/components/container": { "childrenField": "items" },
   "aem-integration/components/column-layout": { "childrenField": "items" },
-  "aem-integration/components/box": { "childrenField": "items" }
+  "aem-integration/components/box": { "childrenField": "items" },
+  "aem-integration/components/resources-column-container": { "childrenField": "items" }
 }

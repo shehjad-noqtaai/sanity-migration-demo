@@ -683,15 +683,20 @@ function collectPageBuilder(
           filter,
           exceptions,
         );
+        // Sanity field names are restricted (/^[A-Za-z]+[0-9A-Za-z_]*$/),
+        // so a JCR key like `resources-column-item` becomes the camelCased
+        // `resourcesColumnItem` at schema-emission time. Land the slot
+        // data under the same camelCased name so both sides agree.
+        const outKey = toCamelCase(slotKey) || slotKey;
         // Named slots hold a single nested block. If the child walker
         // returned more than one (unlikely — would mean the slot child
         // was itself a container-of-containers), keep them as an array
         // so nothing is dropped; the Studio will flag the shape mismatch
         // rather than losing data.
         if (childItems.length === 1) {
-          inline[slotKey] = childItems[0];
+          inline[outKey] = childItems[0];
         } else if (childItems.length > 1) {
-          inline[slotKey] = childItems;
+          inline[outKey] = childItems;
         }
       }
 

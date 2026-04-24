@@ -16,7 +16,7 @@ import {
   type SanityField,
 } from "./mapper.ts";
 import { emitSchemaFile, resolveSchemaTitle } from "./emitter.ts";
-import { resolveSanityTypeNames } from "./naming.ts";
+import { resolveSanityTypeNames, toCamelCase } from "./naming.ts";
 import { Report } from "./report.ts";
 import { auditUnmappedTypes } from "./audit.ts";
 import {
@@ -468,14 +468,28 @@ async function processOne(
         );
         continue;
       }
+      // Sanity field names must match /^[A-Za-z]+[0-9A-Za-z_]*$/ — no
+      // hyphens, no leading digits. AEM JCR keys frequently use kebab
+      // case (`resources-column-item`), so normalize the same way
+      // dialog field names are normalized. Content transform applies
+      // the same camelCase pass when emitting the slot, so both sides
+      // agree on the on-disk field name.
+      const fieldName = toCamelCase(slotKey);
+      if (!fieldName) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} slot "${slotKey}" camelCased to empty string — skipping.`,
+        );
+        continue;
+      }
+      if (existingNames.has(fieldName)) continue;
       const slotField: SanityField = {
-        name: slotKey,
+        name: fieldName,
         title: slotKey,
         type: "slot-reference",
         slotTypeName: childTypeName,
       };
       mapped.fields.push(slotField);
-      existingNames.add(slotKey);
+      existingNames.add(fieldName);
     }
   }
 
