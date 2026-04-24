@@ -36,6 +36,7 @@ export type SanityField =
   | (CommonFieldProps & RichTextField)
   | (CommonFieldProps & ArrayOfObjectField)
   | (CommonFieldProps & ContainerChildrenField)
+  | (CommonFieldProps & SlotReferenceField)
   | (CommonFieldProps & PlaceholderField);
 
 export interface CommonFieldProps {
@@ -98,6 +99,18 @@ interface ArrayOfObjectField {
  */
 interface ContainerChildrenField {
   type: "container-children";
+}
+/**
+ * Named-slot field: a dialog-less child component embedded under a fixed
+ * JCR key (e.g. `media-paragraph`'s `content` child → `content` component).
+ * Discovered by scanning extracted AEM content, not the dialog. Emitted
+ * as a direct type reference so the single nested block lands inline
+ * under the slot key rather than as an array member.
+ */
+interface SlotReferenceField {
+  type: "slot-reference";
+  /** Sanity type name of the nested block that fills this slot. */
+  slotTypeName: string;
 }
 interface PlaceholderField {
   type: "placeholder";

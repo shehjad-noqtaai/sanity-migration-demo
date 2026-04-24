@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import "dotenv/config";
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import {
   DialogNodeSchema,
   createColors,
@@ -15,6 +15,7 @@ import {
   type SanityRuntimeSummary,
 } from "aem-to-sanity-core";
 import { migrateSchemas } from "./api.ts";
+import { scanSlotsFromRawDir } from "./slots.ts";
 
 async function main(): Promise<void> {
   const timer = startTimer();
@@ -72,6 +73,21 @@ async function main(): Promise<void> {
     );
   }
 
+  // Slot discovery — scan already-extracted AEM content for named-slot
+  // child components (dialog-less nested components under a fixed JCR key,
+  // e.g. media-paragraph.content). First-ever run has no raw/ yet and
+  // this returns empty; a second run after `aem-extract` picks up every
+  // slot referenced in authored content.
+  const rawDir = join(config.outputDir, "cache", "raw");
+  const discoveredSlots = scanSlotsFromRawDir(rawDir);
+  if (discoveredSlots.size > 0) {
+    let slotCount = 0;
+    for (const m of discoveredSlots.values()) slotCount += m.size;
+    logger.info(
+      `Slot discovery: scanned ${rawDir} — found ${slotCount} slot(s) across ${discoveredSlots.size} parent type(s).`,
+    );
+  }
+
   if (filtered.length === 0) {
     logger.error(
       `No component paths in ${config.componentPathsFile} after applying exceptions.`,
@@ -114,6 +130,7 @@ async function main(): Promise<void> {
     docsOutputFile: "./docs/aem-to-sanity-mapping.md",
     continueOnAuth,
     containers,
+    discoveredSlots,
   });
 
   const s = report.summary();

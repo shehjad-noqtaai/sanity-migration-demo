@@ -269,6 +269,42 @@ function collectContainerChildKeys(node: AemNode): string[] {
   return out;
 }
 
+/**
+ * Named-slot keys for the current node: direct children that are themselves
+ * AEM component instances (carry `sling:resourceType`) under a JCR key
+ * that isn't already claimed by container logic. Each hit becomes one
+ * nested block under that key at transform time — the schema side
+ * discovers the same shape offline by scanning extracted content
+ * (`packages/aem-to-sanity-schema/src/slots.ts`) and appends a matching
+ * typed `slot-reference` field so the Studio shows the slot as
+ * first-class content.
+ *
+ * Intentionally NOT filtering by dialog-declared field names: once
+ * schema-side slot discovery runs, the registry's `fieldNames` includes
+ * the slot key (as a `slot-reference` type). If we excluded declared
+ * field names here, the nested block would round-trip through
+ * `transformInline` as raw inline data and lose its `_type` + richtext
+ * coercion. Having `sling:resourceType` on the child is the reliable
+ * signal that it's a component instance, not dialog data — dialog
+ * multifield rows are plain `nt:unstructured` nodes without
+ * sling:resourceType, so they're never mistaken for slots.
+ */
+function collectSlotKeys(
+  node: AemNode,
+  containerChildKeys: string[] | null,
+): string[] {
+  const containerClaim = new Set(containerChildKeys ?? []);
+  const out: string[] = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (containerClaim.has(key)) continue;
+    if (!isChildNode(value)) continue;
+    const childType = asString((value as AemNode)["sling:resourceType"]);
+    if (!childType) continue;
+    out.push(key);
+  }
+  return out;
+}
+
 function stripKeys(node: AemNode, keys: string[]): AemNode {
   if (keys.length === 0) return node;
   const skip = new Set(keys);
@@ -615,13 +651,49 @@ function collectPageBuilder(
       const containerChildKeys = containerEntry
         ? collectContainerChildKeys(frame.node)
         : null;
-      const nodeForInline = containerChildKeys
-        ? stripKeys(frame.node, containerChildKeys)
+
+      // Named-slot children: direct child nodes that carry their own
+      // sling:resourceType under a JCR key that isn't a declared dialog
+      // field and isn't already claimed by container logic. e.g.
+      // `media-paragraph` has a `content` child that's itself a full
+      // `aem-integration/components/content` component. We emit these as
+      // single nested blocks under the same JCR key so the Studio shows
+      // them as typed subfields rather than raw "Unknown field" blobs.
+      // Dialog-field collisions leave the dialog field in place (dialog
+      // wins).
+      const slotKeys = collectSlotKeys(frame.node, containerChildKeys);
+      const stripAll = [
+        ...(containerChildKeys ?? []),
+        ...slotKeys,
+      ];
+      const nodeForInline = stripAll.length > 0
+        ? stripKeys(frame.node, stripAll)
         : frame.node;
 
       const inline = transformInline(nodeForInline, frame.jcrPath, inlineCtx);
       splitAemFileUploadDamPaths(inline, entry.fieldNames);
       coerceFieldTypes(inline, entry.fieldTypes, frame.jcrPath);
+
+      for (const slotKey of slotKeys) {
+        const child = frame.node[slotKey] as AemNode;
+        const childItems = collectPageBuilder(
+          child,
+          `${frame.jcrPath}/${slotKey}`,
+          ctx,
+          filter,
+          exceptions,
+        );
+        // Named slots hold a single nested block. If the child walker
+        // returned more than one (unlikely — would mean the slot child
+        // was itself a container-of-containers), keep them as an array
+        // so nothing is dropped; the Studio will flag the shape mismatch
+        // rather than losing data.
+        if (childItems.length === 1) {
+          inline[slotKey] = childItems[0];
+        } else if (childItems.length > 1) {
+          inline[slotKey] = childItems;
+        }
+      }
 
       if (containerEntry && containerChildKeys) {
         const items: PageBuilderItem[] = [];

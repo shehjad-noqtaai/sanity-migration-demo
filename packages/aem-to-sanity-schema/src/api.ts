@@ -100,6 +100,21 @@ export interface MigrateSchemasOptions {
    * Empty / omitted → no container behavior (current default).
    */
   containers?: ContainerConfig;
+  /**
+   * Discovered named-slot map: `parentResourceType → slotKey → childTypes`.
+   * Produced by {@link scanSlotsFromRawDir} (or {@link discoverSlots} for
+   * tests). When present, the emitter appends a `defineField({ name:
+   * slotKey, type: childTypeName })` per discovered slot so nested
+   * dialog-less child components (e.g. `media-paragraph`'s `content`
+   * child) become first-class typed fields instead of Studio "Unknown
+   * field" warnings.
+   *
+   * Empty / omitted → no slot behavior. The transform still emits nested
+   * components under their JCR keys regardless, so data never gets
+   * dropped; the schema side is what upgrades warning → typed field on
+   * the next `migrate:schema` run.
+   */
+  discoveredSlots?: Map<string, Map<string, { childTypes: Map<string, unknown> }>>;
 }
 
 export interface MigrateSchemasResult {
@@ -135,6 +150,7 @@ export async function migrateSchemas(
   const schemasDir = opts.schemasDir ?? join(outputDir, "schemas");
   const containers = opts.containers ?? new Map();
   const effectiveJcrPrefix = opts.jcrPrefix ?? "/apps/";
+  const discoveredSlots = opts.discoveredSlots ?? new Map();
 
   const report = new Report();
 
@@ -146,14 +162,24 @@ export async function migrateSchemas(
   // prevents ingested data from showing up as "Untitled" with an unknown-type
   // warning because its `_type` no longer matches the live schema.
   const typeNameByPath = resolveSanityTypeNames(componentPaths);
+  // Reverse index: slot children reference each other by AEM `sling:resourceType`,
+  // but a Sanity `defineField({ type })` needs the Sanity type name. Build this
+  // once so slot emission stays O(1) per lookup.
+  const typeNameByResourceType = new Map<string, string>();
+  for (const p of componentPaths) {
+    const rt = resourceTypeFromPath(p, effectiveJcrPrefix);
+    const n = typeNameByPath.get(p);
+    if (n) typeNameByResourceType.set(rt, n);
+  }
 
   let authFailures = 0;
   let successes = 0;
 
   await runWithConcurrency(
     componentPaths,
-    (p) =>
-      processOne(p, {
+    (p) => {
+      const rt = resourceTypeFromPath(p, effectiveJcrPrefix);
+      return processOne(p, {
         fetcher,
         outputDir,
         schemasDir,
@@ -162,8 +188,11 @@ export async function migrateSchemas(
         writeAemSnapshot,
         regenerateCommand,
         typeName: typeNameByPath.get(p)!,
-        containerEntry: containers.get(resourceTypeFromPath(p, effectiveJcrPrefix)),
-      }),
+        containerEntry: containers.get(rt),
+        slotMap: discoveredSlots.get(rt),
+        typeNameByResourceType,
+      });
+    },
     concurrency,
     (r) => {
       if (r.success) successes++;
@@ -270,6 +299,10 @@ interface ProcessOneDeps {
   typeName: string;
   /** Container behavior opted in for this component (via `containers` config). */
   containerEntry?: { childrenField: string };
+  /** Discovered named-slot keys for this resource type → set of child resource types. */
+  slotMap?: Map<string, { childTypes: Map<string, unknown> }>;
+  /** Reverse index: AEM resource type → Sanity type name, for slot child references. */
+  typeNameByResourceType: Map<string, string>;
 }
 
 /**
@@ -379,6 +412,55 @@ async function processOne(
         type: "container-children",
       };
       mapped.fields.push(container);
+    }
+  }
+
+  // Named-slot synthesis. For each discovered slot key (parentResourceType →
+  // slotKey → childResourceType(s)), append a direct type-reference field.
+  // Priority rules:
+  //   - Dialog field with the same name wins (skip).
+  //   - Container parents skip slot synthesis entirely: their drop-zone
+  //     children are already handled by `childrenField`, and their JCR
+  //     keys are author-generated (`item_1657754806454`,
+  //     `content_1747537251_c`) which would otherwise pollute the schema
+  //     with one defineField per instance.
+  //   - Multiple child resource types observed at the same slot → skip +
+  //     warn; author tooling would need to pick one and we don't want to
+  //     guess. Transform still emits under the JCR key, so data isn't lost;
+  //     the Studio just keeps flagging "Unknown field" until the operator
+  //     hand-authors a field.
+  //   - Child resource type without a known Sanity mapping (not in
+  //     componentPaths) → skip + warn; can't reference a type that doesn't
+  //     exist yet.
+  if (!deps.containerEntry && deps.slotMap && deps.slotMap.size > 0) {
+    const existingNames = new Set(mapped.fields.map((f) => f.name));
+    for (const [slotKey, slotEntry] of deps.slotMap) {
+      if (existingNames.has(slotKey)) continue;
+      if (slotEntry.childTypes.size === 0) continue;
+      if (slotEntry.childTypes.size > 1) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} slot "${slotKey}" carries ${slotEntry.childTypes.size} child types — ` +
+            `${[...slotEntry.childTypes.keys()].join(", ")}. Skipping synthesis; hand-author this field in the dialog or in a custom wrapper if you need it typed.`,
+        );
+        continue;
+      }
+      const childResourceType = [...slotEntry.childTypes.keys()][0]!;
+      const childTypeName = deps.typeNameByResourceType.get(childResourceType);
+      if (!childTypeName) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} slot "${slotKey}" references unmapped child type "${childResourceType}". ` +
+            `Add /apps/${childResourceType} to aem-component-paths and re-run migrate:schema to pick it up.`,
+        );
+        continue;
+      }
+      const slotField: SanityField = {
+        name: slotKey,
+        title: slotKey,
+        type: "slot-reference",
+        slotTypeName: childTypeName,
+      };
+      mapped.fields.push(slotField);
+      existingNames.add(slotKey);
     }
   }
 

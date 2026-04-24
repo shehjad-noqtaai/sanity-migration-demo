@@ -303,6 +303,13 @@ function fieldBody(field: SanityField, _indentLevel: number): string {
       props.type = '"pageBuilder"';
       break;
     }
+    case "slot-reference": {
+      // Direct type reference — the slot carries one nested block inline,
+      // not an array. Transform writes `{slotKey: {_type, ...}}` under this
+      // field; schema agrees by declaring the field as that block type.
+      props.type = JSON.stringify(field.slotTypeName);
+      break;
+    }
     case "placeholder": {
       props.type = '"string"';
       props.description = JSON.stringify(

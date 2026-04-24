@@ -100,6 +100,15 @@ AEM "container" components (cq:isContainer=true) carry two shapes in one JCR nod
 
 Transform then does the right thing: dialog fields go through the normal inline + coercion path, while direct child keys with `sling:resourceType` are recursively emitted as pageBuilder blocks under `childrenField`. Nesting works — expander > box > content roundtrips. On the schema side, `migrate:schema` appends a matching `type: "pageBuilder"` field so the Studio palette inside the container matches the top-level page builder (any block is droppable).
 
+## Named-slot components (auto-detected)
+
+A different AEM pattern shows up on components like `media-paragraph`: a single nested child under a **fixed** JCR key (e.g. `content`) whose value is itself a full component with its own `sling:resourceType`. Not a dialog field, not a drop-zone container — just a named slot.
+
+- **Transform** always emits these as single nested blocks under the slot key (`mediaParagraph.content = {_type: 'content', text: [{_type:'block', ...}], ...}`). Detection is structural: any direct child with `sling:resourceType` that isn't already claimed by container logic is a slot. Works on the first run with no config.
+- **Schema** catches up on the next `migrate:schema`: that pass scans `output/cache/raw/` (extracted content) and appends a typed `defineField({ name: slotKey, type: childTypeName })` to the parent schema. Until then the Studio shows a yellow "Unknown fields found" warning on the nested data but the data itself is preserved.
+
+There's no config for named slots — the shape is inferred from content. Container parents (listed in `aem-component-containers.json`) skip slot synthesis so their drop-zone children stay on the container-items path.
+
 ## Timing
 
 Every CLI appends an `Elapsed:` line to its summary. `aem-assets` also reports per-phase durations (`phase 0 (ML dedup)` / `phase 1 (download)` / `phase 2 (upload)` / `phase 3 (link)` / `phase 4 (rewrite)`), which lets you see at a glance whether a slow run is bottlenecked on AEM fetches, ML uploads, or the dataset link API.
