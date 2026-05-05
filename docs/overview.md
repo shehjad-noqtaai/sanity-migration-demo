@@ -65,6 +65,9 @@ Drift findings (unknown resource types, unknown props per mapped component, tran
 **Studio app** (`apps/studio`)
 A real Sanity Studio. `apps/studio/schemas/index.ts` re-exports `allSchemaTypes` from `examples/davids-bridal/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import. It's a consumer test — if emitted schemas break `sanity schema validate`, this is where it surfaces.
 
+**Storefront preview** (`apps/web`)
+A Vite + React 19 app that reads the migrated home doc and renders its pageBuilder through a set of block primitives styled per `docs/DESIGN.md`. Mirrors the `hydrogen-sanity` data pattern — when this graduates into a full Shopify + Hydrogen storefront, the renderers + Portable Text setup carry over unchanged. Run with `pnpm -F web dev`.
+
 ---
 
 ## Design principles worth keeping in mind

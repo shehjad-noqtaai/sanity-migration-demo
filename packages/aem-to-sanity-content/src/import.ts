@@ -105,7 +105,7 @@ async function main(): Promise<void> {
 interface SanityTransactionLike {
   createOrReplace(doc: SanityDoc): SanityTransactionLike;
   delete(id: string): SanityTransactionLike;
-  commit(): Promise<unknown>;
+  commit(): Promise<{ transactionId?: string; results?: Array<{ id: string; operation: string }> }>;
 }
 interface SanityClientLike {
   transaction(): SanityTransactionLike;

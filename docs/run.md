@@ -85,6 +85,14 @@ The four stages are independent CLIs chained through on-disk output; you can re-
 ### 4b. `transform`
 **What this does:** Walks each raw JCR tree under `output/raw/`, maps `sling:resourceType` values via `content-type-registry.json`, and emits one Sanity `page` doc per input into `output/clean/` — with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key`, so re-runs upsert instead of duplicating. Unknown types and entries in `aem-component-exceptions` are skipped but recorded in `output/transform-report.json`. Purely local — no AEM or Sanity calls.
 
+Any `sling:resourceType` that isn't in the registry is also printed to the console at the end of the run — hit count, example path, and a paste-ready `/apps/...` line. New pages bringing new components show up here as action items: paste the lines into `aem-component-paths`, re-run `migrate:schema` + `transform` + `import`, and the dropped content comes through on the next pass.
+
+AEM **container** components (cq:isContainer=true — drop-zone children, not dialog multifields) are declared in `aem-component-containers.json` (default path). Listed types get a synthetic pageBuilder-typed `items` array appended at schema emission, and the transform walker descends into each container's direct child nodes with `sling:resourceType`, recursively emitting them as pageBuilder blocks under that field — so expander → box → content nests exactly like AEM structures it. See running-the-migration § 1c-quater for the config shape.
+
+AEM **authoring hints** like `cq:panelTitle` (the question heading on each accordion / expander panel child) live outside the dialog payload, so the migration drops them by default. Components opt in via `aem-component-hints.json` (default path; mirror shape of the containers config). Listed components get the named hint(s) lifted at transform time to a canonical Sanity field name (`cq:panelTitle` → `panelTitle`) and a matching read-only field declared on their emitted schema. Non-listed components stay clean — no pollution. See running-the-migration § 1c-quinquies for the config shape.
+
+AEM **named-slot** components (a single nested child under a fixed JCR key, e.g. `media-paragraph` > `content`) are auto-detected — no config needed. Every `migrate:schema` run scans the extracted raw content in `output/cache/raw/` and appends a typed field to each parent schema for each slot it finds. Transform emits nested components under their JCR key on every run, so data never gets dropped; the Studio stops showing "Unknown field" warnings once the schema pass picks up the slot shape. Container parents skip slot synthesis (their drop-zone logic already claims resourceType-carrying children).
+
 AEM's JCR serializes every authored dialog value as a JSON string; transform reads each field's declared Sanity type from the registry and coerces on the way in. `array-of-blocks` fields (richtext) are converted to Portable Text via `@portabletext/block-tools`; `number` fields are parsed via `Number(v)`; `boolean` fields are parsed from the literal strings `"true"` / `"false"`. Values that can't be coerced cleanly are left in place so they surface as Studio validation errors rather than being silently remapped. Deterministic `_key`s preserve clean diffs across re-runs.
 
 ### 4c. `assets`
@@ -119,13 +127,26 @@ pnpm --filter studio exec sanity media deploy-aspect aemSource
 
 ---
 
-## 5. (Optional) Run the whole pipeline in one shot
+## 5. Run the whole pipeline in one shot
+
+The `migrate` script chains every stage end-to-end, with `--discard-drafts` on import so re-runs reflect immediately in the Studio:
+
+```bash
+pnpm --filter example-davids-bridal migrate
+```
+
+**What this does:** runs in order — `migrate:schema` → `extract` → `transform` → `assets` (full download + upload + link) → `import --discard-drafts`. Each stage's `Elapsed:` line surfaces along the way. Use this for "blow away and re-run" workflows on a dataset only the pipeline writes to.
+
+For more granular variants:
+
+- `pnpm --filter example-davids-bridal migrate:content` — content stages only, **no** `--discard-drafts` (preserves any in-progress author edits).
+- `pnpm --filter example-davids-bridal migrate:all` — schema + typegen only.
+
+Or via Turbo with input-hash caching for the pure emit stages:
 
 ```bash
 pnpm turbo run migrate:schema typegen migrate:content --filter=example-davids-bridal
 ```
-
-**What this does:** Turbo executes the three top-level tasks in the order declared in `turbo.json` (schema → typegen → content). Pure emit steps are cached against input hashes so unchanged inputs skip re-running; network-dependent tasks (`extract`, `assets`, `import`) are marked `"cache": false` and always execute.
 
 ---
 

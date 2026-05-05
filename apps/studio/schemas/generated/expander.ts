@@ -107,5 +107,6 @@ export const expander = defineType({
         },
       ],
     }),
+    defineField({ name: "items", title: "Items", type: "pageBuilder" }),
   ],
 });

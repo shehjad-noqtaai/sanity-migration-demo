@@ -21,6 +21,8 @@ Every user-facing change must update its documentation in the same commit. Drift
 - **Emitter / mapper behavior change** → update `packages/aem-to-sanity-schema/src/docs.ts` (prose that lands in the generated mapping doc) + regenerate `docs/aem-to-sanity-mapping.md`.
 - **Pipeline phase / output shape change** → update the "Outputs" subsections in `docs/running-the-migration.md` § 2 and § 4, and `docs/run.md`.
 - **Mapping table change** (`packages/aem-to-sanity-schema/src/mapping-table.ts`) → rerun `pnpm migrate:schema` so `docs/aem-to-sanity-mapping.md` regenerates from the source of truth. `writeMappingDocs` can also be called standalone from the schema package's `dist/index.js` (no AEM round-trip needed).
+- **Container config shape change** (`packages/aem-to-sanity-core/src/config/containers.ts` or `aem-component-containers.json` fields) → update the "Container components" section in `packages/aem-to-sanity-schema/src/docs.ts`, regenerate `docs/aem-to-sanity-mapping.md`, and mirror in `docs/running-the-migration.md` § 1c-quater + content package README.
+- **Slot discovery shape change** (`packages/aem-to-sanity-schema/src/slots.ts` behavior, `slot-reference` field emission rules) → update the "Named slots (auto-discovered)" section in `packages/aem-to-sanity-schema/src/docs.ts`, regenerate the mapping doc, and mirror in `docs/running-the-migration.md` § 2 + content package README.
 
 **Anti-patterns:**
 - Don't duplicate content between the generated mapping doc and hand-authored docs. The generated file is the source of truth for field-level mapping; hand-authored docs describe architecture, phases, env vars, flags.
@@ -77,6 +79,12 @@ Phases 0–3 of `aem-assets` run with a work-stealing pool sized by `ASSET_CONCU
 ## Drafts shadow imports
 
 The Studio edits `drafts.{id}` whenever one exists. `aem-import` by default only writes the published `{id}`, so a stale draft keeps shadowing fresh migration output — the operator sees old content after a "successful" re-import and gets confused. For migration re-runs, pass `--discard-drafts` (or set `MIGRATION_DISCARD_DRAFTS=true`). When diagnosing "I re-ran the import and nothing changed in the Studio", check for a shadowing draft first.
+
+## Storefront preview (apps/web)
+
+A Vite + React 19 app lives at `apps/web/` that reads the migrated home doc from Sanity and renders its pageBuilder through a set of block primitives styled per `docs/DESIGN.md` (the "Ethereal Atelier" system). Use it to eyeball the output of a migration run end-to-end — `pnpm -F web dev` → http://localhost:4321. Env plumbing falls back to `examples/davids-bridal/.env` so the demo tracks the migration destination automatically.
+
+Design tokens live in `apps/web/src/styles.css` under a Tailwind v4 `@theme` block. Block renderers are one-per-`_type` under `apps/web/src/blocks/`, wired through a switch-based dispatcher in `blocks/index.tsx`; unknown `_type`s fall through to a visible `UnknownBlock` placeholder so missing primitives surface immediately instead of rendering as blank space. When adding a new block type to the schema side, drop a primitive into this dispatcher in the same change so the preview stays usable.
 
 ## Running verification
 

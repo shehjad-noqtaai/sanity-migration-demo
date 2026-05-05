@@ -3,7 +3,15 @@ import "dotenv/config";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { createColors, startTimer } from "aem-to-sanity-core";
+import {
+  AEM_AUTHORING_HINTS,
+  createColors,
+  loadAuthoringHintConfig,
+  loadContainerConfig,
+  startTimer,
+  type AuthoringHintConfig,
+  type ContainerConfig,
+} from "aem-to-sanity-core";
 import { htmlToBlocks } from "@portabletext/block-tools";
 import { compileSchema, defineSchema, type Schema } from "@portabletext/schema";
 import { JSDOM } from "jsdom";
@@ -91,6 +99,19 @@ const JCR_METADATA = new Set<string>([
  *   otherwise surface in the Studio as "Unknown field found".
  */
 const AEM_DIALOG_RUNTIME_KEYS = new Set<string>(["textIsRich"]);
+
+/**
+ * AEM structural wrappers we always recurse through — the page root and the
+ * responsive-grid container. These never become Sanity blocks on their own;
+ * the transform walker descends into their children. Listing them here lets
+ * the CLI hide them from the "unmapped components" callout so every row there
+ * is an actionable missing schema, not known passthrough noise. The JSON
+ * report still records them for completeness.
+ */
+const AEM_STRUCTURAL_PASSTHROUGH_TYPES = new Set<string>([
+  "aem-integration/components/page",
+  "wcm/foundation/components/responsivegrid",
+]);
 
 const MAX_DEPTH = 512;
 
@@ -234,6 +255,70 @@ function stableKey(jcrUuid: string | undefined, jcrPath: string): string {
   return createHash("sha1").update(jcrPath).digest("hex").slice(0, 16);
 }
 
+/**
+ * For a container node, the list of direct child keys that are themselves
+ * full AEM components (have a `sling:resourceType`). These are the drop-zone
+ * items that become pageBuilder blocks inside the container, NOT inline
+ * fields. Ordered by JCR insertion order (JavaScript object-key iteration).
+ */
+function collectContainerChildKeys(node: AemNode): string[] {
+  const out: string[] = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (!isChildNode(value)) continue;
+    const childType = asString((value as AemNode)["sling:resourceType"]);
+    if (!childType) continue;
+    out.push(key);
+  }
+  return out;
+}
+
+/**
+ * Named-slot keys for the current node: direct children that are themselves
+ * AEM component instances (carry `sling:resourceType`) under a JCR key
+ * that isn't already claimed by container logic. Each hit becomes one
+ * nested block under that key at transform time — the schema side
+ * discovers the same shape offline by scanning extracted content
+ * (`packages/aem-to-sanity-schema/src/slots.ts`) and appends a matching
+ * typed `slot-reference` field so the Studio shows the slot as
+ * first-class content.
+ *
+ * Intentionally NOT filtering by dialog-declared field names: once
+ * schema-side slot discovery runs, the registry's `fieldNames` includes
+ * the slot key (as a `slot-reference` type). If we excluded declared
+ * field names here, the nested block would round-trip through
+ * `transformInline` as raw inline data and lose its `_type` + richtext
+ * coercion. Having `sling:resourceType` on the child is the reliable
+ * signal that it's a component instance, not dialog data — dialog
+ * multifield rows are plain `nt:unstructured` nodes without
+ * sling:resourceType, so they're never mistaken for slots.
+ */
+function collectSlotKeys(
+  node: AemNode,
+  containerChildKeys: string[] | null,
+): string[] {
+  const containerClaim = new Set(containerChildKeys ?? []);
+  const out: string[] = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (containerClaim.has(key)) continue;
+    if (!isChildNode(value)) continue;
+    const childType = asString((value as AemNode)["sling:resourceType"]);
+    if (!childType) continue;
+    out.push(key);
+  }
+  return out;
+}
+
+function stripKeys(node: AemNode, keys: string[]): AemNode {
+  if (keys.length === 0) return node;
+  const skip = new Set(keys);
+  const out: AemNode = {};
+  for (const [k, v] of Object.entries(node)) {
+    if (skip.has(k)) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
 function isChildNode(value: unknown): value is AemNode {
   return (
     typeof value === "object" &&
@@ -252,6 +337,15 @@ interface TransformContext {
   depth: number;
   registry: Map<string, NormalizedRegistryEntry>;
   audit: Audit;
+  /** Resource types whose drop-zone children should be emitted under `childrenField`. */
+  containers: ContainerConfig;
+  /**
+   * Per-resource-type opt-ins for AEM authoring hints (e.g. `cq:panelTitle`).
+   * Listed components have those keys lifted to the corresponding Sanity
+   * field name (via `AEM_AUTHORING_HINTS`). Non-listed components see no
+   * hint behavior — colon-bearing keys still drop as before.
+   */
+  authoringHints: AuthoringHintConfig;
 }
 
 /**
@@ -488,6 +582,12 @@ function deepCoerceAemMultifieldMapsToArrays(val: unknown): unknown {
 // Transform a mapped component into an inline object. Children are recursively
 // inlined (each with a stable _key). Used for pageBuilder items and nested refs.
 function transformInline(node: AemNode, jcrPath: string, ctx: TransformContext): Record<string, unknown> {
+  const nodeResourceType = typeof node["sling:resourceType"] === "string"
+    ? (node["sling:resourceType"] as string)
+    : undefined;
+  const optedInHintKeys = nodeResourceType
+    ? ctx.authoringHints.get(nodeResourceType)
+    : undefined;
   const out: Record<string, unknown> = {};
 
   if (ctx.visited.has(node)) {
@@ -514,6 +614,19 @@ function transformInline(node: AemNode, jcrPath: string, ctx: TransformContext):
         _key: stableKey(asString(value["jcr:uuid"]), childPath),
       };
     } else {
+      // AEM authoring hints (e.g. `cq:panelTitle` on accordion children)
+      // carry meaningful content but live outside the dialog. Lift them
+      // only for components opted in via `aem-component-hints.json` so
+      // the schema's declared field set stays tight — colon-bearing keys
+      // on non-opted components fall through to `isValidSanityAttributeKey`
+      // and get dropped as before.
+      if (optedInHintKeys?.has(key)) {
+        const hintKey = AEM_AUTHORING_HINTS.get(key);
+        if (hintKey && out[hintKey] === undefined) {
+          out[hintKey] = value;
+        }
+        continue;
+      }
       if (!isValidSanityAttributeKey(key)) continue;
       if (out[key] !== undefined) continue;
       out[key] = value;
@@ -556,16 +669,89 @@ function collectPageBuilder(
         depth: 0,
         visited: new WeakSet(),
       };
-      const inline = transformInline(frame.node, frame.jcrPath, inlineCtx);
+      const containerEntry = resourceType ? ctx.containers.get(resourceType) : undefined;
+
+      // Container components carry two shapes in the same JCR node: dialog
+      // fields (handled by transformInline) AND drop-zone child components
+      // (each itself an AEM component with its own sling:resourceType).
+      // Strip those child keys out before transformInline so they don't
+      // pollute the dialog-field area; we re-collect them below as
+      // pageBuilder-style blocks under `childrenField`.
+      const containerChildKeys = containerEntry
+        ? collectContainerChildKeys(frame.node)
+        : null;
+
+      // Named-slot children: direct child nodes that carry their own
+      // sling:resourceType under a JCR key that isn't a declared dialog
+      // field and isn't already claimed by container logic. e.g.
+      // `media-paragraph` has a `content` child that's itself a full
+      // `aem-integration/components/content` component. We emit these as
+      // single nested blocks under the same JCR key so the Studio shows
+      // them as typed subfields rather than raw "Unknown field" blobs.
+      // Dialog-field collisions leave the dialog field in place (dialog
+      // wins).
+      const slotKeys = collectSlotKeys(frame.node, containerChildKeys);
+      const stripAll = [
+        ...(containerChildKeys ?? []),
+        ...slotKeys,
+      ];
+      const nodeForInline = stripAll.length > 0
+        ? stripKeys(frame.node, stripAll)
+        : frame.node;
+
+      const inline = transformInline(nodeForInline, frame.jcrPath, inlineCtx);
       splitAemFileUploadDamPaths(inline, entry.fieldNames);
       coerceFieldTypes(inline, entry.fieldTypes, frame.jcrPath);
+
+      for (const slotKey of slotKeys) {
+        const child = frame.node[slotKey] as AemNode;
+        const childItems = collectPageBuilder(
+          child,
+          `${frame.jcrPath}/${slotKey}`,
+          ctx,
+          filter,
+          exceptions,
+        );
+        // Sanity field names are restricted (/^[A-Za-z]+[0-9A-Za-z_]*$/),
+        // so a JCR key like `resources-column-item` becomes the camelCased
+        // `resourcesColumnItem` at schema-emission time. Land the slot
+        // data under the same camelCased name so both sides agree.
+        const outKey = toCamelCase(slotKey) || slotKey;
+        // Named slots hold a single nested block. If the child walker
+        // returned more than one (unlikely — would mean the slot child
+        // was itself a container-of-containers), keep them as an array
+        // so nothing is dropped; the Studio will flag the shape mismatch
+        // rather than losing data.
+        if (childItems.length === 1) {
+          inline[outKey] = childItems[0];
+        } else if (childItems.length > 1) {
+          inline[outKey] = childItems;
+        }
+      }
+
+      if (containerEntry && containerChildKeys) {
+        const items: PageBuilderItem[] = [];
+        for (const key of containerChildKeys) {
+          const child = frame.node[key] as AemNode;
+          const childItems = collectPageBuilder(
+            child,
+            `${frame.jcrPath}/${key}`,
+            ctx,
+            filter,
+            exceptions,
+          );
+          items.push(...childItems);
+        }
+        inline[containerEntry.childrenField] = items;
+      }
+
       out.push({
         _type: entry.sanityType,
         _key: stableKey(asString(frame.node["jcr:uuid"]), frame.jcrPath),
         ...inline,
       });
       ctx.audit.tick();
-      const drift = diffProps(frame.node, entry);
+      const drift = diffProps(frame.node, entry, ctx.authoringHints);
       if (drift.length > 0) ctx.audit.unknownProps(entry.sanityType, frame.jcrPath, drift);
       continue;
     }
@@ -599,7 +785,7 @@ interface Audit {
 function createAudit(maxExamples = 3): Audit {
   let totalDocs = 0;
   let totalFindings = 0;
-  const unknownTypes = new Map<string, string[]>();
+  const unknownTypes = new Map<string, { hits: number; examples: string[] }>();
   const unknownProps = new Map<string, Map<string, Array<{ path: string; value: unknown }>>>();
   const bails: Array<{ path: string; reason: string; depth: number }> = [];
 
@@ -611,12 +797,13 @@ function createAudit(maxExamples = 3): Audit {
     tick: () => void totalDocs++,
     unknownType(resourceType, path) {
       totalFindings++;
-      let list = unknownTypes.get(resourceType);
-      if (!list) {
-        list = [];
-        unknownTypes.set(resourceType, list);
+      let entry = unknownTypes.get(resourceType);
+      if (!entry) {
+        entry = { hits: 0, examples: [] };
+        unknownTypes.set(resourceType, entry);
       }
-      bump(list, path);
+      entry.hits++;
+      bump(entry.examples, path);
     },
     unknownProps(component, path, props) {
       totalFindings++;
@@ -647,8 +834,9 @@ function createAudit(maxExamples = 3): Audit {
           componentsWithUnknownProps: unknownProps.size,
           transformBails: bails.length,
         },
-        unknownResourceTypes: [...unknownTypes.entries()].map(([resourceType, examples]) => ({
+        unknownResourceTypes: [...unknownTypes.entries()].map(([resourceType, { hits, examples }]) => ({
           resourceType,
+          hits,
           examples,
         })),
         unknownPropsByComponent: Object.fromEntries(
@@ -663,12 +851,23 @@ function createAudit(maxExamples = 3): Audit {
   };
 }
 
-function diffProps(node: AemNode, entry: NormalizedRegistryEntry | undefined): Array<{ prop: string; value: unknown }> {
+function diffProps(
+  node: AemNode,
+  entry: NormalizedRegistryEntry | undefined,
+  authoringHints: AuthoringHintConfig,
+): Array<{ prop: string; value: unknown }> {
   if (!entry?.fieldNames?.length) return [];
   const expected = new Set(entry.fieldNames);
+  const nodeResourceType = typeof node["sling:resourceType"] === "string"
+    ? (node["sling:resourceType"] as string)
+    : undefined;
+  const optedInHints = nodeResourceType ? authoringHints.get(nodeResourceType) : undefined;
   const out: Array<{ prop: string; value: unknown }> = [];
   for (const [key, value] of Object.entries(node)) {
     if (JCR_METADATA.has(key) || AEM_DIALOG_RUNTIME_KEYS.has(key)) continue;
+    // Skip AEM keys this component opted into — they're lifted to the
+    // declared Sanity field, not stray.
+    if (optedInHints?.has(key)) continue;
     if (expected.has(key)) continue;
     if (typeof value === "object" && value !== null && !Array.isArray(value)) continue;
     out.push({ prop: key, value });
@@ -705,6 +904,16 @@ function main(): void {
   const include = getFlag("--include")?.split(",").filter(Boolean);
   const allowed = include ? new Set(include) : undefined;
 
+  const containersFile = resolve(
+    process.env.AEM_COMPONENT_CONTAINERS_FILE ?? "./aem-component-containers.json",
+  );
+  const containers = loadContainerConfig({ file: containersFile });
+
+  const hintsFile = resolve(
+    process.env.AEM_COMPONENT_HINTS_FILE ?? "./aem-component-hints.json",
+  );
+  const authoringHints = loadAuthoringHintConfig({ file: hintsFile });
+
   const registry = loadRegistry(registryFile);
   const rawDir = join(outputDir, "cache", "raw");
   const cleanDir = join(outputDir, "cache", "clean");
@@ -720,6 +929,16 @@ function main(): void {
   if (exceptions.size > 0) {
     console.error(
       `[transform] applying ${exceptions.size} exception(s) from ${exceptionsFile}`,
+    );
+  }
+  if (containers.size > 0) {
+    console.error(
+      `[transform] container behavior for ${containers.size} resource type(s) from ${containersFile}`,
+    );
+  }
+  if (authoringHints.size > 0) {
+    console.error(
+      `[transform] authoring-hint opt-ins for ${authoringHints.size} resource type(s) from ${hintsFile}`,
     );
   }
 
@@ -743,6 +962,8 @@ function main(): void {
       visited: new WeakSet(),
       depth: 0,
       registry,
+      containers,
+      authoringHints,
       audit,
     };
 
@@ -772,7 +993,10 @@ function main(): void {
     blocksEmitted += pageBuilder.length;
   }
 
-  const report = audit.report() as { summary: { totalFindings: number } };
+  const report = audit.report() as {
+    summary: { totalFindings: number };
+    unknownResourceTypes: Array<{ resourceType: string; hits: number; examples: string[] }>;
+  };
   const reportFile = join(outputDir, "cache", "transform-report.json");
   writeFileSync(reportFile, JSON.stringify(report, null, 2) + "\n", "utf8");
 
@@ -783,6 +1007,30 @@ function main(): void {
     `Findings:  ${report.summary.totalFindings > 0 ? c.yellow(report.summary.totalFindings) : c.green(0)}  ${c.dim(`→ ${reportFile}`)}`,
   );
   console.error(`Elapsed:   ${c.dim(timer.elapsed())}`);
+
+  const unmapped = report.unknownResourceTypes.filter(
+    (u) => !AEM_STRUCTURAL_PASSTHROUGH_TYPES.has(u.resourceType),
+  );
+  if (unmapped.length > 0) {
+    const typeWidth = Math.min(60, unmapped.reduce((w, u) => Math.max(w, u.resourceType.length), 0));
+    console.error("");
+    console.error(
+      c.yellow(
+        `${unmapped.length} unmapped AEM resource type(s) — content dropped. Add to aem-component-paths, then re-run migrate:schema + transform + import:`,
+      ),
+    );
+    unmapped
+      .sort((a, b) => b.hits - a.hits)
+      .forEach((u, i) => {
+        const n = c.dim(String(i + 1).padStart(2, " ") + ".");
+        const rt = u.resourceType.padEnd(typeWidth, " ");
+        const count = c.yellow(`${u.hits}×`.padStart(5, " "));
+        const pathLine = `/apps/${u.resourceType}`;
+        console.error(`  ${n} ${rt}  ${count}  ${c.dim(pathLine)}`);
+        const firstExample = u.examples[0];
+        if (firstExample) console.error(`      ${c.dim(`e.g. ${firstExample}`)}`);
+      });
+  }
 }
 
 function getFlag(name: string): string | undefined {

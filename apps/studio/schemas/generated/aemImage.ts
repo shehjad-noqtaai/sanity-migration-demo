@@ -14,12 +14,8 @@ export const aemImage = defineType({
     },
   },
   fields: [
-    defineField({
-      name: "metadata",
-      title: "metadata",
-      description:
-        'TODO: no Sanity mapping for AEM resource type "unknown". Falling back to string.',
-      type: "string",
-    }),
+    defineField({ name: "fit", title: "Image fit type", type: "string" }),
+    defineField({ name: "fullWidth", type: "boolean", initialValue: true }),
+    defineField({ name: "bg", title: "Background color", type: "string" }),
   ],
 });

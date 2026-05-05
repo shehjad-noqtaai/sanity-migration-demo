@@ -296,6 +296,20 @@ function fieldBody(field: SanityField, _indentLevel: number): string {
       props.of = `[{ type: "object"${memberTitle}, fields: [${itemFields}] }]`;
       break;
     }
+    case "container-children": {
+      // Emit a direct reference to the top-level page-builder array type.
+      // Keeps the container's drop-zone palette in sync with the page's
+      // automatically — one list, one source of truth.
+      props.type = '"pageBuilder"';
+      break;
+    }
+    case "slot-reference": {
+      // Direct type reference — the slot carries one nested block inline,
+      // not an array. Transform writes `{slotKey: {_type, ...}}` under this
+      // field; schema agrees by declaring the field as that block type.
+      props.type = JSON.stringify(field.slotTypeName);
+      break;
+    }
     case "placeholder": {
       props.type = '"string"';
       props.description = JSON.stringify(

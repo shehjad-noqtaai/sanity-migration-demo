@@ -47,6 +47,8 @@ cp examples/davids-bridal/.env.example examples/davids-bridal/.env
 | `AEM_COMPONENT_PATHS_FILE` | optional | File listing component JCR paths to migrate (one per line, `#` for comments). Default: `./aem-component-paths`. |
 | `AEM_CONTENT_ROOTS_FILE` | optional | File listing content roots to walk during extraction. Default: `./aem-content-roots`. See `aem-content-roots.example` for syntax. |
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | optional | File listing `sling:resourceType` values to skip during transform. Default: `./aem-component-exceptions`. |
+| `AEM_COMPONENT_CONTAINERS_FILE` | optional | JSON file mapping `sling:resourceType` → `{ childrenField }` for AEM container components whose drop-zone children should become a nested `pageBuilder` array. Default: `./aem-component-containers.json`. Missing file → no container behavior. |
+| `AEM_COMPONENT_HINTS_FILE` | optional | JSON file mapping `sling:resourceType` → `["cq:hintKey", …]`, opting individual components into AEM authoring-hint lifting (e.g. `cq:panelTitle` on accordion children). Default: `./aem-component-hints.json`. Missing file → no hint behavior. See § 1c-quinquies. |
 | `AEM_MAX_RESPONSE_MB` | optional | Cap per-fetch payload size during extract. Pages exceeding this are recorded as `tooLarge` failures. |
 | `OUTPUT_DIR` | optional | Where schemas, reports, and audit live. Default: `./output`. |
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
@@ -109,6 +111,49 @@ Each line becomes a Sanity page doc with its slug derived from the last segment.
 
 Consumed by `aem-transform`. One `sling:resourceType` (or `apps/...` prefix) per line; matching nodes and their subtrees are skipped. Use this for decorative wrappers or AEM-only utilities that don't belong in Sanity.
 
+### 1c-quater. Container components — `examples/davids-bridal/aem-component-containers.json`
+
+Consumed by both `migrate:schema` and `aem-transform`. Declares which components are AEM "containers" — ones whose children are dropped in via the page editor (cq:isContainer=true) rather than declared as a dialog multifield. Example:
+
+```json
+{
+  "aem-integration/components/expander": { "childrenField": "items" },
+  "aem-integration/components/container": { "childrenField": "items" },
+  "aem-integration/components/column-layout": { "childrenField": "items" },
+  "aem-integration/components/box": { "childrenField": "items" }
+}
+```
+
+For each listed resource type:
+
+- **Schema emission** appends a synthetic `defineField({ name: childrenField, title: "Items", type: "pageBuilder" })` to the component so the Studio palette inside the container matches the top-level page builder — every block type is droppable. The field is appended last so dialog-authored fields keep their declared order. Name collisions with dialog fields (same-name field already declared) leave the dialog field untouched and skip the synthetic append.
+- **Content transform** descends into the container node's direct child keys that themselves carry a `sling:resourceType`, recursively emits each as a pageBuilder block (same `_type` / `_key` / coercion pipeline as top-level blocks), and stores the array under `childrenField`. Containers nest: an expander containing boxes containing content paragraphs all roundtrip. Children without `sling:resourceType` stay inline on the container (that's how multifields keep working).
+
+Missing file → container behavior stays off. Malformed JSON or invalid entries are a hard error (fail loudly rather than silently drop child content).
+
+### 1c-quinquies. Authoring hints — `examples/davids-bridal/aem-component-hints.json`
+
+Consumed by both `migrate:schema` and `aem-transform`. Opts specific components into AEM authoring-hint lifting — JCR/CQ properties that carry meaningful content but live outside the dialog payload, like `cq:panelTitle` on accordion / expander panel children. Without this opt-in, the transform's normal property iterator drops anything with a colon and the value is lost.
+
+```json
+{
+  "aem-integration/components/box":     ["cq:panelTitle"],
+  "aem-integration/components/content": ["cq:panelTitle"]
+}
+```
+
+Two layers, one source of truth each:
+
+- **Rename vocabulary** (`AEM_AUTHORING_HINTS` in `packages/aem-to-sanity-core/src/aem/authoring-hints.ts`) — the migrator-wide map of AEM keys to canonical Sanity field names (`cq:panelTitle` → `panelTitle`). Stable across projects.
+- **Per-project opt-in** (this file) — names which components apply which hints. Per-project, since which components act as accordion children depends on the AEM authoring conventions in that project.
+
+For each listed resource type:
+
+- **Schema emission** appends a `readOnly` `string` field per opted-in hint (translated through the rename vocabulary). Read-only because the value is preserved from AEM, not authored from the Studio. Components not listed in this file get no extra fields — the rest of the schema stays clean.
+- **Content transform** consults the same map keyed by the current node's `sling:resourceType`. If the node is opted in and the property is in its allowlist, the value is renamed and emitted under the Sanity field name; otherwise colon-bearing keys drop as before. The drift report skips opted-in keys so they don't surface as "unknown props".
+
+Missing file → no hint behavior on any component. Malformed JSON or invalid entries are a hard error.
+
 ### 1d. Resource-type registry — `output/content-type-registry.json`
 
 **Generated** by `migrate:schema`; you don't hand-author it. Maps AEM `sling:resourceType` values to the Sanity type names that stage 1 emitted, plus each field's name + Sanity type (used by the drift auditor and by `aem-transform` for type-aware coercion — e.g. HTML → Portable Text on `array-of-blocks` fields):
@@ -170,6 +215,8 @@ On start-up the CLI prints a banner summarizing what it's connecting to: AEM env
 | `audit/unmapped-examples.json` | Real-world examples per unmapped AEM type. Feed these back into `mapping-table.ts` when adding new mappings. |
 
 Re-run any time — output is deterministic, so `git diff` shows only real changes. Each CLI appends an `Elapsed:` line to its summary (and `aem-assets` prints a `Per phase:` breakdown) so you can see where time is going across runs.
+
+**Slot discovery runs automatically on every schema pass.** `migrate:schema` scans `output/cache/raw/*.json` — the output of `aem-extract` — for AEM components that nest other AEM components under a fixed JCR key (e.g. `media-paragraph`'s `content` child is itself an `aem-integration/components/content` block). Each discovered slot gets a synthetic `defineField({ name: slotKey, type: childTypeName })` on the parent schema so the Studio shows it as a typed inline field rather than flagging it as "Unknown field found". First-ever run has no `raw/` to scan yet (scan returns empty, no slot fields emitted); run `aem-extract` once and the next `migrate:schema` picks every slot up. The content transform always emits nested components under their JCR key regardless, so data never gets dropped on the first pass — the schema upgrade only clears Studio warnings. Skipped cases: dialog-field name collisions (dialog wins), container parents (their drop-zone logic claims all resourceType-carrying children already), multi-type slots (logged, hand-author if you need the field), and slots whose child type isn't yet in `aem-component-paths` (add it, re-run).
 
 ### Type-name resolution (reserved-name handling)
 
@@ -258,7 +305,9 @@ Legacy `content-type-registry.json` files without `fields[].type` skip every coe
 | `--include type1,type2` | Restrict to a comma-separated allow-list of `sling:resourceType` values. |
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | Path to exceptions file. Default: `./aem-component-exceptions`. |
 
-**Outputs:** `output/clean/*.json` (one per page, containing the transformed doc) and `output/transform-report.json` (unknown resource types, unknown props per component, transform bails — with first-N example paths per finding).
+**Outputs:** `output/clean/*.json` (one per page, containing the transformed doc) and `output/transform-report.json` (unknown resource types with hit counts, unknown props per component, transform bails — with first-N example paths per finding).
+
+**Unmapped components, surfaced in the console.** At the end of each `aem-transform` run, any `sling:resourceType` that doesn't resolve to a Sanity type is printed directly to stderr as a ranked list — `<hits>× <resourceType>  /apps/<resourceType>`, plus one example JCR path per type. Those `/apps/...` lines are paste-ready for `aem-component-paths`; add them, re-run `migrate:schema` to emit schemas, then rerun `transform` + `import` to pick up the content that was dropped. The page root (`aem-integration/components/page`) and `wcm/foundation/components/responsivegrid` wrapper are hidden from this list — they're structural passthroughs the walker recurses through, not missing schemas. (They still appear in `transform-report.json` for completeness.)
 
 ### 4c. `aem-assets` — upload DAM → Media Library → link to dataset
 
@@ -333,6 +382,19 @@ AEM's `.infinity.json` truncates the tree at depth ~5, inserting path-string mar
 ---
 
 ## 5. Orchestrated — one command for the full pipeline
+
+```bash
+pnpm --filter example-davids-bridal migrate
+```
+
+Chains `migrate:schema` → `extract` → `transform` → `assets` → `import --discard-drafts` in a single shell. Each stage's `Elapsed:` line surfaces as it runs, so timing breakdowns are visible without parsing logs after the fact. Use this for "blow away and re-run" workflows on datasets only the pipeline writes to — `--discard-drafts` is destructive of in-progress author edits.
+
+More granular variants:
+
+- `pnpm --filter example-davids-bridal migrate:content` — content stages only, no `--discard-drafts`.
+- `pnpm --filter example-davids-bridal migrate:all` — schema + typegen only.
+
+Or via Turbo with input-hash caching for the pure emit stages:
 
 ```bash
 pnpm turbo run migrate:schema typegen migrate:content --filter=example-davids-bridal

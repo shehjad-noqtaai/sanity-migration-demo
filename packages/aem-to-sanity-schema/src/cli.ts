@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import "dotenv/config";
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import {
   DialogNodeSchema,
   createColors,
   createLogger,
   fetchInfinityJson,
+  loadAuthoringHintConfig,
+  loadContainerConfig,
   logStartupBanner,
   resolveConfig,
   startTimer,
@@ -14,6 +16,7 @@ import {
   type SanityRuntimeSummary,
 } from "aem-to-sanity-core";
 import { migrateSchemas } from "./api.ts";
+import { scanSlotsFromRawDir } from "./slots.ts";
 
 async function main(): Promise<void> {
   const timer = startTimer();
@@ -58,6 +61,48 @@ async function main(): Promise<void> {
   const exceptions = await readExceptionList(exceptionsFile);
   const filtered = applyComponentExceptions(componentPaths, exceptions);
 
+  // AEM containers — components whose children are dropped in via the page
+  // editor (cq:isContainer) rather than a dialog multifield. Optional file;
+  // missing file → no container behavior.
+  const containersFile = resolve(
+    process.env.AEM_COMPONENT_CONTAINERS_FILE ?? "./aem-component-containers.json",
+  );
+  const containers = loadContainerConfig({ file: containersFile });
+  if (containers.size > 0) {
+    logger.info(
+      `Applied ${containers.size} container entr${containers.size === 1 ? "y" : "ies"} from ${containersFile}`,
+    );
+  }
+
+  // AEM authoring-hint opt-ins (e.g. `cq:panelTitle` on accordion children).
+  // Each listed component gets the named hint(s) lifted at transform time
+  // and declared as a read-only field on the emitted Sanity schema.
+  // Non-listed components stay clean.
+  const hintsFile = resolve(
+    process.env.AEM_COMPONENT_HINTS_FILE ?? "./aem-component-hints.json",
+  );
+  const authoringHints = loadAuthoringHintConfig({ file: hintsFile });
+  if (authoringHints.size > 0) {
+    logger.info(
+      `Applied authoring-hint opt-ins for ${authoringHints.size} component(s) from ${hintsFile}`,
+    );
+  }
+
+  // Slot discovery — scan already-extracted AEM content for named-slot
+  // child components (dialog-less nested components under a fixed JCR key,
+  // e.g. media-paragraph.content). First-ever run has no raw/ yet and
+  // this returns empty; a second run after `aem-extract` picks up every
+  // slot referenced in authored content.
+  const rawDir = join(config.outputDir, "cache", "raw");
+  const discoveredSlots = scanSlotsFromRawDir(rawDir);
+  if (discoveredSlots.size > 0) {
+    let slotCount = 0;
+    for (const m of discoveredSlots.values()) slotCount += m.size;
+    logger.info(
+      `Slot discovery: scanned ${rawDir} — found ${slotCount} slot(s) across ${discoveredSlots.size} parent type(s).`,
+    );
+  }
+
   if (filtered.length === 0) {
     logger.error(
       `No component paths in ${config.componentPathsFile} after applying exceptions.`,
@@ -99,6 +144,9 @@ async function main(): Promise<void> {
     logger,
     docsOutputFile: "./docs/aem-to-sanity-mapping.md",
     continueOnAuth,
+    containers,
+    discoveredSlots,
+    authoringHints,
   });
 
   const s = report.summary();

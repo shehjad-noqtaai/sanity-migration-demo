@@ -85,6 +85,58 @@ Coercion walks the registry tree recursively — nested `array-of-object` items 
 
 Legacy `fields: string[]` registry entries skip every coercion step (pass-through); regenerate the registry via `migrate:schema` to opt in.
 
+## Container components
+
+AEM "container" components (cq:isContainer=true) carry two shapes in one JCR node: authored dialog fields *plus* drop-zone children that are themselves full component instances (e.g. the keys on an `expander` include both `theme` / `singleExpansion` dialog values AND `item_1657754806454`-style child `box` components). Declare those resource types in `aem-component-containers.json` (override with `AEM_COMPONENT_CONTAINERS_FILE`):
+
+```json
+{
+  "aem-integration/components/expander":     { "childrenField": "items" },
+  "aem-integration/components/box":          { "childrenField": "items" },
+  "aem-integration/components/column-layout":{ "childrenField": "items" },
+  "aem-integration/components/container":    { "childrenField": "items" }
+}
+```
+
+Transform then does the right thing: dialog fields go through the normal inline + coercion path, while direct child keys with `sling:resourceType` are recursively emitted as pageBuilder blocks under `childrenField`. Nesting works — expander > box > content roundtrips. On the schema side, `migrate:schema` appends a matching `type: "pageBuilder"` field so the Studio palette inside the container matches the top-level page builder (any block is droppable).
+
+## AEM authoring hints (`cq:panelTitle` and friends)
+
+Some AEM authoring metadata lives **outside** the dialog payload — the most common case is the panel heading on accordion / expander panels, which AEM writes as `cq:panelTitle` on each child node rather than as a dialog field. The transform's normal property iterator drops anything with a colon, so the value would be lost without an explicit lift step.
+
+Per-project opt-ins are declared in `aem-component-hints.json` (override with `AEM_COMPONENT_HINTS_FILE`):
+
+```json
+{
+  "aem-integration/components/box":     ["cq:panelTitle"],
+  "aem-integration/components/content": ["cq:panelTitle"]
+}
+```
+
+The rename vocabulary (which AEM key becomes which Sanity field) is global in `packages/aem-to-sanity-core/src/aem/authoring-hints.ts`:
+
+| AEM key | Sanity field |
+| --- | --- |
+| `cq:panelTitle` | `panelTitle` |
+
+Two layers, symmetric across stages:
+
+- **Transform** consults the opt-in config keyed by the current node's `sling:resourceType`. If the node is opted in and the property is in its allowlist, the value is renamed via `AEM_AUTHORING_HINTS` and emitted under the Sanity field name. Otherwise colon-bearing keys drop as before. The drift report skips opted-in keys so they don't surface as "unknown props".
+- **Schema** (`migrate:schema`) declares a `readOnly` `string` field per opted-in hint on the matching component schema. Read-only because authors don't edit it from the Studio dialog — it's runtime metadata preserved from AEM. Components not listed in this file get no extra fields.
+
+To support a new hint: add the AEM-key → Sanity-field row to `AEM_AUTHORING_HINTS`, then add the AEM key to the relevant component's array in `aem-component-hints.json`. Re-run `pnpm migrate:schema` and `pnpm transform`.
+
+Missing file → no hint behavior on any component. Malformed JSON or invalid entries are a hard error.
+
+## Named-slot components (auto-detected)
+
+A different AEM pattern shows up on components like `media-paragraph`: a single nested child under a **fixed** JCR key (e.g. `content`) whose value is itself a full component with its own `sling:resourceType`. Not a dialog field, not a drop-zone container — just a named slot.
+
+- **Transform** always emits these as single nested blocks under the slot key (`mediaParagraph.content = {_type: 'content', text: [{_type:'block', ...}], ...}`). Detection is structural: any direct child with `sling:resourceType` that isn't already claimed by container logic is a slot. Works on the first run with no config.
+- **Schema** catches up on the next `migrate:schema`: that pass scans `output/cache/raw/` (extracted content) and appends a typed `defineField({ name: slotKey, type: childTypeName })` to the parent schema. Until then the Studio shows a yellow "Unknown fields found" warning on the nested data but the data itself is preserved.
+
+There's no config for named slots — the shape is inferred from content. Container parents (listed in `aem-component-containers.json`) skip slot synthesis so their drop-zone children stay on the container-items path.
+
 ## Timing
 
 Every CLI appends an `Elapsed:` line to its summary. `aem-assets` also reports per-phase durations (`phase 0 (ML dedup)` / `phase 1 (download)` / `phase 2 (upload)` / `phase 3 (link)` / `phase 4 (rewrite)`), which lets you see at a glance whether a slow run is bottlenecked on AEM fetches, ML uploads, or the dataset link API.
@@ -97,7 +149,7 @@ Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (de
 
 - `output/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.
 - `output/extract-404.log` — one `<jcrPath>\t<fullUrl>` per 404 (only written when 404s occur).
-- `output/transform-report.json` — unknown `sling:resourceType`s, unknown properties per mapped component, transform bails (max-depth or cycle).
+- `output/transform-report.json` — unknown `sling:resourceType`s (with hit counts and example paths), unknown properties per mapped component, transform bails (max-depth or cycle). `aem-transform` also echoes unmapped types to the console at the end of the run as a paste-ready `/apps/...` list (the page root and `responsivegrid` wrapper are hidden — they're always passthroughs, never missing schemas). Add the listed paths to `aem-component-paths`, then re-run `migrate:schema` → `transform` → `import` so the new component's content stops being dropped.
 - `output/assets-report.json` — asset download/upload/link counts, failures.
 - `output/assets/manifest.json` — per-asset state (damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef + sanityRef). Drives resumability for all four phases: download, upload to Media Library, GDR link to dataset, doc rewrite.
 

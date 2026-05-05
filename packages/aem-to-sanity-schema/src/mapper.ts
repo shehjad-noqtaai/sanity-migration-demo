@@ -35,6 +35,8 @@ export type SanityField =
   | (CommonFieldProps & FileField)
   | (CommonFieldProps & RichTextField)
   | (CommonFieldProps & ArrayOfObjectField)
+  | (CommonFieldProps & ContainerChildrenField)
+  | (CommonFieldProps & SlotReferenceField)
   | (CommonFieldProps & PlaceholderField);
 
 export interface CommonFieldProps {
@@ -87,6 +89,28 @@ interface ArrayOfObjectField {
   itemFields: SanityField[];
   /** AEM multifield `fieldLabel` → Sanity array member `title` (repeating row). */
   itemTitle?: string;
+}
+/**
+ * Drop-zone array on an AEM container component (e.g. `expander`, `container`,
+ * `column-layout`). Emitted as a field of type `"pageBuilder"` so the Studio
+ * palette inside the container matches the top-level page builder. Populated
+ * at content-transform time by walking the container's child component nodes
+ * — NOT by coerceFieldTypes, which doesn't touch this type string.
+ */
+interface ContainerChildrenField {
+  type: "container-children";
+}
+/**
+ * Named-slot field: a dialog-less child component embedded under a fixed
+ * JCR key (e.g. `media-paragraph`'s `content` child → `content` component).
+ * Discovered by scanning extracted AEM content, not the dialog. Emitted
+ * as a direct type reference so the single nested block lands inline
+ * under the slot key rather than as an array member.
+ */
+interface SlotReferenceField {
+  type: "slot-reference";
+  /** Sanity type name of the nested block that fills this slot. */
+  slotTypeName: string;
 }
 interface PlaceholderField {
   type: "placeholder";
@@ -227,11 +251,26 @@ async function walk(
     const resourceType = child["sling:resourceType"];
     const entry = lookup(resourceType);
 
-    // Transparent `items` wrapper — AEM often uses literal `items` nodes to
-    // group children; they have no resourceType. Walk through them.
-    if (!entry && !resourceType && key === "items") {
-      await walk(child, ctx, out, currentGroup);
-      continue;
+    // Transparent wrapper handling. Two patterns show up in real AEM dialogs:
+    //  1. Literal `items` grouping node — walk its children directly.
+    //  2. A named wrapper (e.g. outer `content`, `columns`, `column`) that
+    //     lacks `sling:resourceType` but nests an `items` child. David's
+    //     Bridal `aem-integration/components/content` is the motivating
+    //     example: every structural level omits the
+    //     `cq/gui/components/authoring/dialog` / granite container markup,
+    //     so without this descent we'd stop at the first child and emit a
+    //     single placeholder string instead of the real richtext + option
+    //     fields buried several levels down.
+    if (!entry && !resourceType) {
+      if (key === "items") {
+        await walk(child, ctx, out, currentGroup);
+        continue;
+      }
+      const itemsChild = child["items"];
+      if (itemsChild && typeof itemsChild === "object" && !Array.isArray(itemsChild)) {
+        await walk(itemsChild as DialogNode, ctx, out, currentGroup);
+        continue;
+      }
     }
 
     if (!entry) {
@@ -676,7 +715,11 @@ function isImageUpload(node: DialogNode): boolean {
       ? [mimes]
       : [];
   if (arr.length === 0) return false;
-  return arr.every((m) => m.startsWith("image/"));
+  // If the slot accepts any image mime, treat it as image — even when mixed
+  // with video/* (e.g. feature-card's mediaItems). The asset linker emits
+  // image refs unconditionally, so a `file`-typed field would reject them.
+  // Pure-non-image uploads (e.g. video-only) still emit `file` correctly.
+  return arr.some((m) => m.startsWith("image/"));
 }
 
 /**

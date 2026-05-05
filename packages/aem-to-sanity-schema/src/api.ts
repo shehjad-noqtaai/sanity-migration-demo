@@ -1,9 +1,12 @@
 import { join, dirname } from "node:path";
 import { readFile, readdir, unlink } from "node:fs/promises";
 import {
+  AEM_AUTHORING_HINTS,
   AemFetchError,
   writeJson,
   writeTextFile,
+  type AuthoringHintConfig,
+  type ContainerConfig,
   type DialogNode,
   type Logger,
 } from "aem-to-sanity-core";
@@ -12,9 +15,10 @@ import {
   flattenSchemaFieldNames,
   mapDialog,
   type NodeFetcher,
+  type SanityField,
 } from "./mapper.ts";
 import { emitSchemaFile, resolveSchemaTitle } from "./emitter.ts";
-import { resolveSanityTypeNames } from "./naming.ts";
+import { resolveSanityTypeNames, toCamelCase, toTitleCase } from "./naming.ts";
 import { Report } from "./report.ts";
 import { auditUnmappedTypes } from "./audit.ts";
 import {
@@ -87,6 +91,46 @@ export interface MigrateSchemasOptions {
   continueOnAuth?: boolean;
   /** Threshold for the `continueOnAuth` circuit breaker. Default: 5. */
   authCircuitBreakerThreshold?: number;
+  /**
+   * Map of `sling:resourceType` → `{ childrenField }` for AEM container
+   * components whose children are dropped in via the editor (not via a
+   * dialog multifield). For each listed component, the emitter appends a
+   * synthetic `childrenField`-named `pageBuilder` array so authors can nest
+   * blocks inside the container, and the content transform descends into
+   * its child nodes with `sling:resourceType` at migration time.
+   *
+   * Empty / omitted → no container behavior (current default).
+   */
+  containers?: ContainerConfig;
+  /**
+   * Discovered named-slot map: `parentResourceType → slotKey → childTypes`.
+   * Produced by {@link scanSlotsFromRawDir} (or {@link discoverSlots} for
+   * tests). When present, the emitter appends a `defineField({ name:
+   * slotKey, type: childTypeName })` per discovered slot so nested
+   * dialog-less child components (e.g. `media-paragraph`'s `content`
+   * child) become first-class typed fields instead of Studio "Unknown
+   * field" warnings.
+   *
+   * Empty / omitted → no slot behavior. The transform still emits nested
+   * components under their JCR keys regardless, so data never gets
+   * dropped; the schema side is what upgrades warning → typed field on
+   * the next `migrate:schema` run.
+   */
+  discoveredSlots?: Map<string, Map<string, { childTypes: Map<string, unknown> }>>;
+  /**
+   * Per-component opt-in for AEM authoring hints (e.g. `cq:panelTitle` on
+   * accordion children). Listed components get the hint lifted at
+   * transform time and a corresponding read-only Sanity field declared
+   * on the emitted schema. Non-listed components stay clean — no
+   * hint-related fields are added, no transform-time renames happen.
+   *
+   * The rename vocabulary (which AEM key becomes which Sanity field) is
+   * defined globally in `AEM_AUTHORING_HINTS` (in core); this map only
+   * controls which components opt in.
+   *
+   * Empty / omitted → no hint behavior on any component.
+   */
+  authoringHints?: AuthoringHintConfig;
 }
 
 export interface MigrateSchemasResult {
@@ -120,6 +164,10 @@ export async function migrateSchemas(
   const continueOnAuth = opts.continueOnAuth ?? false;
   const authCircuitBreakerThreshold = opts.authCircuitBreakerThreshold ?? 5;
   const schemasDir = opts.schemasDir ?? join(outputDir, "schemas");
+  const containers = opts.containers ?? new Map();
+  const effectiveJcrPrefix = opts.jcrPrefix ?? "/apps/";
+  const discoveredSlots = opts.discoveredSlots ?? new Map();
+  const authoringHints = opts.authoringHints ?? new Map();
 
   const report = new Report();
 
@@ -131,14 +179,24 @@ export async function migrateSchemas(
   // prevents ingested data from showing up as "Untitled" with an unknown-type
   // warning because its `_type` no longer matches the live schema.
   const typeNameByPath = resolveSanityTypeNames(componentPaths);
+  // Reverse index: slot children reference each other by AEM `sling:resourceType`,
+  // but a Sanity `defineField({ type })` needs the Sanity type name. Build this
+  // once so slot emission stays O(1) per lookup.
+  const typeNameByResourceType = new Map<string, string>();
+  for (const p of componentPaths) {
+    const rt = resourceTypeFromPath(p, effectiveJcrPrefix);
+    const n = typeNameByPath.get(p);
+    if (n) typeNameByResourceType.set(rt, n);
+  }
 
   let authFailures = 0;
   let successes = 0;
 
   await runWithConcurrency(
     componentPaths,
-    (p) =>
-      processOne(p, {
+    (p) => {
+      const rt = resourceTypeFromPath(p, effectiveJcrPrefix);
+      return processOne(p, {
         fetcher,
         outputDir,
         schemasDir,
@@ -147,7 +205,12 @@ export async function migrateSchemas(
         writeAemSnapshot,
         regenerateCommand,
         typeName: typeNameByPath.get(p)!,
-      }),
+        containerEntry: containers.get(rt),
+        slotMap: discoveredSlots.get(rt),
+        hintKeys: authoringHints.get(rt),
+        typeNameByResourceType,
+      });
+    },
     concurrency,
     (r) => {
       if (r.success) successes++;
@@ -252,6 +315,29 @@ interface ProcessOneDeps {
   regenerateCommand?: string;
   /** Final Sanity type name resolved by `resolveSanityTypeNames` for this path. */
   typeName: string;
+  /** Container behavior opted in for this component (via `containers` config). */
+  containerEntry?: { childrenField: string };
+  /** Discovered named-slot keys for this resource type → set of child resource types. */
+  slotMap?: Map<string, { childTypes: Map<string, unknown> }>;
+  /**
+   * AEM authoring-hint keys (e.g. `cq:panelTitle`) opted in for this component
+   * via the per-project hints config. Translated through `AEM_AUTHORING_HINTS`
+   * to the corresponding Sanity field name and injected as a read-only field.
+   */
+  hintKeys?: ReadonlySet<string>;
+  /** Reverse index: AEM resource type → Sanity type name, for slot child references. */
+  typeNameByResourceType: Map<string, string>;
+}
+
+/**
+ * Strip `jcrPrefix` (default `/apps/`) from a component path to derive the
+ * AEM `sling:resourceType` key used by the container config map and the
+ * content-type registry. Mirrors the same logic in `content-registry.ts`.
+ */
+function resourceTypeFromPath(componentPath: string, jcrPrefix: string): string {
+  return componentPath.startsWith(jcrPrefix)
+    ? componentPath.slice(jcrPrefix.length)
+    : componentPath.replace(/^\/+/, "");
 }
 
 /**
@@ -334,6 +420,129 @@ async function processOne(
       message: (err as Error).message,
     });
     return { authFailure: false, success: false };
+  }
+
+  if (deps.containerEntry) {
+    const { childrenField } = deps.containerEntry;
+    // If the dialog already declared a field by this name (unlikely but
+    // possible if a component author reused the name), skip the synthetic
+    // append — the dialog-declared field wins. Otherwise tack it on the
+    // end so dialog-authored fields come first in the Studio UI.
+    const clashes = mapped.fields.some((f) => f.name === childrenField);
+    if (!clashes) {
+      const container: SanityField = {
+        name: childrenField,
+        title: "Items",
+        type: "container-children",
+      };
+      mapped.fields.push(container);
+    }
+  }
+
+  // Named-slot synthesis. For each discovered slot key (parentResourceType →
+  // slotKey → childResourceType(s)), append a direct type-reference field.
+  // Priority rules:
+  //   - Dialog field with the same name wins (skip).
+  //   - Container parents skip slot synthesis entirely: their drop-zone
+  //     children are already handled by `childrenField`, and their JCR
+  //     keys are author-generated (`item_1657754806454`,
+  //     `content_1747537251_c`) which would otherwise pollute the schema
+  //     with one defineField per instance.
+  //   - Multiple child resource types observed at the same slot → skip +
+  //     warn; author tooling would need to pick one and we don't want to
+  //     guess. Transform still emits under the JCR key, so data isn't lost;
+  //     the Studio just keeps flagging "Unknown field" until the operator
+  //     hand-authors a field.
+  //   - Child resource type without a known Sanity mapping (not in
+  //     componentPaths) → skip + warn; can't reference a type that doesn't
+  //     exist yet.
+  if (!deps.containerEntry && deps.slotMap && deps.slotMap.size > 0) {
+    const existingNames = new Set(mapped.fields.map((f) => f.name));
+    for (const [slotKey, slotEntry] of deps.slotMap) {
+      if (existingNames.has(slotKey)) continue;
+      if (slotEntry.childTypes.size === 0) continue;
+      // Skip AEM-author-generated keys: `item_1657754806454`,
+      // `content_1747537251_c`, `promo_1234_copy`. Any underscore followed
+      // by a run of digits is the AEM page-editor's "new instance id"
+      // stamp — emitting a schema field per instance would produce one
+      // defineField per author-drop, which is noise, not content model.
+      // If the parent is a real container the config file handles this;
+      // this regex is defense-in-depth when the config is missing (or
+      // when someone adds a new container and forgets to register it).
+      if (/_\d+/.test(slotKey)) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} has author-generated slot key "${slotKey}" ` +
+            `(child type ${[...slotEntry.childTypes.keys()][0]}). Looks like a cq:isContainer drop-zone — add this component to aem-component-containers.json.`,
+        );
+        continue;
+      }
+      if (slotEntry.childTypes.size > 1) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} slot "${slotKey}" carries ${slotEntry.childTypes.size} child types — ` +
+            `${[...slotEntry.childTypes.keys()].join(", ")}. Skipping synthesis; hand-author this field in the dialog or in a custom wrapper if you need it typed.`,
+        );
+        continue;
+      }
+      const childResourceType = [...slotEntry.childTypes.keys()][0]!;
+      const childTypeName = deps.typeNameByResourceType.get(childResourceType);
+      if (!childTypeName) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} slot "${slotKey}" references unmapped child type "${childResourceType}". ` +
+            `Add /apps/${childResourceType} to aem-component-paths and re-run migrate:schema to pick it up.`,
+        );
+        continue;
+      }
+      // Sanity field names must match /^[A-Za-z]+[0-9A-Za-z_]*$/ — no
+      // hyphens, no leading digits. AEM JCR keys frequently use kebab
+      // case (`resources-column-item`), so normalize the same way
+      // dialog field names are normalized. Content transform applies
+      // the same camelCase pass when emitting the slot, so both sides
+      // agree on the on-disk field name.
+      const fieldName = toCamelCase(slotKey);
+      if (!fieldName) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} slot "${slotKey}" camelCased to empty string — skipping.`,
+        );
+        continue;
+      }
+      if (existingNames.has(fieldName)) continue;
+      const slotField: SanityField = {
+        name: fieldName,
+        title: slotKey,
+        type: "slot-reference",
+        slotTypeName: childTypeName,
+      };
+      mapped.fields.push(slotField);
+      existingNames.add(fieldName);
+    }
+  }
+
+  // AEM authoring hints (e.g. `cq:panelTitle` lifted to `panelTitle` at
+  // transform time) — declared only for components that opted in via
+  // `aem-component-hints.json`. Read-only because the value is preserved
+  // from AEM, not authored from the Studio dialog. Components without a
+  // hint config entry stay clean — no extra field on every component.
+  if (deps.hintKeys && deps.hintKeys.size > 0) {
+    const declaredNames = new Set(mapped.fields.map((f) => f.name));
+    for (const aemKey of deps.hintKeys) {
+      const sanityFieldName = AEM_AUTHORING_HINTS.get(aemKey);
+      if (!sanityFieldName) {
+        deps.logger?.warn(
+          `authoring-hints: ${componentPath} opts into "${aemKey}" but it has no entry in AEM_AUTHORING_HINTS — skipping. Add a row to packages/aem-to-sanity-core/src/aem/authoring-hints.ts to extend the rename vocabulary.`,
+        );
+        continue;
+      }
+      if (declaredNames.has(sanityFieldName)) continue;
+      const hintField: SanityField = {
+        name: sanityFieldName,
+        title: toTitleCase(sanityFieldName),
+        description: `AEM authoring hint preserved from migration (\`${aemKey}\`). Read-only.`,
+        type: "string",
+        readOnly: true,
+      };
+      mapped.fields.push(hintField);
+      declaredNames.add(sanityFieldName);
+    }
   }
 
   let contents: string;

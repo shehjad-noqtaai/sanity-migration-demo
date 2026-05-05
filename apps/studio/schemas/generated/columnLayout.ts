@@ -24,12 +24,12 @@ export const columnLayout = defineType({
       type: "boolean",
       initialValue: true,
     }),
+    defineField({ name: "title", title: "Main title", type: "string" }),
     defineField({
-      name: "properties",
-      title: "properties",
-      description:
-        'TODO: no Sanity mapping for AEM resource type "unknown". Falling back to string.',
-      type: "string",
+      name: "enableHorizontalLine",
+      type: "boolean",
+      initialValue: true,
     }),
+    defineField({ name: "items", title: "Items", type: "pageBuilder" }),
   ],
 });

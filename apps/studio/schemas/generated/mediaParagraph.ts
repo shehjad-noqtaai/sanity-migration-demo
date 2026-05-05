@@ -105,5 +105,6 @@ export const mediaParagraph = defineType({
       ],
     }),
     defineField({ name: "id", title: "Component ID", type: "string" }),
+    defineField({ name: "content", title: "content", type: "content" }),
   ],
 });

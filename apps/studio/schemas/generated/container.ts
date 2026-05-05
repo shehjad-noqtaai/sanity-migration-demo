@@ -21,5 +21,6 @@ export const container = defineType({
       group: "general",
       initialValue: true,
     }),
+    defineField({ name: "items", title: "Items", type: "pageBuilder" }),
   ],
 });
