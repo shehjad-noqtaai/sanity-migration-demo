@@ -38,5 +38,13 @@ export const content = defineType({
     defineField({ name: "pr", title: "pr", type: "number" }),
     defineField({ name: "pb", title: "pb", type: "number" }),
     defineField({ name: "pl", title: "pl", type: "number" }),
+    defineField({
+      name: "panelTitle",
+      title: "Paneltitle",
+      description:
+        "AEM authoring hint preserved from migration (`cq:panelTitle`). Read-only.",
+      type: "string",
+      readOnly: true,
+    }),
   ],
 });

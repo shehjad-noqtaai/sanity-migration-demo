@@ -239,15 +239,27 @@ export interface FaqHubBlock extends BaseBlock {
 }
 
 /**
- * AEM `box` widget — generic rich-text container. Carries the answer
- * HTML on its `text` field. Used inside `expander` items.
+ * AEM `box` / `content` widget — generic rich-text container. Carries
+ * the rendered text on its `text` field (Portable Text after the
+ * registry-driven coercion; legacy migrations may still have the raw
+ * HTML string). Used inside `expander` items.
+ *
+ * `panelTitle` is the optional heading for accordion / expander panels
+ * (lifted from AEM's `cq:panelTitle`). Present on the wrapping box only
+ * when the component is used as a panel child.
+ *
+ * `items` is the container-children array discovered by the schema
+ * walker — when the box wraps another `content` node, the actual text
+ * lives one level deeper rather than directly on the box.
  */
 export interface AemBoxLike {
   _key: string;
-  text?: string;
+  text?: string | PortableTextBlock[];
   align?: string;
   fontFamily?: string;
   fontWeight?: string;
+  panelTitle?: string;
+  items?: AemBoxLike[];
 }
 
 export interface ExpanderItem {
@@ -259,9 +271,18 @@ export interface ExpanderItem {
 
 export interface ExpanderBlock extends BaseBlock {
   _type: "expander";
-  /** First item lives under `box`; subsequent items under `item_*` keys. */
+  /**
+   * Modern shape: container-children walker emits panel boxes here.
+   * Legacy shape (pre-slot-discovery): first item under `box`, the rest
+   * under variable `item_*` keys.
+   */
+  items?: AemBoxLike[];
   box?: ExpanderItem;
   expandedItems?: string[];
+  headline1?: string;
+  headline2?: string;
+  removeTopPadding?: boolean;
+  removeBottomPadding?: boolean;
   [itemKey: string]: unknown;
 }
 
@@ -273,6 +294,87 @@ export interface QuoteBlock extends BaseBlock {
   theme?: string;
   backgroundColor?: string;
   quotationMarksEnabled?: boolean;
+}
+
+/**
+ * Centered text-only section break — `headline2` is the prominent
+ * display headline (David's Bridal pattern), `description` is a
+ * supporting paragraph.
+ */
+export interface SectionHeadlineBlock extends BaseBlock {
+  _type: "sectionHeadline";
+  headline1?: string;
+  headline2?: string;
+  description?: PortableTextBlock[];
+  theme?: string;
+  removeTopPadding?: boolean;
+  removeBottomPadding?: boolean;
+}
+
+export interface FeatureCardMediaItem {
+  _key: string;
+  fileReference?: SanityImageRef;
+  fileReferenceAemPath?: string;
+  visible?: "desktop" | "mobile" | string;
+  title?: string;
+  videoAssetPreviewImage?: SanityImageRef;
+}
+
+/**
+ * Editorial photo block — three numbered image slots with optional
+ * per-image links and labels, paired with a headline block (title +
+ * sansSerifHeadline + description) at the top and a free-text copy
+ * block (`imageText2`) that pairs with the middle image. AEM serializes
+ * the slots as flat `fileReferenceN` / `imageLinkN` / `linkN` /
+ * `linkTitleN` properties; we render whatever the author populated and
+ * skip the rest.
+ */
+export interface PhotoLayoutBlock extends BaseBlock {
+  _type: "photoLayout";
+  headline1?: string;
+  headline2?: string;
+  sansSerifHeadline?: string;
+  description?: PortableTextBlock[];
+  imageText2?: PortableTextBlock[];
+  fileReference1?: SanityImageRef;
+  fileReference2?: SanityImageRef;
+  fileReference3?: SanityImageRef;
+  fileReference1AemPath?: string;
+  fileReference2AemPath?: string;
+  fileReference3AemPath?: string;
+  imageLink1?: string;
+  imageLink2?: string;
+  imageLink3?: string;
+  link1?: string;
+  link2?: string;
+  link3?: string;
+  linkTitle1?: string;
+  linkTitle2?: string;
+  linkTitle3?: string;
+  theme?: string;
+  mobileLayout?: string;
+  removeTopPadding?: boolean;
+  removeBottomPadding?: boolean;
+}
+
+/**
+ * Two-column feature row (image one side, copy + CTA on the other).
+ * `layoutArrangement` decides which side the image lands on.
+ */
+export interface FeatureCardBlock extends BaseBlock {
+  _type: "featureCard";
+  headline?: string;
+  overline?: string;
+  bodyText?: PortableTextBlock[];
+  mediaItems?: FeatureCardMediaItem[];
+  buttons?: PromoButton[];
+  layoutArrangement?: "img_left" | "img_right" | string;
+  layoutType?: string;
+  textAlign?: "left" | "center" | "right";
+  cardBackground?: string;
+  theme?: string;
+  removeTopPadding?: boolean;
+  removeBottomPadding?: boolean;
 }
 
 export interface ResourcesColumnListBlock extends BaseBlock {
@@ -305,7 +407,10 @@ export type PageBlock =
   | FaqHubBlock
   | ExpanderBlock
   | QuoteBlock
-  | ResourcesColumnListBlock;
+  | ResourcesColumnListBlock
+  | SectionHeadlineBlock
+  | FeatureCardBlock
+  | PhotoLayoutBlock;
 
 export interface PageDoc {
   _id: string;

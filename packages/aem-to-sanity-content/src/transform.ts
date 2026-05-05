@@ -4,9 +4,12 @@ import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
+  AEM_AUTHORING_HINTS,
   createColors,
+  loadAuthoringHintConfig,
   loadContainerConfig,
   startTimer,
+  type AuthoringHintConfig,
   type ContainerConfig,
 } from "aem-to-sanity-core";
 import { htmlToBlocks } from "@portabletext/block-tools";
@@ -336,6 +339,13 @@ interface TransformContext {
   audit: Audit;
   /** Resource types whose drop-zone children should be emitted under `childrenField`. */
   containers: ContainerConfig;
+  /**
+   * Per-resource-type opt-ins for AEM authoring hints (e.g. `cq:panelTitle`).
+   * Listed components have those keys lifted to the corresponding Sanity
+   * field name (via `AEM_AUTHORING_HINTS`). Non-listed components see no
+   * hint behavior — colon-bearing keys still drop as before.
+   */
+  authoringHints: AuthoringHintConfig;
 }
 
 /**
@@ -572,6 +582,12 @@ function deepCoerceAemMultifieldMapsToArrays(val: unknown): unknown {
 // Transform a mapped component into an inline object. Children are recursively
 // inlined (each with a stable _key). Used for pageBuilder items and nested refs.
 function transformInline(node: AemNode, jcrPath: string, ctx: TransformContext): Record<string, unknown> {
+  const nodeResourceType = typeof node["sling:resourceType"] === "string"
+    ? (node["sling:resourceType"] as string)
+    : undefined;
+  const optedInHintKeys = nodeResourceType
+    ? ctx.authoringHints.get(nodeResourceType)
+    : undefined;
   const out: Record<string, unknown> = {};
 
   if (ctx.visited.has(node)) {
@@ -598,6 +614,19 @@ function transformInline(node: AemNode, jcrPath: string, ctx: TransformContext):
         _key: stableKey(asString(value["jcr:uuid"]), childPath),
       };
     } else {
+      // AEM authoring hints (e.g. `cq:panelTitle` on accordion children)
+      // carry meaningful content but live outside the dialog. Lift them
+      // only for components opted in via `aem-component-hints.json` so
+      // the schema's declared field set stays tight — colon-bearing keys
+      // on non-opted components fall through to `isValidSanityAttributeKey`
+      // and get dropped as before.
+      if (optedInHintKeys?.has(key)) {
+        const hintKey = AEM_AUTHORING_HINTS.get(key);
+        if (hintKey && out[hintKey] === undefined) {
+          out[hintKey] = value;
+        }
+        continue;
+      }
       if (!isValidSanityAttributeKey(key)) continue;
       if (out[key] !== undefined) continue;
       out[key] = value;
@@ -722,7 +751,7 @@ function collectPageBuilder(
         ...inline,
       });
       ctx.audit.tick();
-      const drift = diffProps(frame.node, entry);
+      const drift = diffProps(frame.node, entry, ctx.authoringHints);
       if (drift.length > 0) ctx.audit.unknownProps(entry.sanityType, frame.jcrPath, drift);
       continue;
     }
@@ -822,12 +851,23 @@ function createAudit(maxExamples = 3): Audit {
   };
 }
 
-function diffProps(node: AemNode, entry: NormalizedRegistryEntry | undefined): Array<{ prop: string; value: unknown }> {
+function diffProps(
+  node: AemNode,
+  entry: NormalizedRegistryEntry | undefined,
+  authoringHints: AuthoringHintConfig,
+): Array<{ prop: string; value: unknown }> {
   if (!entry?.fieldNames?.length) return [];
   const expected = new Set(entry.fieldNames);
+  const nodeResourceType = typeof node["sling:resourceType"] === "string"
+    ? (node["sling:resourceType"] as string)
+    : undefined;
+  const optedInHints = nodeResourceType ? authoringHints.get(nodeResourceType) : undefined;
   const out: Array<{ prop: string; value: unknown }> = [];
   for (const [key, value] of Object.entries(node)) {
     if (JCR_METADATA.has(key) || AEM_DIALOG_RUNTIME_KEYS.has(key)) continue;
+    // Skip AEM keys this component opted into — they're lifted to the
+    // declared Sanity field, not stray.
+    if (optedInHints?.has(key)) continue;
     if (expected.has(key)) continue;
     if (typeof value === "object" && value !== null && !Array.isArray(value)) continue;
     out.push({ prop: key, value });
@@ -869,6 +909,11 @@ function main(): void {
   );
   const containers = loadContainerConfig({ file: containersFile });
 
+  const hintsFile = resolve(
+    process.env.AEM_COMPONENT_HINTS_FILE ?? "./aem-component-hints.json",
+  );
+  const authoringHints = loadAuthoringHintConfig({ file: hintsFile });
+
   const registry = loadRegistry(registryFile);
   const rawDir = join(outputDir, "cache", "raw");
   const cleanDir = join(outputDir, "cache", "clean");
@@ -889,6 +934,11 @@ function main(): void {
   if (containers.size > 0) {
     console.error(
       `[transform] container behavior for ${containers.size} resource type(s) from ${containersFile}`,
+    );
+  }
+  if (authoringHints.size > 0) {
+    console.error(
+      `[transform] authoring-hint opt-ins for ${authoringHints.size} resource type(s) from ${hintsFile}`,
     );
   }
 
@@ -913,6 +963,7 @@ function main(): void {
       depth: 0,
       registry,
       containers,
+      authoringHints,
       audit,
     };
 

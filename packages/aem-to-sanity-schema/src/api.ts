@@ -1,9 +1,11 @@
 import { join, dirname } from "node:path";
 import { readFile, readdir, unlink } from "node:fs/promises";
 import {
+  AEM_AUTHORING_HINTS,
   AemFetchError,
   writeJson,
   writeTextFile,
+  type AuthoringHintConfig,
   type ContainerConfig,
   type DialogNode,
   type Logger,
@@ -16,7 +18,7 @@ import {
   type SanityField,
 } from "./mapper.ts";
 import { emitSchemaFile, resolveSchemaTitle } from "./emitter.ts";
-import { resolveSanityTypeNames, toCamelCase } from "./naming.ts";
+import { resolveSanityTypeNames, toCamelCase, toTitleCase } from "./naming.ts";
 import { Report } from "./report.ts";
 import { auditUnmappedTypes } from "./audit.ts";
 import {
@@ -115,6 +117,20 @@ export interface MigrateSchemasOptions {
    * the next `migrate:schema` run.
    */
   discoveredSlots?: Map<string, Map<string, { childTypes: Map<string, unknown> }>>;
+  /**
+   * Per-component opt-in for AEM authoring hints (e.g. `cq:panelTitle` on
+   * accordion children). Listed components get the hint lifted at
+   * transform time and a corresponding read-only Sanity field declared
+   * on the emitted schema. Non-listed components stay clean — no
+   * hint-related fields are added, no transform-time renames happen.
+   *
+   * The rename vocabulary (which AEM key becomes which Sanity field) is
+   * defined globally in `AEM_AUTHORING_HINTS` (in core); this map only
+   * controls which components opt in.
+   *
+   * Empty / omitted → no hint behavior on any component.
+   */
+  authoringHints?: AuthoringHintConfig;
 }
 
 export interface MigrateSchemasResult {
@@ -151,6 +167,7 @@ export async function migrateSchemas(
   const containers = opts.containers ?? new Map();
   const effectiveJcrPrefix = opts.jcrPrefix ?? "/apps/";
   const discoveredSlots = opts.discoveredSlots ?? new Map();
+  const authoringHints = opts.authoringHints ?? new Map();
 
   const report = new Report();
 
@@ -190,6 +207,7 @@ export async function migrateSchemas(
         typeName: typeNameByPath.get(p)!,
         containerEntry: containers.get(rt),
         slotMap: discoveredSlots.get(rt),
+        hintKeys: authoringHints.get(rt),
         typeNameByResourceType,
       });
     },
@@ -301,6 +319,12 @@ interface ProcessOneDeps {
   containerEntry?: { childrenField: string };
   /** Discovered named-slot keys for this resource type → set of child resource types. */
   slotMap?: Map<string, { childTypes: Map<string, unknown> }>;
+  /**
+   * AEM authoring-hint keys (e.g. `cq:panelTitle`) opted in for this component
+   * via the per-project hints config. Translated through `AEM_AUTHORING_HINTS`
+   * to the corresponding Sanity field name and injected as a read-only field.
+   */
+  hintKeys?: ReadonlySet<string>;
   /** Reverse index: AEM resource type → Sanity type name, for slot child references. */
   typeNameByResourceType: Map<string, string>;
 }
@@ -490,6 +514,34 @@ async function processOne(
       };
       mapped.fields.push(slotField);
       existingNames.add(fieldName);
+    }
+  }
+
+  // AEM authoring hints (e.g. `cq:panelTitle` lifted to `panelTitle` at
+  // transform time) — declared only for components that opted in via
+  // `aem-component-hints.json`. Read-only because the value is preserved
+  // from AEM, not authored from the Studio dialog. Components without a
+  // hint config entry stay clean — no extra field on every component.
+  if (deps.hintKeys && deps.hintKeys.size > 0) {
+    const declaredNames = new Set(mapped.fields.map((f) => f.name));
+    for (const aemKey of deps.hintKeys) {
+      const sanityFieldName = AEM_AUTHORING_HINTS.get(aemKey);
+      if (!sanityFieldName) {
+        deps.logger?.warn(
+          `authoring-hints: ${componentPath} opts into "${aemKey}" but it has no entry in AEM_AUTHORING_HINTS — skipping. Add a row to packages/aem-to-sanity-core/src/aem/authoring-hints.ts to extend the rename vocabulary.`,
+        );
+        continue;
+      }
+      if (declaredNames.has(sanityFieldName)) continue;
+      const hintField: SanityField = {
+        name: sanityFieldName,
+        title: toTitleCase(sanityFieldName),
+        description: `AEM authoring hint preserved from migration (\`${aemKey}\`). Read-only.`,
+        type: "string",
+        readOnly: true,
+      };
+      mapped.fields.push(hintField);
+      declaredNames.add(sanityFieldName);
     }
   }
 

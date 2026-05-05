@@ -48,6 +48,7 @@ cp examples/davids-bridal/.env.example examples/davids-bridal/.env
 | `AEM_CONTENT_ROOTS_FILE` | optional | File listing content roots to walk during extraction. Default: `./aem-content-roots`. See `aem-content-roots.example` for syntax. |
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | optional | File listing `sling:resourceType` values to skip during transform. Default: `./aem-component-exceptions`. |
 | `AEM_COMPONENT_CONTAINERS_FILE` | optional | JSON file mapping `sling:resourceType` → `{ childrenField }` for AEM container components whose drop-zone children should become a nested `pageBuilder` array. Default: `./aem-component-containers.json`. Missing file → no container behavior. |
+| `AEM_COMPONENT_HINTS_FILE` | optional | JSON file mapping `sling:resourceType` → `["cq:hintKey", …]`, opting individual components into AEM authoring-hint lifting (e.g. `cq:panelTitle` on accordion children). Default: `./aem-component-hints.json`. Missing file → no hint behavior. See § 1c-quinquies. |
 | `AEM_MAX_RESPONSE_MB` | optional | Cap per-fetch payload size during extract. Pages exceeding this are recorded as `tooLarge` failures. |
 | `OUTPUT_DIR` | optional | Where schemas, reports, and audit live. Default: `./output`. |
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
@@ -129,6 +130,29 @@ For each listed resource type:
 - **Content transform** descends into the container node's direct child keys that themselves carry a `sling:resourceType`, recursively emits each as a pageBuilder block (same `_type` / `_key` / coercion pipeline as top-level blocks), and stores the array under `childrenField`. Containers nest: an expander containing boxes containing content paragraphs all roundtrip. Children without `sling:resourceType` stay inline on the container (that's how multifields keep working).
 
 Missing file → container behavior stays off. Malformed JSON or invalid entries are a hard error (fail loudly rather than silently drop child content).
+
+### 1c-quinquies. Authoring hints — `examples/davids-bridal/aem-component-hints.json`
+
+Consumed by both `migrate:schema` and `aem-transform`. Opts specific components into AEM authoring-hint lifting — JCR/CQ properties that carry meaningful content but live outside the dialog payload, like `cq:panelTitle` on accordion / expander panel children. Without this opt-in, the transform's normal property iterator drops anything with a colon and the value is lost.
+
+```json
+{
+  "aem-integration/components/box":     ["cq:panelTitle"],
+  "aem-integration/components/content": ["cq:panelTitle"]
+}
+```
+
+Two layers, one source of truth each:
+
+- **Rename vocabulary** (`AEM_AUTHORING_HINTS` in `packages/aem-to-sanity-core/src/aem/authoring-hints.ts`) — the migrator-wide map of AEM keys to canonical Sanity field names (`cq:panelTitle` → `panelTitle`). Stable across projects.
+- **Per-project opt-in** (this file) — names which components apply which hints. Per-project, since which components act as accordion children depends on the AEM authoring conventions in that project.
+
+For each listed resource type:
+
+- **Schema emission** appends a `readOnly` `string` field per opted-in hint (translated through the rename vocabulary). Read-only because the value is preserved from AEM, not authored from the Studio. Components not listed in this file get no extra fields — the rest of the schema stays clean.
+- **Content transform** consults the same map keyed by the current node's `sling:resourceType`. If the node is opted in and the property is in its allowlist, the value is renamed and emitted under the Sanity field name; otherwise colon-bearing keys drop as before. The drift report skips opted-in keys so they don't surface as "unknown props".
+
+Missing file → no hint behavior on any component. Malformed JSON or invalid entries are a hard error.
 
 ### 1d. Resource-type registry — `output/content-type-registry.json`
 

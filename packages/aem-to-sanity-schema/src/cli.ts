@@ -7,6 +7,7 @@ import {
   createColors,
   createLogger,
   fetchInfinityJson,
+  loadAuthoringHintConfig,
   loadContainerConfig,
   logStartupBanner,
   resolveConfig,
@@ -73,6 +74,20 @@ async function main(): Promise<void> {
     );
   }
 
+  // AEM authoring-hint opt-ins (e.g. `cq:panelTitle` on accordion children).
+  // Each listed component gets the named hint(s) lifted at transform time
+  // and declared as a read-only field on the emitted Sanity schema.
+  // Non-listed components stay clean.
+  const hintsFile = resolve(
+    process.env.AEM_COMPONENT_HINTS_FILE ?? "./aem-component-hints.json",
+  );
+  const authoringHints = loadAuthoringHintConfig({ file: hintsFile });
+  if (authoringHints.size > 0) {
+    logger.info(
+      `Applied authoring-hint opt-ins for ${authoringHints.size} component(s) from ${hintsFile}`,
+    );
+  }
+
   // Slot discovery — scan already-extracted AEM content for named-slot
   // child components (dialog-less nested components under a fixed JCR key,
   // e.g. media-paragraph.content). First-ever run has no raw/ yet and
@@ -131,6 +146,7 @@ async function main(): Promise<void> {
     continueOnAuth,
     containers,
     discoveredSlots,
+    authoringHints,
   });
 
   const s = report.summary();

@@ -167,5 +167,13 @@ export const box = defineType({
       group: "backgroundImage",
     }),
     defineField({ name: "items", title: "Items", type: "pageBuilder" }),
+    defineField({
+      name: "panelTitle",
+      title: "Paneltitle",
+      description:
+        "AEM authoring hint preserved from migration (`cq:panelTitle`). Read-only.",
+      type: "string",
+      readOnly: true,
+    }),
   ],
 });

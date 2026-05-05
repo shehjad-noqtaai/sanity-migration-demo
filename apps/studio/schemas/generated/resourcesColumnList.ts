@@ -50,10 +50,5 @@ export const resourcesColumnList = defineType({
         ],
       },
     }),
-    defineField({
-      name: "resourcesColumnItem",
-      title: "resources-column-item",
-      type: "resourcesColumnContainer",
-    }),
   ],
 });

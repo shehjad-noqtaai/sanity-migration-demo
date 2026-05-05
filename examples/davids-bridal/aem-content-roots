@@ -1,6 +1,9 @@
-# Content roots for migration — narrowed to a single page per @shehjadkhan (2026-04-22).
+# Content roots for migration
 # Scope widens later by adding more @base sections / slug lines below.
 
 @base /content/aem-integration/us/en
 
-faq
+home
+travel
+labubu
+vows

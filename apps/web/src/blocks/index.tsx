@@ -2,28 +2,34 @@ import type {
   ColorCarouselBlock,
   ExpanderBlock,
   FaqHubBlock,
+  FeatureCardBlock,
   GalleryBlock,
   HeroVideoBannerBlock,
   HrBlock,
   IconGridBlock,
+  PhotoLayoutBlock,
   ProductCarouselBlock,
   PromoBlock,
   QuoteBlock,
   ResourcesColumnListBlock,
+  SectionHeadlineBlock,
   UnknownBlock as UnknownBlockType,
   VariableColumnBlock,
 } from "../types.ts";
 import { ColorCarousel } from "./ColorCarousel.tsx";
 import { Expander } from "./Expander.tsx";
 import { FaqHub } from "./FaqHub.tsx";
+import { FeatureCard } from "./FeatureCard.tsx";
 import { Gallery } from "./Gallery.tsx";
 import { HeroVideoBanner } from "./HeroVideoBanner.tsx";
 import { Hr } from "./Hr.tsx";
 import { IconGrid } from "./IconGrid.tsx";
+import { PhotoLayout } from "./PhotoLayout.tsx";
 import { ProductCarousel } from "./ProductCarousel.tsx";
 import { Promo } from "./Promo.tsx";
 import { Quote } from "./Quote.tsx";
 import { ResourcesColumnList } from "./ResourcesColumnList.tsx";
+import { SectionHeadline } from "./SectionHeadline.tsx";
 import { UnknownBlock } from "./UnknownBlock.tsx";
 import { VariableColumn } from "./VariableColumn.tsx";
 
@@ -64,6 +70,12 @@ export function Block({ block }: { block: AnyBlock }) {
       return (
         <ResourcesColumnList block={block as unknown as ResourcesColumnListBlock} />
       );
+    case "sectionHeadline":
+      return <SectionHeadline block={block as unknown as SectionHeadlineBlock} />;
+    case "featureCard":
+      return <FeatureCard block={block as unknown as FeatureCardBlock} />;
+    case "photoLayout":
+      return <PhotoLayout block={block as unknown as PhotoLayoutBlock} />;
     default:
       return <UnknownBlock block={block as UnknownBlockType} />;
   }

@@ -7,3 +7,8 @@ export type {
   ContainerConfigEntry,
   LoadContainerConfigOptions,
 } from "./containers.ts";
+export { loadAuthoringHintConfig } from "./authoring-hints.ts";
+export type {
+  AuthoringHintConfig,
+  LoadAuthoringHintConfigOptions,
+} from "./authoring-hints.ts";

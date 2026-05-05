@@ -100,6 +100,34 @@ AEM "container" components (cq:isContainer=true) carry two shapes in one JCR nod
 
 Transform then does the right thing: dialog fields go through the normal inline + coercion path, while direct child keys with `sling:resourceType` are recursively emitted as pageBuilder blocks under `childrenField`. Nesting works — expander > box > content roundtrips. On the schema side, `migrate:schema` appends a matching `type: "pageBuilder"` field so the Studio palette inside the container matches the top-level page builder (any block is droppable).
 
+## AEM authoring hints (`cq:panelTitle` and friends)
+
+Some AEM authoring metadata lives **outside** the dialog payload — the most common case is the panel heading on accordion / expander panels, which AEM writes as `cq:panelTitle` on each child node rather than as a dialog field. The transform's normal property iterator drops anything with a colon, so the value would be lost without an explicit lift step.
+
+Per-project opt-ins are declared in `aem-component-hints.json` (override with `AEM_COMPONENT_HINTS_FILE`):
+
+```json
+{
+  "aem-integration/components/box":     ["cq:panelTitle"],
+  "aem-integration/components/content": ["cq:panelTitle"]
+}
+```
+
+The rename vocabulary (which AEM key becomes which Sanity field) is global in `packages/aem-to-sanity-core/src/aem/authoring-hints.ts`:
+
+| AEM key | Sanity field |
+| --- | --- |
+| `cq:panelTitle` | `panelTitle` |
+
+Two layers, symmetric across stages:
+
+- **Transform** consults the opt-in config keyed by the current node's `sling:resourceType`. If the node is opted in and the property is in its allowlist, the value is renamed via `AEM_AUTHORING_HINTS` and emitted under the Sanity field name. Otherwise colon-bearing keys drop as before. The drift report skips opted-in keys so they don't surface as "unknown props".
+- **Schema** (`migrate:schema`) declares a `readOnly` `string` field per opted-in hint on the matching component schema. Read-only because authors don't edit it from the Studio dialog — it's runtime metadata preserved from AEM. Components not listed in this file get no extra fields.
+
+To support a new hint: add the AEM-key → Sanity-field row to `AEM_AUTHORING_HINTS`, then add the AEM key to the relevant component's array in `aem-component-hints.json`. Re-run `pnpm migrate:schema` and `pnpm transform`.
+
+Missing file → no hint behavior on any component. Malformed JSON or invalid entries are a hard error.
+
 ## Named-slot components (auto-detected)
 
 A different AEM pattern shows up on components like `media-paragraph`: a single nested child under a **fixed** JCR key (e.g. `content`) whose value is itself a full component with its own `sling:resourceType`. Not a dialog field, not a drop-zone container — just a named slot.

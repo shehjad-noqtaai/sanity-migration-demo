@@ -715,7 +715,11 @@ function isImageUpload(node: DialogNode): boolean {
       ? [mimes]
       : [];
   if (arr.length === 0) return false;
-  return arr.every((m) => m.startsWith("image/"));
+  // If the slot accepts any image mime, treat it as image — even when mixed
+  // with video/* (e.g. feature-card's mediaItems). The asset linker emits
+  // image refs unconditionally, so a `file`-typed field would reject them.
+  // Pure-non-image uploads (e.g. video-only) still emit `file` correctly.
+  return arr.some((m) => m.startsWith("image/"));
 }
 
 /**

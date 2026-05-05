@@ -120,8 +120,39 @@ When `fileReferenceParameter` is present (e.g. `./fileReference`), AEM stores th
 **Schema** — If `fileReferenceParameter` is set, the migrator emits **two** fields in order:
 
 1. **`{name}AemPath`** — `string`, `readOnly: true`, holds the migrated AEM path for traceability in Studio.
-2. **`{name}`** — `image` when all `mimeTypes` are `image/*`, otherwise `file` (e.g. video). **`required`** from AEM applies only here so authors attach a Sanity asset.
+2. **`{name}`** — `image` when **any** `mimeTypes` entry is `image/*` (covers pure-image slots and mixed image+video slots like `feature-card`'s `mediaItems`). `file` only when no entry is `image/*` (e.g. `hero-video-banner`'s `video/*`-only upload). The asset linker emits image references unconditionally, so a `file`-typed mixed slot would surface "Invalid file value" in Studio. **`required`** from AEM applies only here so authors attach a Sanity asset.
 
 If `fileReferenceParameter` is omitted, a single image/file field is emitted (legacy behaviour).
 
 **Content + assets** — `aem-transform` moves `/content/dam/...` strings from `{name}` onto `{name}AemPath` using `content-type-registry.json` (field names include **nested** multifield/array member fields via `flattenSchemaFieldNames` in `mapper.ts`). `aem-assets` uploads binaries and replaces `{name}` with a Sanity asset reference object, while **leaving** `{name}AemPath` strings untouched (`rewriteDamRefs` in `assets.ts`).
+
+## AEM authoring hints (`cq:panelTitle` and friends)
+
+AEM stores certain authoring metadata **outside** the dialog payload. The clearest example is accordion / expander panels: each child node carries the panel heading on `cq:panelTitle` (sibling to its own dialog fields), not on a dialog-defined property. The transform's normal property iterator drops anything with a colon — so without an explicit lift step the value would be lost.
+
+The migrator handles this in two layers — a global rename vocabulary and a per-component opt-in config — so only components that actually use the hint pick up a corresponding Sanity field. Other components stay untouched.
+
+**Rename vocabulary** — `AEM_AUTHORING_HINTS` in `packages/aem-to-sanity-core/src/aem/authoring-hints.ts` lists the AEM keys we know how to canonicalize:
+
+| AEM key | Sanity field |
+| --- | --- |
+| `cq:panelTitle` | `panelTitle` |
+
+**Per-project opt-in** — `aem-component-hints.json` (override via `AEM_COMPONENT_HINTS_FILE`) names which components opt into which AEM keys. Same shape and override mechanism as `aem-component-containers.json`:
+
+```json
+{
+  "aem-integration/components/box":     ["cq:panelTitle"],
+  "aem-integration/components/content": ["cq:panelTitle"]
+}
+```
+
+**Transform** — `transformInline` (in `packages/aem-to-sanity-content/src/transform.ts`) consults the opt-in config keyed by the current node's `sling:resourceType`. If the node is opted in and the current property is in its allowlist, the value is renamed via `AEM_AUTHORING_HINTS` and emitted under the Sanity field name. Otherwise colon-bearing keys drop as before. `diffProps` skips opted-in keys so the report doesn't flag them as unknown.
+
+**Schema** — `migrateSchemas` injects, **only on opted-in components**, a `readOnly` `string` field per declared hint key. The field is read-only because the value is preserved from AEM, not authored from the Studio dialog. Non-opted components stay clean.
+
+**Extending** — to support a new hint:
+
+1. Add the AEM-key → Sanity-field row to `AEM_AUTHORING_HINTS`.
+2. Add the AEM key to the relevant component's array in `aem-component-hints.json`.
+3. Re-run `pnpm migrate:schema` and `pnpm transform`. The field surfaces in the registry and clean docs in the same step; nothing else needs editing.
