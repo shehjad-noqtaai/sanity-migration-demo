@@ -16,31 +16,9 @@
 # logged into AEM author to list top-level site roots. Drill down one level at
 # a time (`/content/<sitename>.1.json`, etc.) until you reach your locale.
 
-@base /content/dbi/en
+@base /content/<your-site>/<locale>
 
-FAQ
-about-us
-bridal-party
-bridesmaids-guide
-brides
-bridesmaid
-categories
-designers
-gifts-and-decor
-help
-homepage
-inspiration
-inspiration-and-planning
-mother-of-the-bride-dress
-planning
-privacy-policy
-prom
-prom-trends
-promotions-coupons
-sale
-shoes-and-accessories
-sitemap
-special-occasion
-stores
-wedding-dresses
-wedding-dress-style
+home
+about
+products
+support

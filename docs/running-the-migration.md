@@ -30,10 +30,23 @@ pnpm build   # builds all three packages into packages/*/dist
 
 There are two `.env` files — one for the pipeline CLIs, one for the Studio. They can share values; they live in different directories because each tool loads `.env` from its own cwd.
 
-### 1a. Pipeline `.env` — `examples/davids-bridal/.env`
+### 1-pre. Bootstrap a tenant folder
+
+Every migration runs from a tenant folder under `examples/`. The only one tracked in git is `examples/tenant/` — the template. **Copy it** to start a new migration:
 
 ```bash
-cp examples/davids-bridal/.env.example examples/davids-bridal/.env
+cp -R examples/tenant examples/<your-tenant>
+# Update the workspace name so `pnpm -F` matches:
+sed -i '' 's/"example-tenant"/"example-<your-tenant>"/' examples/<your-tenant>/package.json
+pnpm install   # pnpm auto-discovers via the `examples/*` glob in pnpm-workspace.yaml
+```
+
+`<your-tenant>` is any short slug — `acme`, `tmobile`, `davids-bridal`. The copy is gitignored — only `examples/tenant/` is committed, so each operator's working copy (with real credentials, customer-specific component lists, and per-run pipeline output) stays local.
+
+### 1a. Pipeline `.env` — `examples/<your-tenant>/.env`
+
+```bash
+cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
 ```
 
 | Variable | Required? | Purpose |
@@ -132,19 +145,19 @@ SANITY_STUDIO_DATASET=production
 
 The studio config also accepts unprefixed `SANITY_PROJECT_ID` / `SANITY_DATASET` as a fallback, so if you already exported those in your shell for the content CLI you don't need to duplicate them.
 
-### 1c. Component path list — `examples/davids-bridal/aem-component-paths`
+### 1c. Component path list — `examples/<your-tenant>/aem-component-paths`
 
 One JCR path per line. Lines beginning with `#` are ignored. Example:
 
 ```
-/apps/davidsbridal/components/content/heroBanner
-/apps/davidsbridal/components/content/promo
+/apps/<your-namespace>/components/content/heroBanner
+/apps/<your-namespace>/components/content/promo
 # add or remove paths as you migrate in waves
 ```
 
 The schema CLI fetches `{path}/_cq_dialog.infinity.json` for each entry.
 
-### 1c-bis. Content roots list — `examples/davids-bridal/aem-content-roots`
+### 1c-bis. Content roots list — `examples/<your-tenant>/aem-content-roots`
 
 Consumed by `aem-extract` (stage 3). Supports `@base` sections to avoid repeating long paths, plus absolute JCR paths. Example:
 
@@ -158,11 +171,11 @@ about-us
 
 Each line becomes a Sanity page doc with its slug derived from the last segment. See `aem-content-roots.example` for the full syntax (comments, absolute paths, multiple `@base` blocks).
 
-### 1c-ter. Component exceptions — `examples/davids-bridal/aem-component-exceptions`
+### 1c-ter. Component exceptions — `examples/<your-tenant>/aem-component-exceptions`
 
 Consumed by `aem-transform`. One `sling:resourceType` (or `apps/...` prefix) per line; matching nodes and their subtrees are skipped. Use this for decorative wrappers or AEM-only utilities that don't belong in Sanity.
 
-### 1c-quater. Container components — `examples/davids-bridal/aem-component-containers.json`
+### 1c-quater. Container components — `examples/<your-tenant>/aem-component-containers.json`
 
 Consumed by both `migrate:schema` and `aem-transform`. Declares which components are AEM "containers" — ones whose children are dropped in via the page editor (cq:isContainer=true) rather than declared as a dialog multifield. Example:
 
@@ -182,7 +195,7 @@ For each listed resource type:
 
 Missing file → container behavior stays off. Malformed JSON or invalid entries are a hard error (fail loudly rather than silently drop child content).
 
-### 1c-quinquies. Authoring hints — `examples/davids-bridal/aem-component-hints.json`
+### 1c-quinquies. Authoring hints — `examples/<your-tenant>/aem-component-hints.json`
 
 Consumed by both `migrate:schema` and `aem-transform`. Opts specific components into AEM authoring-hint lifting — JCR/CQ properties that carry meaningful content but live outside the dialog payload, like `cq:panelTitle` on accordion / expander panel children. Without this opt-in, the transform's normal property iterator drops anything with a colon and the value is lost.
 
@@ -241,8 +254,8 @@ Anything outside this registry is still extracted but tagged `_type: "aemUnmappe
 ## 2. Stage 1 — emit Sanity schemas
 
 ```bash
-pnpm --filter example-davids-bridal migrate:schema
-pnpm --filter example-davids-bridal migrate:schema --verbose  # + per-request AEM GET logs
+pnpm --filter example-<your-tenant> migrate:schema
+pnpm --filter example-<your-tenant> migrate:schema --verbose  # + per-request AEM GET logs
 ```
 
 On start-up the CLI prints a banner summarizing what it's connecting to: AEM env, base URL, auth kind (basic shows the username only; bearer is shown as `len=N, prefix=abcd…` so you can confirm the right token is loaded without it leaking into logs), paths / roots files, output dir, concurrency. A Sanity preflight block follows with project id, dataset, and token presence — schema generation never calls Sanity, it's a config confirmation for the downstream content ingest.
@@ -282,7 +295,7 @@ The Studio-side `sanitizeSchemaTypes` still exists and runs the same rename as a
 If you hand-add a `schemas/myBlock.ts` without re-running the whole migration, refresh the page-builder registration with:
 
 ```bash
-pnpm --filter example-davids-bridal pagebuilder:refresh
+pnpm --filter example-<your-tenant> pagebuilder:refresh
 # or
 npx aem-to-sanity-pagebuilder --output-dir ./output --exclude xfPage
 ```
@@ -294,7 +307,7 @@ This rescans `schemas/`, rebuilds `pageBuilder.ts`, and refreshes `schemas/index
 ## 3. Stage 2 — TypeGen
 
 ```bash
-pnpm --filter example-davids-bridal typegen
+pnpm --filter example-<your-tenant> typegen
 ```
 
 Produces `output/sanity.types.ts`. Runs in-process via tsx + `@sanity/schema` internals — **no network call**, no `sanity schema extract` required.
@@ -313,12 +326,12 @@ const doc = await client.fetch<HeroBanner>(`*[_type == "heroBanner"][0]`);
 Stage 3 is four independent CLIs, run in order. The `migrate:content` pnpm script chains them (`extract && transform && assets && import`), but you can run each step on its own — each reads from the output directory of the previous one, so re-running just one stage is cheap.
 
 ```bash
-pnpm --filter example-davids-bridal migrate:content
+pnpm --filter example-<your-tenant> migrate:content
 # equivalent to:
-pnpm --filter example-davids-bridal extract
-pnpm --filter example-davids-bridal transform
-pnpm --filter example-davids-bridal assets
-pnpm --filter example-davids-bridal import
+pnpm --filter example-<your-tenant> extract
+pnpm --filter example-<your-tenant> transform
+pnpm --filter example-<your-tenant> assets
+pnpm --filter example-<your-tenant> import
 ```
 
 **All writes to Sanity are dry-run unless `MIGRATION_DRY_RUN=false` is set.** The `extract` and `transform` stages are read/local-only regardless; only `assets` and `import` touch Sanity.
@@ -333,7 +346,7 @@ Reads every entry in `aem-content-roots`, fetches `{root}.infinity.json` from AE
 | `AEM_CONTENT_ROOTS_FILE` | Path to roots file. Default: `./aem-content-roots`. |
 | `AEM_MAX_RESPONSE_MB` | Per-fetch payload cap. Oversized responses are recorded as `tooLarge` failures. |
 | `AEM_MAX_DEPTH_EXPANSIONS` | How many rounds of depth-5 follow-up fetches to run per root. Default: 3. Raise only if a page is pathologically deep; leftover markers after the budget are replaced with `{__truncated: "maxDepth", jcrPath}` sentinels and the transform stage treats them as opaque. |
-| `AEM_FIXTURES_DIR` | If set, reads captured AEM responses from this directory instead of issuing HTTP calls. See `examples/davids-bridal/fixtures/aem/README.md` for the URL → filename mapping. Used by unit tests and CI; leave unset for live migrations. |
+| `AEM_FIXTURES_DIR` | If set, reads captured AEM responses from this directory instead of issuing HTTP calls. Capture fixtures with `packages/aem-to-sanity-core/scripts/capture-fixtures.ts` — default output is `<cwd>/output/cache/fixtures/aem/`. Used by unit tests and CI; leave unset for live migrations. |
 
 **Outputs:** `output/raw/*.json`, `output/extract-report.json` (counts, categorized failures, ambiguous-path resolutions, and a `depthExpansions` array with per-root `markersFound`/`markersResolved`/`markersTruncated`/`markersFailed`/`expansionsUsed` stats), and `output/extract-404.log` if any roots weren't found.
 
@@ -439,7 +452,7 @@ Authentication:
   User type:  normal
 ```
 
-Copy the value after `Auth token:`. That token is tied to your user account, so it carries every grant you have — including org-level Media Library access. Paste it into `examples/davids-bridal/.env` as `SANITY_ML_LINK_TOKEN=…` (and, if phase 2 is also failing with `SIO-401-ANF`, replace `SANITY_TOKEN` with the same value).
+Copy the value after `Auth token:`. That token is tied to your user account, so it carries every grant you have — including org-level Media Library access. Paste it into `examples/<your-tenant>/.env` as `SANITY_ML_LINK_TOKEN=…` (and, if phase 2 is also failing with `SIO-401-ANF`, replace `SANITY_TOKEN` with the same value).
 
 **Note:** the token in `sanity debug --secrets` is the live session token used by the CLI. Logging in again from another machine, running `sanity logout`, or rotating credentials in your Sanity account will invalidate it. For a stable token that survives CLI re-logins, use Option B.
 
@@ -485,20 +498,20 @@ AEM's `.infinity.json` truncates the tree at depth ~5, inserting path-string mar
 ## 5. Orchestrated — one command for the full pipeline
 
 ```bash
-pnpm --filter example-davids-bridal migrate
+pnpm --filter example-<your-tenant> migrate
 ```
 
 Chains `migrate:schema` → `extract` → `transform` → `assets` → `import --discard-drafts` in a single shell. Each stage's `Elapsed:` line surfaces as it runs, so timing breakdowns are visible without parsing logs after the fact. Use this for "blow away and re-run" workflows on datasets only the pipeline writes to — `--discard-drafts` is destructive of in-progress author edits.
 
 More granular variants:
 
-- `pnpm --filter example-davids-bridal migrate:content` — content stages only, no `--discard-drafts`.
-- `pnpm --filter example-davids-bridal migrate:all` — schema + typegen only.
+- `pnpm --filter example-<your-tenant> migrate:content` — content stages only, no `--discard-drafts`.
+- `pnpm --filter example-<your-tenant> migrate:all` — schema + typegen only.
 
 Or via Turbo with input-hash caching for the pure emit stages:
 
 ```bash
-pnpm turbo run migrate:schema typegen migrate:content --filter=example-davids-bridal
+pnpm turbo run migrate:schema typegen migrate:content --filter=example-<your-tenant>
 ```
 
 Turbo respects the ordering declared in `turbo.json`: schema → typegen → content. Network-dependent tasks are `"cache": false`; pure emit steps cache against input hashes.
@@ -519,7 +532,7 @@ pnpm --filter studio exec sanity schema validate
 # Expects: 0 errors, 0 warnings.
 ```
 
-The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `examples/davids-bridal/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import time — it's a real consumer of the pipeline output, not a toy fixture. If you change the emitted schemas, `sanity schema validate` is the gate that catches breakage.
+The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `examples/<your-tenant>/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import time — it's a real consumer of the pipeline output, not a toy fixture. If you change the emitted schemas, `sanity schema validate` is the gate that catches breakage.
 
 ---
 
@@ -534,14 +547,14 @@ The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `examples/david
 | `AEM service credentials JSON is missing the fields needed for either flow` | Neither `SCOPES` (Server-to-Server) nor `privateKey + metascopes + technicalAccountId + org` (JWT) found. You likely pasted a half-edited file or a different Adobe integration's JSON. Re-export from Cloud Manager. |
 | `401` or `403` on fetches | Creds valid but account lacks read access to the JCR paths. Verify in AEM's CRXDE — for AEMaaCS the technical account's product profile must include the right AEM environment + permissions. |
 | `aem-import` prints `DRY RUN` and nothing lands in Sanity | That's the default. Export `MIGRATION_DRY_RUN=false` (also set `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN`) and re-run. |
-| `aem-import` → `Missing env var: SANITY_TOKEN` | You set `MIGRATION_DRY_RUN=false` but the write token isn't in the env. Source it into `examples/davids-bridal/.env`. |
+| `aem-import` → `Missing env var: SANITY_TOKEN` | You set `MIGRATION_DRY_RUN=false` but the write token isn't in the env. Source it into `examples/<your-tenant>/.env`. |
 | `aem-assets` phase 2 → `HTTP 401 SIO-401-ANF "Session not found"` on every upload | The `/media-libraries/{mlId}/upload` endpoint rejected your `SANITY_TOKEN`. Newer Media Library API versions don't accept project robot tokens here. Replace `SANITY_TOKEN` (or just override for this run) with a **personal auth token** that has read/write on the Media Library. See § 4c-bis for how to generate one. Retries can't help — every request fails the same way. |
 | `aem-assets` phase 3 → `401 Invalid non-global session for user id g-...` | The `/assets/media-library-link` endpoint rejected your `SANITY_TOKEN`. It requires a *personal* auth token, not a project robot token. Set `SANITY_ML_LINK_TOKEN` to a personal token with read/write on both the Media Library and the project. See § 4c-bis. |
 | `aem-assets` phase 2 → `409 asset already exists` | Informational, not an error. The binary was already uploaded to the Media Library. The code recovers both IDs via a GROQ lookup and continues. |
 | `aem-assets` → `Missing env var: SANITY_MEDIA_LIBRARY_ID` | Set it to the org-level ML id that the project belongs to. `sanity media library list` on the org shows available ids. |
 | `aem-extract` fails with `HTTP 300` on a root | AEM returned an ambiguous-path response (the path may point at a folder). Check `output/extract-report.json` → `ambiguous[]` for the resolution suggestion. |
 | `aem-transform` → `No raw files in output/raw` | Run `aem-extract` first. The transform stage only reads from disk — it never hits AEM. |
-| Studio boots but shows no schemas | `output/schemas/index.ts` is missing or stale. Run `pnpm --filter example-davids-bridal migrate:schema`. |
+| Studio boots but shows no schemas | `output/schemas/index.ts` is missing or stale. Run `pnpm --filter example-<your-tenant> migrate:schema`. |
 | `sanity schema validate` → `Type has property "fields", but is not an object/document type` | The sanitizer is injecting placeholder fields into a non-object type. Confirm you're on the latest schema package (this is fixed). |
 | `ERR_PACKAGE_PATH_NOT_EXPORTED` when running sanity CLI | Rebuild: `pnpm build`. The bundled CJS loader the Sanity CLI uses needs the `default` export condition that `dist/` ships. |
 | Depth-5 follow-ups never fire on a deep page | Make sure you're calling `aem-extract`, not hitting `.infinity.json` manually. Raise `maxDepthExpansions` if you have pages > 6 follow-up rounds deep. |

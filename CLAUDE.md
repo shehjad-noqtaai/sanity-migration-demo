@@ -13,7 +13,7 @@ Every user-facing change must update its documentation in the same commit. Drift
 - `docs/running-the-migration.md` — exhaustive operator's guide (env vars table, per-stage flag tables, troubleshooting).
 - `docs/overview.md` — architecture + layout.
 - `docs/aem-to-sanity-mapping.md` — **auto-generated** by `packages/aem-to-sanity-schema/src/docs.ts`. Do not edit by hand; regenerate.
-- `examples/davids-bridal/.env.example` — must list every env var a CLI reads.
+- `examples/tenant/.env.example` — must list every env var a CLI reads. `examples/tenant/` is the **committed template**; operator working copies live at `examples/<their-tenant>/` and are gitignored.
 
 **Triggers:**
 - **New CLI flag** → update the package README + the stage section in `docs/running-the-migration.md` + the short summary in `docs/run.md` + `.env.example` if there's a matching env var.
@@ -39,7 +39,7 @@ The pipeline emits many artifacts into `output/cache/` and `apps/studio/schemas/
 - `output/cache/clean/*.json` — written by `aem-transform`, mutated in place by `aem-assets` phase 4 (DAM-path → asset ref rewrite).
 - `output/cache/assets/manifest.json` — per-DAM-path state; drives `aem-assets` resumability.
 
-When you change how any artifact is generated, **re-run the relevant stage against `examples/davids-bridal/` to verify** — don't just typecheck. The example has `MIGRATION_DRY_RUN=false` configured, so schema + transform runs are free; assets and import writes go to a real dataset (`rolz99xh` / `production`). Prefer `--link-only` on `aem-assets` for re-runs — it skips AEM downloads and ML uploads.
+When you change how any artifact is generated, **re-run the relevant stage against whichever local tenant folder you have set up** — don't just typecheck. Operator tenant folders (`examples/davids-bridal/`, `examples/<your-tenant>/`, etc.) are gitignored, so on a fresh clone there's nothing to run against — copy `examples/tenant/` first and fill in real credentials. Prefer `--link-only` on `aem-assets` for re-runs — it skips AEM downloads and ML uploads.
 
 ## Type-name resolution (reserved names)
 
@@ -82,7 +82,7 @@ The Studio edits `drafts.{id}` whenever one exists. `aem-import` by default only
 
 ## Storefront preview (apps/web)
 
-A Vite + React 19 app lives at `apps/web/` that reads the migrated home doc from Sanity and renders its pageBuilder through a set of block primitives styled per `docs/DESIGN.md` (the "Ethereal Atelier" system). Use it to eyeball the output of a migration run end-to-end — `pnpm -F web dev` → http://localhost:4321. Env plumbing falls back to `examples/davids-bridal/.env` so the demo tracks the migration destination automatically.
+A Vite + React 19 app lives at `apps/web/` that reads the migrated home doc from Sanity and renders its pageBuilder through a set of block primitives styled per `docs/DESIGN.md` (the "Ethereal Atelier" system). Use it to eyeball the output of a migration run end-to-end — `pnpm -F web dev` → http://localhost:4321. Env plumbing falls back to the first non-template tenant folder under `examples/` that has a `.env` (so the demo tracks whichever migration destination you have configured locally).
 
 Design tokens live in `apps/web/src/styles.css` under a Tailwind v4 `@theme` block. Block renderers are one-per-`_type` under `apps/web/src/blocks/`, wired through a switch-based dispatcher in `blocks/index.tsx`; unknown `_type`s fall through to a visible `UnknownBlock` placeholder so missing primitives surface immediately instead of rendering as blank space. When adding a new block type to the schema side, drop a primitive into this dispatcher in the same change so the preview stays usable.
 
@@ -94,8 +94,8 @@ After code changes that affect the pipeline output:
 # 1. Rebuild so dist/ reflects source changes (Node runs from dist/)
 pnpm -r build
 
-# 2. Full schema + content run on the reference example
-cd examples/davids-bridal
+# 2. Full schema + content run against your local tenant folder
+cd examples/<your-tenant>             # e.g. examples/davids-bridal, examples/acme
 pnpm migrate:schema
 pnpm extract
 pnpm transform

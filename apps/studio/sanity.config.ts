@@ -16,7 +16,7 @@ import { allSchemaTypes } from "./schemas/index.ts";
  */
 export default defineConfig({
   name: "default",
-  title: "AEM → Sanity (davids-bridal example)",
+  title: "AEM → Sanity Studio",
   projectId:
     process.env.SANITY_STUDIO_PROJECT_ID ?? process.env.SANITY_PROJECT_ID ?? "",
   dataset:

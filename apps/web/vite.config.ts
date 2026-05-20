@@ -1,3 +1,5 @@
+import { existsSync, readdirSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -5,16 +7,38 @@ import tailwindcss from "@tailwindcss/vite";
 /**
  * Dev-time Sanity env is sourced from:
  *  1. `apps/web/.env` (if present — same conventions as the rest of the repo),
- *  2. otherwise `examples/davids-bridal/.env` so the demo picks up the same
- *     project / dataset the migration pipeline writes to without duplication.
+ *  2. otherwise the first tenant folder under `examples/` that has a `.env`
+ *     so the demo picks up the same project / dataset the migration pipeline
+ *     writes to without duplication. `examples/tenant/` (the committed
+ *     template) is intentionally skipped — it never has real credentials.
  *
  * Only the *public* values (SANITY_PROJECT_ID, SANITY_DATASET) are exposed to
  * the client bundle; tokens stay server-side (this demo is read-only and
  * doesn't need one).
  */
+function findTenantEnvDir(mode: string): string | undefined {
+  const examplesDir = resolve(process.cwd(), "../../examples");
+  if (!existsSync(examplesDir)) return undefined;
+  const candidates = readdirSync(examplesDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && d.name !== "tenant")
+    .map((d) => join(examplesDir, d.name))
+    .filter((dir) => {
+      // loadEnv honors .env, .env.local, .env.<mode>, .env.<mode>.local.
+      // Any of these is a signal the tenant folder has been set up.
+      return (
+        existsSync(join(dir, ".env")) ||
+        existsSync(join(dir, ".env.local")) ||
+        existsSync(join(dir, `.env.${mode}`)) ||
+        existsSync(join(dir, `.env.${mode}.local`))
+      );
+    });
+  return candidates[0];
+}
+
 export default defineConfig(({ mode }) => {
   const localEnv = loadEnv(mode, process.cwd(), "");
-  const sharedEnv = loadEnv(mode, `${process.cwd()}/../../examples/davids-bridal`, "");
+  const tenantDir = findTenantEnvDir(mode);
+  const sharedEnv = tenantDir ? loadEnv(mode, tenantDir, "") : {};
   const projectId = localEnv.SANITY_PROJECT_ID ?? sharedEnv.SANITY_PROJECT_ID ?? "";
   const dataset = localEnv.SANITY_DATASET ?? sharedEnv.SANITY_DATASET ?? "production";
   // Server-side token for the dev proxy when the dataset is private.

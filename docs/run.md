@@ -12,31 +12,42 @@ pnpm build
 
 ---
 
-## 1. Configure env files
+## 1. Bootstrap a tenant folder + configure env
+
+Every migration runs from a **tenant folder** under `examples/`. The only one tracked in git is `examples/tenant/` — the template. Copy it for each migration:
 
 ```bash
-cp examples/davids-bridal/.env.example examples/davids-bridal/.env
+cp -R examples/tenant examples/<your-tenant>
+# Update the workspace name so `pnpm -F` matches:
+sed -i '' 's/"example-tenant"/"example-<your-tenant>"/' examples/<your-tenant>/package.json
+pnpm install   # pnpm auto-discovers via the examples/* glob
+```
+
+Then fill in env files:
+
+```bash
+cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
 cp apps/studio/.env.example apps/studio/.env
 # then edit both files with AEM creds + Sanity project id / dataset / token
 ```
 
 **What this does:** Creates two local `.env` files that the pipeline and Studio read at startup.
 
-- **`examples/davids-bridal/.env`** — consumed by the migration CLIs. Holds AEM connection info (`AEM_ENV`, `AEM_AUTHOR_URL`, plus **one** of: `AEM_SERVICE_CREDENTIALS_FILE` for AEMaaCS via Adobe IMS — recommended; `AEM_TOKEN` for an AEMaaCS developer token or any pre-minted bearer; or `AEM_AUTHOR_USERNAME`+`AEM_AUTHOR_PASSWORD` for on-prem / AMS basic auth) and, for live runs, Sanity write credentials (`SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN`, `SANITY_MEDIA_LIBRARY_ID`, `SANITY_ML_LINK_TOKEN`). See `running-the-migration.md` § 1a-bis for the AEMaaCS Service Credentials walkthrough.
+- **`examples/<your-tenant>/.env`** — consumed by the migration CLIs. Holds AEM connection info (`AEM_ENV`, `AEM_AUTHOR_URL`, plus **one** of: `AEM_SERVICE_CREDENTIALS_FILE` for AEMaaCS via Adobe IMS — recommended; `AEM_TOKEN` for an AEMaaCS developer token or any pre-minted bearer; or `AEM_AUTHOR_USERNAME`+`AEM_AUTHOR_PASSWORD` for on-prem / AMS basic auth) and, for live runs, Sanity write credentials (`SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN`, `SANITY_MEDIA_LIBRARY_ID`, `SANITY_ML_LINK_TOKEN`). See `running-the-migration.md` § 1a-bis for the AEMaaCS Service Credentials walkthrough.
 - **`apps/studio/.env`** — consumed by the Sanity Studio. Holds `SANITY_STUDIO_PROJECT_ID` and `SANITY_STUDIO_DATASET` so the Studio knows which project to open.
 
-Each tool loads `.env` from its own cwd, which is why the two files live in different directories (they can share values).
+Each tool loads `.env` from its own cwd, which is why the two files live in different directories (they can share values). Operator tenant folders (`examples/<your-tenant>/`) are gitignored — they hold real credentials, customer-specific component lists, and per-run pipeline output. Only `examples/tenant/` (the template) is committed.
 
 ---
 
 ## 2. Stage 1 — emit Sanity schemas
 
 ```bash
-pnpm --filter example-davids-bridal migrate:schema
-pnpm --filter example-davids-bridal migrate:schema --verbose  # + per-request AEM GET logs
+pnpm --filter example-<your-tenant> migrate:schema
+pnpm --filter example-<your-tenant> migrate:schema --verbose  # + per-request AEM GET logs
 ```
 
-**What this does:** Reads every AEM component path listed in `examples/davids-bridal/aem-component-paths`, fetches each component's `_cq_dialog.infinity.json` from AEM, and converts those Granite UI dialogs into Sanity object schemas.
+**What this does:** Reads every AEM component path listed in `examples/<your-tenant>/aem-component-paths`, fetches each component's `_cq_dialog.infinity.json` from AEM, and converts those Granite UI dialogs into Sanity object schemas.
 
 At startup the CLI prints a runtime banner summarizing the AEM env it's about to hit (base URL, auth kind — with password masked and bearer tokens shown as length + 4-char prefix) plus a Sanity preflight check (project id, dataset, token presence — the schema stage never calls Sanity, this is a config confirmation).
 
@@ -46,7 +57,7 @@ Flags / env vars:
 
 Component type-name resolution happens up front via `resolveSanityTypeNames` (in `aem-to-sanity-schema/naming.ts`): any AEM path whose base name collides with a Sanity built-in (`image`, `file`, `slug`, `text`, etc.) is emitted with an `aem` prefix (so `/apps/aem-integration/components/image` → `aemImage.ts`). The same resolved name is written into the content registry and the `pageBuilder.of[]` array, so ingested documents will carry a `_type` that matches the Studio-registered schema name with no Studio-side renaming needed.
 
-Outputs land under `examples/davids-bridal/output/`:
+Outputs land under `examples/<your-tenant>/output/`:
 - `schemas/*.ts` — one Sanity object type per AEM component. Each carries a non-empty preview title (AEM `jcr:title` → title-cased type name → raw type name fallback) so Page Builder rows never render as "Untitled".
 - `schemas/pageBuilder.ts` — array type listing every emitted block. Each member is emitted as `defineArrayMember({ type, title })` so the "+ Add" menu and row previews render friendly labels even before the row has any data.
 - `schemas/page.ts` — minimal `page` document type (`title`, `slug`, `pageBuilder`).
@@ -61,7 +72,7 @@ Output is deterministic, so re-runs produce clean `git diff`s.
 ## 3. Stage 2 — TypeGen
 
 ```bash
-pnpm --filter example-davids-bridal typegen
+pnpm --filter example-<your-tenant> typegen
 ```
 
 **What this does:** Reads the schemas emitted in stage 1 and generates `output/sanity.types.ts` — TypeScript types for every schema, suitable for typed GROQ clients (`client.fetch<HeroBanner>(...)`). Runs entirely in-process via `tsx` + `@sanity/schema` internals; no network call and no `sanity schema extract` needed.
@@ -71,10 +82,10 @@ pnpm --filter example-davids-bridal typegen
 ## 4. Stage 3 — content migration (run each sub-step individually)
 
 ```bash
-pnpm --filter example-davids-bridal extract
-pnpm --filter example-davids-bridal transform
-pnpm --filter example-davids-bridal assets
-pnpm --filter example-davids-bridal import
+pnpm --filter example-<your-tenant> extract
+pnpm --filter example-<your-tenant> transform
+pnpm --filter example-<your-tenant> assets
+pnpm --filter example-<your-tenant> import
 ```
 
 The four stages are independent CLIs chained through on-disk output; you can re-run any single one without redoing the others.
@@ -134,20 +145,20 @@ pnpm --filter studio exec sanity media deploy-aspect aemSource
 The `migrate` script chains every stage end-to-end, with `--discard-drafts` on import so re-runs reflect immediately in the Studio:
 
 ```bash
-pnpm --filter example-davids-bridal migrate
+pnpm --filter example-<your-tenant> migrate
 ```
 
 **What this does:** runs in order — `migrate:schema` → `extract` → `transform` → `assets` (full download + upload + link) → `import --discard-drafts`. Each stage's `Elapsed:` line surfaces along the way. Use this for "blow away and re-run" workflows on a dataset only the pipeline writes to.
 
 For more granular variants:
 
-- `pnpm --filter example-davids-bridal migrate:content` — content stages only, **no** `--discard-drafts` (preserves any in-progress author edits).
-- `pnpm --filter example-davids-bridal migrate:all` — schema + typegen only.
+- `pnpm --filter example-<your-tenant> migrate:content` — content stages only, **no** `--discard-drafts` (preserves any in-progress author edits).
+- `pnpm --filter example-<your-tenant> migrate:all` — schema + typegen only.
 
 Or via Turbo with input-hash caching for the pure emit stages:
 
 ```bash
-pnpm turbo run migrate:schema typegen migrate:content --filter=example-davids-bridal
+pnpm turbo run migrate:schema typegen migrate:content --filter=example-<your-tenant>
 ```
 
 ---
@@ -158,7 +169,7 @@ pnpm turbo run migrate:schema typegen migrate:content --filter=example-davids-br
 pnpm --filter studio dev          # http://localhost:3333
 ```
 
-**What this does:** Boots the Sanity Studio defined in `apps/studio/` against your configured project. The Studio's `schemas/index.ts` re-exports `allSchemaTypes` from `examples/davids-bridal/output/schemas/index.ts`, so every schema the pipeline emitted shows up as a real editable document type — you can open imported pages, verify block rendering, and spot-check the migration result.
+**What this does:** Boots the Sanity Studio defined in `apps/studio/` against your configured project. The Studio's `schemas/index.ts` re-exports `allSchemaTypes` from `examples/<your-tenant>/output/schemas/index.ts`, so every schema the pipeline emitted shows up as a real editable document type — you can open imported pages, verify block rendering, and spot-check the migration result.
 
 Or just validate schema shape without booting the UI:
 
@@ -174,10 +185,10 @@ pnpm --filter studio exec sanity schema validate
 
 ```bash
 # dry-run — prints what would be deleted
-pnpm --filter example-davids-bridal wipe:media-library
+pnpm --filter example-<your-tenant> wipe:media-library
 
 # actually delete
-pnpm --filter example-davids-bridal wipe:media-library -- --confirm-delete
+pnpm --filter example-<your-tenant> wipe:media-library -- --confirm-delete
 ```
 
 **What this does:** Runs `scripts/wipe-media-library.ts`, which deletes **every** asset from the configured Sanity Media Library. It queries all `sanity.asset` parents plus their `sanity.imageAsset` / `sanity.fileAsset` instances, then removes them in batches of 50 via the Media Library mutate endpoint.
@@ -193,11 +204,11 @@ pnpm --filter example-davids-bridal wipe:media-library -- --confirm-delete
 Typical reset sequence for a test environment:
 
 ```bash
-pnpm --filter example-davids-bridal wipe:media-library -- --confirm-delete
-rm -rf examples/davids-bridal/output/cache/assets
+pnpm --filter example-<your-tenant> wipe:media-library -- --confirm-delete
+rm -rf examples/<your-tenant>/output/cache/assets
 # optionally also clear the dataset's linked-asset docs, then re-run:
-pnpm --filter example-davids-bridal assets
-pnpm --filter example-davids-bridal import
+pnpm --filter example-<your-tenant> assets
+pnpm --filter example-<your-tenant> import
 ```
 
 ---
