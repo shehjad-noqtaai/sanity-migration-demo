@@ -93,7 +93,7 @@ function categorize(err: unknown): FailureCategory {
 async function main(): Promise<void> {
   const timer = startTimer();
   const c = createColors({ stream: process.stderr });
-  const config = resolveConfig(process.env);
+  const config = await resolveConfig(process.env);
   const outputDir = resolve(process.env.OUTPUT_DIR ?? "./output");
   const rootsFile = resolve(process.env.AEM_CONTENT_ROOTS_FILE ?? "./aem-content-roots");
   const overwrite = process.argv.includes("--overwrite");

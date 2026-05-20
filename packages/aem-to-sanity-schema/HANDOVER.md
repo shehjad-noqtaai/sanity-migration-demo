@@ -173,7 +173,7 @@ import {
 } from "aem-to-sanity-core";
 import { migrateSchemas } from "aem-to-sanity-schema";
 
-const config = resolveConfig(process.env);
+const config = await resolveConfig(process.env);
 const logger = createLogger({ level: "info" });
 
 const fetcher = (jcrPath: string): Promise<DialogNode> =>

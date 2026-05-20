@@ -162,9 +162,15 @@ Two `.env` files. They can share values; each tool loads `.env` from its own cwd
 # AEM source
 AEM_ENV=author                     # or `publish`
 AEM_AUTHOR_URL=https://author.example.com
+
+# Pick one (see running-the-migration.md § 1a-bis):
+# (a) AEMaaCS Service Credentials — exchanged via Adobe IMS at startup
+# AEM_SERVICE_CREDENTIALS_FILE=/path/to/service-credentials.json
+# (b) AEMaaCS developer token (24h) or any pre-minted bearer
+# AEM_TOKEN=...
+# (c) on-prem / AMS basic auth (rejected by AEMaaCS)
 AEM_AUTHOR_USERNAME=migration-user
 AEM_AUTHOR_PASSWORD=***
-# AEM_TOKEN=...                    # optional; Bearer, overrides basic auth
 
 # Optional plumbing
 AEM_COMPONENT_PATHS_FILE=./aem-component-paths
@@ -200,7 +206,7 @@ SANITY_STUDIO_DATASET=production
 
 ### Auth precedence
 
-`AEM_TOKEN` > (`AEM_{ENV}_USERNAME` + `AEM_{ENV}_PASSWORD`). If neither is set for the active `AEM_ENV`, the CLI fails fast with a clear message.
+`AEM_SERVICE_CREDENTIALS_FILE` / `AEM_SERVICE_CREDENTIALS` (AEMaaCS via IMS) > `AEM_TOKEN` (developer / pre-minted bearer) > (`AEM_{ENV}_USERNAME` + `AEM_{ENV}_PASSWORD`) (on-prem / AMS basic auth). If none are set for the active `AEM_ENV`, the CLI fails fast and lists all three options.
 
 ### What you almost certainly don't need to touch
 

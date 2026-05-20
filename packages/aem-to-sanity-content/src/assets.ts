@@ -612,7 +612,7 @@ function loadManifest(file: string): Manifest {
 async function main(): Promise<void> {
   const totalTimer = startTimer();
   const c = createColors({ stream: process.stderr });
-  const config = resolveConfig(process.env);
+  const config = await resolveConfig(process.env);
   const outputDir = resolve(process.env.OUTPUT_DIR ?? "./output");
   const cleanDir = join(outputDir, "cache", "clean");
   const assetsDir = join(outputDir, "cache", "assets");

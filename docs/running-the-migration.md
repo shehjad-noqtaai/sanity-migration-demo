@@ -39,11 +39,13 @@ cp examples/davids-bridal/.env.example examples/davids-bridal/.env
 | Variable | Required? | Purpose |
 | --- | --- | --- |
 | `AEM_ENV` | yes | `author` or `publish` — which of the URL/credential pairs below to use. Default: `author`. |
-| `AEM_AUTHOR_URL` | conditional | Base URL of your author instance. Required when `AEM_ENV=author`. |
-| `AEM_AUTHOR_USERNAME` | conditional | Basic-auth user for author. |
-| `AEM_AUTHOR_PASSWORD` | conditional | Basic-auth password for author. |
+| `AEM_AUTHOR_URL` | conditional | Base URL of your author instance. Required when `AEM_ENV=author`. AEMaaCS URLs look like `https://author-pXXXX-eYYYY.adobeaemcloud.com`. |
+| `AEM_AUTHOR_USERNAME` | conditional | Basic-auth user for author. **AMS / on-prem only** — AEMaaCS rejects basic auth. |
+| `AEM_AUTHOR_PASSWORD` | conditional | Basic-auth password for author. **AMS / on-prem only.** |
 | `AEM_PUBLISH_URL` / `USERNAME` / `PASSWORD` | conditional | Same, for publish. |
-| `AEM_TOKEN` | optional | Bearer token. If set, overrides basic auth for whichever env is active. |
+| `AEM_TOKEN` | optional | Bearer token. Use this for **AEMaaCS developer (local-development) tokens** generated in Cloud Manager → Environment → Developer Console → *Integrations* → *Get Local Development Token*. They expire after 24h. Overrides basic auth when set. |
+| `AEM_SERVICE_CREDENTIALS_FILE` | optional | Path to a **Service Credentials JSON** downloaded from Adobe Developer Console. The migration exchanges these credentials with Adobe IMS at startup and uses the resulting short-lived access token as a bearer. Works for both modern OAuth Server-to-Server and legacy JWT shapes. See § 1a-bis. Highest priority — overrides `AEM_TOKEN` and basic auth. |
+| `AEM_SERVICE_CREDENTIALS` | optional | Same content as the file above, but inlined as a JSON string (useful for CI where you'd rather paste into a secret manager than mount a file). Mutually exclusive with `AEM_SERVICE_CREDENTIALS_FILE`. |
 | `AEM_COMPONENT_PATHS_FILE` | optional | File listing component JCR paths to migrate (one per line, `#` for comments). Default: `./aem-component-paths`. |
 | `AEM_CONTENT_ROOTS_FILE` | optional | File listing content roots to walk during extraction. Default: `./aem-content-roots`. See `aem-content-roots.example` for syntax. |
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | optional | File listing `sling:resourceType` values to skip during transform. Default: `./aem-component-exceptions`. |
@@ -59,12 +61,61 @@ cp examples/davids-bridal/.env.example examples/davids-bridal/.env
 | `AEM_VERBOSE` | optional | `true` ⇔ passing `--verbose`. Elevates the CLI logger to `debug` so every AEM GET is logged. |
 | `SANITY_PROJECT_ID` | required for writes | Only read when `MIGRATION_DRY_RUN=false`. |
 | `SANITY_DATASET` | required for writes | |
-| `SANITY_TOKEN` | required for writes | Write-scoped API token. Used for `aem-import` and for the Media Library **upload** phase of `aem-assets`. |
+| `SANITY_TOKEN` | required for writes | API token. Used for `aem-import` and for the Media Library **upload** phase of `aem-assets`. A project robot token (Editor+) works for `aem-import` and historically worked for ML upload too, but newer Media Library API versions reject robot tokens with `401 SIO-401-ANF "Session not found"` — if you hit that on phase 2, use a personal token here. See § 4c-bis for how to generate one. |
 | `SANITY_MEDIA_LIBRARY_ID` | required for `aem-assets` writes | Id of the org-level Sanity Media Library that assets go into (e.g. `mlTnBiUKRzfi`). Must belong to the same org as `SANITY_PROJECT_ID`. |
-| `SANITY_ML_LINK_TOKEN` | conditional | Personal auth token used for the Media Library **link** step in `aem-assets`. Required when `SANITY_TOKEN` is a project robot token (the link API rejects non-global sessions). See § 4c. |
+| `SANITY_ML_LINK_TOKEN` | conditional | Personal auth token used for the Media Library **link** step in `aem-assets`. Required when `SANITY_TOKEN` is a project robot token (the link API rejects non-global sessions with `401 SIO-401-ANF`). See § 4c-bis for how to generate one. |
 | `SANITY_API_VERSION` | optional | Default: `2024-01-01` for import; `aem-assets` pins `2025-02-19` because Media Library endpoints require it. |
 
-Auth precedence: `AEM_TOKEN` > (`*_USERNAME` + `*_PASSWORD`). If neither is set for the active `AEM_ENV`, the CLI fails fast with a clear message.
+Auth precedence: `AEM_SERVICE_CREDENTIALS_FILE` / `AEM_SERVICE_CREDENTIALS` (AEMaaCS via IMS) > `AEM_TOKEN` (developer / pre-minted bearer) > (`*_USERNAME` + `*_PASSWORD`) (on-prem / AMS basic auth). If none are set for the active `AEM_ENV`, the CLI fails fast and lists all three options.
+
+### 1a-bis. AEM as a Cloud Service — Service Credentials & developer tokens
+
+AEMaaCS does not accept basic auth. Pick one of the three flows below; the resolver auto-detects which based on which env vars you set.
+
+#### Service Credentials (recommended for migration runs)
+
+The right choice for anything more than a quick local trial — the token Adobe IMS issues is valid for hours, doesn't need to be re-pasted between runs, and survives CI workflows.
+
+1. In **Cloud Manager**, open the target environment (the one you want to migrate from).
+2. Click the actions menu → **Developer Console** (opens `dev-console-ns-team-aem-cm-prd-nXXXXX.ethos05-prod-va6.dev.adobeaemcloud.com/...` or similar).
+3. Go to **Integrations** → **Service Credentials** → **Get Service Credentials** → **Create new technical account**. Adobe IMS provisions a technical account, generates a private key, and downloads a JSON file. Save it somewhere outside the repo — it carries credentials.
+4. Point the migration at the file:
+   ```bash
+   AEM_SERVICE_CREDENTIALS_FILE=/path/to/service-credentials.json
+   ```
+   Or, for CI, inline the JSON:
+   ```bash
+   AEM_SERVICE_CREDENTIALS='{"CLIENT_ID":"...","CLIENT_SECRET":"...","SCOPES":["..."], ...}'
+   ```
+   Set only one — both is a configuration error.
+
+The migration accepts both shapes Adobe currently emits:
+
+- **OAuth Server-to-Server** (current, for new integrations): flat object with `CLIENT_ID`, `CLIENT_SECRET`, `SCOPES`, `TECHNICAL_ACCOUNT_ID`, `IMS_ORG_ID`. The resolver exchanges these via `POST {imsEndpoint}/ims/token/v3` with `grant_type=client_credentials`.
+- **Legacy JWT** (still issued for some AEMaaCS environments — deprecated by Adobe but supported by IMS through their migration window): `{ok, integration:{...}}` wrapper with `imsEndpoint`, `technicalAccount.{clientId,clientSecret}`, `org`, `metascopes`, `id`, `privateKey`. The resolver signs an RS256 JWT and exchanges it via `POST {imsEndpoint}/ims/exchange/jwt/`.
+
+If your file doesn't match either shape, the CLI fails at startup with a message naming the missing fields — no opaque 401s deep in the walker.
+
+Token lifetime: IMS access tokens are typically valid for ~24h. The migration uses a single token for the whole run, so a single token easily covers even a multi-hour migration. The startup banner prints `auth ims access token (len=…, prefix=…) (expires <ISO8601>)` so you can see at a glance how long you have. If you hit an expired token mid-run, just re-run the stage — the resolver fetches a fresh token at startup.
+
+#### Developer (local-development) token
+
+For quick local trials or one-shot debugging. Generate one in Cloud Manager → Environment → Developer Console → *Integrations* → *Get Local Development Token*, then paste:
+
+```bash
+AEM_TOKEN=eyJhbGc...
+```
+
+Expires after 24h. If the migration takes longer, regenerate and re-run — the manifest-driven extract/transform/assets stages are resumable.
+
+#### Basic auth — on-prem / AMS only
+
+`AEM_AUTHOR_USERNAME` + `AEM_AUTHOR_PASSWORD` works against author + publish on-prem and on AMS. AEMaaCS rejects it with 401. If you see a 401 banner against an `*.adobeaemcloud.com` URL with these set, switch to one of the two flows above.
+
+#### Where to read more
+
+- [AEM Headless Authentication Overview](https://experienceleague.adobe.com/en/docs/experience-manager-learn/getting-started-with-aem-headless/authentication/overview) — Adobe's matrix of the three flows.
+- [Service Credentials walkthrough](https://experienceleague.adobe.com/en/docs/experience-manager-learn/getting-started-with-aem-headless/authentication/service-credentials) — step-by-step screenshots of provisioning a Service Credential in Cloud Manager.
 
 ### 1b. Studio `.env` — `apps/studio/.env`
 
@@ -356,8 +407,8 @@ interface ManifestEntry {
 - **Env vars:**
   - `SANITY_PROJECT_ID`, `SANITY_DATASET` — as before.
   - `SANITY_MEDIA_LIBRARY_ID` — **required** when not dry-running. Must be a Media Library in the same org as the project.
-  - `SANITY_TOKEN` — used for the upload phase (project robot token with write access works fine).
-  - `SANITY_ML_LINK_TOKEN` — **required for the link phase** when `SANITY_TOKEN` is a project robot token. The `/assets/media-library-link` endpoint requires a *personal* authorization token with read/write on both the Media Library (org-level) and the project/dataset; a project-only robot token is rejected with `401 Invalid non-global session`. Generate one via `sanity login` + `sanity debug --secrets` or the Sanity user management UI. Falls back to `SANITY_TOKEN` if unset (works only if that token is already a personal/OAuth token).
+  - `SANITY_TOKEN` — used for phase 2 (upload). A project robot token historically worked here, but newer Media Library API versions reject project-scoped sessions with `401 SIO-401-ANF "Session not found"` on `/media-libraries/{mlId}/upload`. When that happens, swap in a personal auth token (the same kind § 4c-bis describes for the link phase). The token still needs write access on the project for the in-place doc rewrites in phase 4.
+  - `SANITY_ML_LINK_TOKEN` — **required for phase 3 (link)** when `SANITY_TOKEN` is a project robot token. The `/assets/media-library-link` endpoint requires a *personal* authorization token with read/write on both the Media Library (org-level) and the project/dataset; a project-only robot token is rejected with `401 Invalid non-global session`. Falls back to `SANITY_TOKEN` if unset (works only if that token is already a personal/OAuth token). See § 4c-bis for how to generate one.
   - `SANITY_API_VERSION` — defaults to `2025-02-19`, which is when Media Library support landed.
 - **Flags:**
   - `--upload-only` — skip phase 1 (download). Assumes the local cache already exists.
@@ -365,6 +416,56 @@ interface ManifestEntry {
   - `--no-rewrite` — skip phase 4 (in-place rewrite of `clean/*.json`).
 
 Ordering contract: the link phase must complete before `aem-import` runs, because the clean docs only contain the linked `_ref` after phase 4. The `migrate:content` chain (`extract → transform → assets → import`) already enforces this.
+
+### 4c-bis. Generating a personal Sanity auth token
+
+The Sanity Media Library endpoints reject project-scoped robot tokens because they're tied to a non-global session (error code `SIO-401-ANF`, message `Session not found` / `Invalid non-global session`). They require a token tied to a **user account** with read/write access to both the Media Library (org-level) and the project/dataset. Two ways to mint one:
+
+#### Option A — Sanity CLI (fastest)
+
+```bash
+# 1. Authenticate as your Sanity user (opens a browser).
+sanity login
+
+# 2. Print the resulting auth token.
+sanity debug --secrets
+```
+
+Look for the `Authentication:` block in the output:
+
+```
+Authentication:
+  Auth token: sk...redacted...
+  User type:  normal
+```
+
+Copy the value after `Auth token:`. That token is tied to your user account, so it carries every grant you have — including org-level Media Library access. Paste it into `examples/davids-bridal/.env` as `SANITY_ML_LINK_TOKEN=…` (and, if phase 2 is also failing with `SIO-401-ANF`, replace `SANITY_TOKEN` with the same value).
+
+**Note:** the token in `sanity debug --secrets` is the live session token used by the CLI. Logging in again from another machine, running `sanity logout`, or rotating credentials in your Sanity account will invalidate it. For a stable token that survives CLI re-logins, use Option B.
+
+#### Option B — Sanity user UI (stable, long-lived)
+
+1. Go to https://www.sanity.io/manage and sign in as the same user.
+2. Top-right user menu → **User settings** → **Personal access tokens**.
+3. Click **Add API token**, give it a descriptive label (e.g. `aem-to-sanity migration — local`), and copy the generated token. You'll only see it once.
+4. The token inherits your user's grants, so make sure your user has:
+   - **Editor (or higher) on the destination project** — required for `aem-import` writes and phase-4 doc rewrites.
+   - **Read/write on the org-level Media Library** — required for phases 2 + 3. If your user can browse the ML in sanity.io/manage and upload through the UI, this is already satisfied.
+
+#### Sanity check before re-running
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -H "Authorization: Bearer $SANITY_TOKEN" \
+  -H "Content-Type: application/json" \
+  "https://api.sanity.io/v2025-02-19/media-libraries/$SANITY_MEDIA_LIBRARY_ID/query" \
+  -d '{"query":"*[_type==\"sanity.asset\"][0]._id"}'
+```
+
+- `200` → token has Media Library access; if `aem-assets` still 401s, the issue is elsewhere (wrong `SANITY_MEDIA_LIBRARY_ID`, wrong org, etc.).
+- `401` → token doesn't have Media Library access. Regenerate via Option A or check the user's grants per Option B.
+
+After updating the token, re-run `pnpm assets`. Phase 0 picks up where you left off — already-uploaded assets in the manifest are reconciled against the ML by id, so no duplicate uploads.
 
 ### 4d. `aem-import` — `output/clean/` → Sanity
 
@@ -427,11 +528,15 @@ The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `examples/david
 | Symptom | Cause / fix |
 | --- | --- |
 | `AEM_AUTHOR_URL is required when AEM_ENV=author` | Either set the matching URL/creds, switch `AEM_ENV` to `publish`, or use `AEM_TOKEN`. |
-| `Missing credentials. Set AEM_TOKEN, or AEM_AUTHOR_USERNAME and AEM_AUTHOR_PASSWORD.` | No auth resolved for the active env. |
-| `401` or `403` on fetches | Creds valid but account lacks read access to the JCR paths. Verify in AEM's CRXDE. |
+| `Missing credentials. Set AEM_SERVICE_CREDENTIALS_FILE (AEMaaCS), AEM_TOKEN, or AEM_..._USERNAME and AEM_..._PASSWORD.` | No auth resolved for the active env. Pick one of the three flows in § 1a-bis. |
+| `IMS OAuth Server-to-Server failed: HTTP 400 — invalid_client` | The Service Credentials JSON's client id / secret don't match what Adobe IMS has for that technical account. Re-download from Cloud Manager (Developer Console → Integrations → Service Credentials) — secrets rotate when you regenerate. |
+| `IMS JWT exchange failed: HTTP 401` | The technical account was deleted, the metascopes don't include `ent_aem_cloud_api`, or the org id is wrong. Re-download Service Credentials from Cloud Manager. Adobe is also deprecating JWT — newly generated credentials will be OAuth Server-to-Server (the resolver picks the right flow automatically). |
+| `AEM service credentials JSON is missing the fields needed for either flow` | Neither `SCOPES` (Server-to-Server) nor `privateKey + metascopes + technicalAccountId + org` (JWT) found. You likely pasted a half-edited file or a different Adobe integration's JSON. Re-export from Cloud Manager. |
+| `401` or `403` on fetches | Creds valid but account lacks read access to the JCR paths. Verify in AEM's CRXDE — for AEMaaCS the technical account's product profile must include the right AEM environment + permissions. |
 | `aem-import` prints `DRY RUN` and nothing lands in Sanity | That's the default. Export `MIGRATION_DRY_RUN=false` (also set `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN`) and re-run. |
 | `aem-import` → `Missing env var: SANITY_TOKEN` | You set `MIGRATION_DRY_RUN=false` but the write token isn't in the env. Source it into `examples/davids-bridal/.env`. |
-| `aem-assets` phase 3 → `401 Invalid non-global session for user id g-...` | The `/assets/media-library-link` endpoint rejected your `SANITY_TOKEN`. It requires a *personal* auth token, not a project robot token. Set `SANITY_ML_LINK_TOKEN` to a personal token with read/write on both the Media Library and the project. See § 4c. |
+| `aem-assets` phase 2 → `HTTP 401 SIO-401-ANF "Session not found"` on every upload | The `/media-libraries/{mlId}/upload` endpoint rejected your `SANITY_TOKEN`. Newer Media Library API versions don't accept project robot tokens here. Replace `SANITY_TOKEN` (or just override for this run) with a **personal auth token** that has read/write on the Media Library. See § 4c-bis for how to generate one. Retries can't help — every request fails the same way. |
+| `aem-assets` phase 3 → `401 Invalid non-global session for user id g-...` | The `/assets/media-library-link` endpoint rejected your `SANITY_TOKEN`. It requires a *personal* auth token, not a project robot token. Set `SANITY_ML_LINK_TOKEN` to a personal token with read/write on both the Media Library and the project. See § 4c-bis. |
 | `aem-assets` phase 2 → `409 asset already exists` | Informational, not an error. The binary was already uploaded to the Media Library. The code recovers both IDs via a GROQ lookup and continues. |
 | `aem-assets` → `Missing env var: SANITY_MEDIA_LIBRARY_ID` | Set it to the org-level ML id that the project belongs to. `sanity media library list` on the org shows available ids. |
 | `aem-extract` fails with `HTTP 300` on a root | AEM returned an ambiguous-path response (the path may point at a folder). Check `output/extract-report.json` → `ambiguous[]` for the resolution suggestion. |

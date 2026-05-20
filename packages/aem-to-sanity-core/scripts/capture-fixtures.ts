@@ -107,7 +107,7 @@ interface CaptureStats {
 }
 
 async function main(): Promise<void> {
-  const config = resolveConfig(process.env);
+  const config = await resolveConfig(process.env);
   const here = dirname(fileURLToPath(import.meta.url));
   const repoRoot = resolve(here, "../../..");
   const outDir = resolve(
@@ -278,7 +278,7 @@ async function captureSingle(
   try {
     const tree = await fetchInfinityJson(
       {
-        config: resolveConfig(process.env),
+        config: await resolveConfig(process.env),
         fetch: recordingFetch,
       },
       jcrPath,

@@ -16,9 +16,11 @@ Env vars (can live in `.env`):
 ```
 AEM_ENV=author                                # or publish
 AEM_AUTHOR_URL=https://author.example.com
-AEM_AUTHOR_USERNAME=...
+AEM_AUTHOR_USERNAME=...                       # on-prem / AMS only — AEMaaCS rejects basic auth
 AEM_AUTHOR_PASSWORD=...
-# or: AEM_TOKEN=...
+# or: AEM_TOKEN=...                           # AEMaaCS developer token (24h) or any pre-minted bearer
+# or: AEM_SERVICE_CREDENTIALS_FILE=...        # AEMaaCS Service Credentials JSON (exchanged with Adobe IMS at startup)
+# or: AEM_SERVICE_CREDENTIALS='{"CLIENT_ID":...}'  # same, inlined as JSON (for CI)
 
 AEM_CONTENT_ROOTS_FILE=./aem-content-roots    # default
 OUTPUT_DIR=./output                           # default
@@ -34,7 +36,10 @@ MIGRATION_DRY_RUN=false                       # opt-in to commit. Default: dry-r
 SANITY_MEDIA_LIBRARY_ID=ml...                 # required when MIGRATION_DRY_RUN=false
 SANITY_ML_LINK_TOKEN=...                      # personal auth token for /assets/media-library-link
                                               # (required when SANITY_TOKEN is a project robot token —
-                                              #  the link API rejects non-global sessions)
+                                              #  the link API rejects non-global sessions).
+                                              # Generate via `sanity login` + `sanity debug --secrets`,
+                                              # or from sanity.io/manage → user → Personal access tokens.
+                                              # See docs/running-the-migration.md § 4c-bis.
 # SANITY_API_VERSION=2025-02-19               # pinned for aem-assets; ML endpoints require it
 
 # Optional
@@ -159,8 +164,8 @@ Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (de
 
 0. **Dedup against the Media Library + manifest staleness check** — GROQ on `aspects.aemSource.damPath`. A hit populates the manifest with both ids so phases 1+2 skip entirely for that asset. When the lookup misses but the manifest claims an `mediaLibraryAssetId`, phase 0 verifies the doc still exists in the ML by id; if it's been deleted (e.g. ML wipe), the stale linkage is cleared so phases 2-3 re-upload + re-link for real. Transport errors are treated conservatively — manifest state is preserved and the next healthy-network run re-verifies. Requires the `aemSource` aspect to be deployed once per ML. Skipped on dry-run by default; `--link-only` forces it to run (safe, read-only).
 1. **Download** AEM DAM binary → local cache in `output/assets/`.
-2. **Upload to Media Library** — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload`. Response `{asset: {_id}, assetInstance: {_id}}` captures the parent asset id and the versioned instance id (both needed for step 3). Uses `SANITY_TOKEN` — a project robot token works for this step.
-3. **Link to dataset** — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Response `{document: {_id, media: {_ref}, ...}}` — `document._id` is the dataset-local asset ref that goes into docs. **Requires a personal auth token** (`SANITY_ML_LINK_TOKEN`) because the endpoint rejects project robot tokens with `401 Invalid non-global session`.
+2. **Upload to Media Library** — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload`. Response `{asset: {_id}, assetInstance: {_id}}` captures the parent asset id and the versioned instance id (both needed for step 3). Uses `SANITY_TOKEN`. A project robot token historically worked here, but newer Media Library API versions reject project-scoped sessions with `401 SIO-401-ANF "Session not found"` — when that happens, swap in a **personal auth token** (see `docs/running-the-migration.md` § 4c-bis for how to mint one).
+3. **Link to dataset** — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Response `{document: {_id, media: {_ref}, ...}}` — `document._id` is the dataset-local asset ref that goes into docs. **Requires a personal auth token** (`SANITY_ML_LINK_TOKEN`) because the endpoint rejects project robot tokens with `401 Invalid non-global session`. See `docs/running-the-migration.md` § 4c-bis.
 4. **Rewrite clean docs** in place — every `/content/dam/...` string becomes `{_type:'image'|'file', asset:{_ref:'<linked-ref>'}}`. Pattern A (Studio-compatible), matches existing doc shape.
 
 ### `--link-only` mode

@@ -22,7 +22,7 @@ cp apps/studio/.env.example apps/studio/.env
 
 **What this does:** Creates two local `.env` files that the pipeline and Studio read at startup.
 
-- **`examples/davids-bridal/.env`** — consumed by the migration CLIs. Holds AEM connection info (`AEM_ENV`, `AEM_AUTHOR_URL`, basic-auth creds or `AEM_TOKEN`) and, for live runs, Sanity write credentials (`SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN`, `SANITY_MEDIA_LIBRARY_ID`, `SANITY_ML_LINK_TOKEN`).
+- **`examples/davids-bridal/.env`** — consumed by the migration CLIs. Holds AEM connection info (`AEM_ENV`, `AEM_AUTHOR_URL`, plus **one** of: `AEM_SERVICE_CREDENTIALS_FILE` for AEMaaCS via Adobe IMS — recommended; `AEM_TOKEN` for an AEMaaCS developer token or any pre-minted bearer; or `AEM_AUTHOR_USERNAME`+`AEM_AUTHOR_PASSWORD` for on-prem / AMS basic auth) and, for live runs, Sanity write credentials (`SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN`, `SANITY_MEDIA_LIBRARY_ID`, `SANITY_ML_LINK_TOKEN`). See `running-the-migration.md` § 1a-bis for the AEMaaCS Service Credentials walkthrough.
 - **`apps/studio/.env`** — consumed by the Sanity Studio. Holds `SANITY_STUDIO_PROJECT_ID` and `SANITY_STUDIO_DATASET` so the Studio knows which project to open.
 
 Each tool loads `.env` from its own cwd, which is why the two files live in different directories (they can share values).
@@ -117,6 +117,8 @@ Flags:
 - `--discard-drafts` (or `MIGRATION_DISCARD_DRAFTS=true`) — also delete `drafts.{id}` in the same transaction. Without this, the Studio's draft pins stale content even after a successful re-import. Opt-in; destroys authored in-progress edits.
 
 All four are dry-run by default. To actually write to Sanity, export `MIGRATION_DRY_RUN=false` before running `assets` + `import` (plus `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN`, and for `assets` `SANITY_MEDIA_LIBRARY_ID` + `SANITY_ML_LINK_TOKEN`).
+
+> The Media Library endpoints (`/media-libraries/{mlId}/upload` in phase 2, `/assets/media-library-link/{dataset}` in phase 3) reject project robot tokens with `401 SIO-401-ANF "Session not found"`. You need a **personal auth token** for these. See `running-the-migration.md` § 4c-bis for two ways to generate one (`sanity login` + `sanity debug --secrets`, or sanity.io/manage → Personal access tokens).
 
 ### One-time before the first live `assets` run:
 ```bash
