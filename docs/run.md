@@ -14,21 +14,26 @@ pnpm build
 
 ## 1. Bootstrap a tenant folder + configure env
 
-Every migration runs from a **tenant folder** under `examples/`. The only one tracked in git is `examples/tenant/` — the template. Copy it for each migration:
+Every migration runs from a **tenant folder** under `examples/`. The only one tracked in git is `examples/tenant/` — the template. Scaffold a new tenant from it:
 
 ```bash
-cp -R examples/tenant examples/<your-tenant>
-# Update the workspace name so `pnpm -F` matches:
-sed -i '' 's/"example-tenant"/"example-<your-tenant>"/' examples/<your-tenant>/package.json
-pnpm install   # pnpm auto-discovers via the examples/* glob
+pnpm -w migrate:init <your-tenant>   # works from any cwd in the repo
+pnpm install                         # link the new workspace
 ```
 
 Then fill in env files:
 
 ```bash
-cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
+$EDITOR examples/<your-tenant>/.env   # AEM creds + Sanity project id / dataset / token
 cp apps/studio/.env.example apps/studio/.env
-# then edit both files with AEM creds + Sanity project id / dataset / token
+$EDITOR apps/studio/.env
+```
+
+Before running the pipeline, verify the folder is wired up correctly:
+
+```bash
+pnpm -w migrate:doctor <your-tenant>          # reports missing env vars, placeholder values, and template drift
+pnpm -w migrate:doctor <your-tenant> --fix    # auto-repair package.json scripts if the template has moved
 ```
 
 **What this does:** Creates two local `.env` files that the pipeline and Studio read at startup.

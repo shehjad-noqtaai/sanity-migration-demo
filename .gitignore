@@ -35,21 +35,22 @@ examples/*
 !examples/tenant/package.json
 !examples/tenant/README.md
 
-# Tenant-emitted Sanity schemas are gitignored by default. Each operator
-# regenerates them from their own AEM via `pnpm migrate:schema`, so
-# checking them in causes merge conflicts between tenants and surfaces one
-# customer's component vocabulary in another's repo. The `index.ts` stub
-# stays tracked so apps/studio boots + typechecks on a bare clone before
-# any migration has run; `migrate:schema` overwrites it locally with the
-# real barrel.
+# Tenant-emitted Sanity schemas are gitignored. Each operator regenerates
+# them from their own AEM via `pnpm migrate:schema`, so checking them in
+# causes merge conflicts between tenants and surfaces one customer's
+# component vocabulary in another's repo.
+#
+# The Studio's `schemas/index.ts` imports `./generated/index.ts` statically,
+# so a bare clone needs *something* there or typecheck/build will fail.
+# The root `prepare` script (`scripts/ensure-studio-stub.ts`) writes a
+# minimal empty barrel on `pnpm install` when the file is missing — it
+# never overwrites a real barrel, so `migrate:schema` output survives.
 #
 # Operators who DO want their generated schemas source-controlled (e.g. a
 # single-tenant repo where the schema doubles as documentation) should
-# comment out the next line AND `git add` the regenerated files after
-# `migrate:schema`. The `!index.ts` exception below stays — it's harmless
-# either way and keeps the bare-clone bootstrap working.
+# comment out the line below AND `git add` the regenerated files after
+# `migrate:schema`.
 apps/studio/schemas/generated/
-!apps/studio/schemas/generated/index.ts
 
 # Logs
 *.log
@@ -63,3 +64,4 @@ yarn-error.log*
 .idea/
 *.swp
 *.code-workspace
+

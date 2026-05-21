@@ -170,12 +170,16 @@ async function main(): Promise<void> {
       }
       writeFileSync(
         file,
-        JSON.stringify({
-          jcrPath: entry.jcrPath,
-          slug: entry.slug,
-          fetchedAt: new Date().toISOString(),
-          tree,
-        }) + "\n",
+        JSON.stringify(
+          {
+            jcrPath: entry.jcrPath,
+            slug: entry.slug,
+            fetchedAt: new Date().toISOString(),
+            tree,
+          },
+          null,
+          2,
+        ) + "\n",
         "utf8",
       );
       downloaded++;

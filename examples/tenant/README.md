@@ -1,12 +1,16 @@
 # Tenant migration template
 
-This folder is a starting point. **Copy it** to set up a new migration:
+This folder is a starting point. **Scaffold a new tenant from it:**
 
 ```bash
-cp -R examples/tenant examples/<your-tenant>
+pnpm -w migrate:init <your-tenant>     # works from any cwd in the repo
 ```
 
-`<your-tenant>` is any short slug — `acme`, `tmobile`, `davids-bridal`. The copy lives outside git (`examples/*` is gitignored except this template) so each operator's working copy stays local.
+`<your-tenant>` is any short slug — `acme`, `tmobile`, `davids-bridal`. The new folder is gitignored (`examples/*` is gitignored except this template) so each operator's working copy stays local.
+
+The `-w` flag targets the root workspace, so this command works whether you're at the repo root or inside an existing `examples/<tenant>/` folder. Drop the `-w` only when invoking from the repo root.
+
+Existing tenant folders may lag the template as new env vars or scripts get added — run `pnpm -w migrate:doctor <your-tenant>` to detect drift, and `--fix` to auto-repair the `package.json` scripts block.
 
 ## What's in here
 
@@ -23,26 +27,25 @@ cp -R examples/tenant examples/<your-tenant>
 ## Bootstrapping a new tenant
 
 ```bash
-# 1. Copy the template
-cp -R examples/tenant examples/<your-tenant>
+# 1. Scaffold (copies the template, renames the workspace, seeds .env)
+pnpm -w migrate:init <your-tenant>
 
-# 2. Rename the workspace
-#    Edit examples/<your-tenant>/package.json → "name": "example-<your-tenant>"
-
-# 3. Install (pnpm auto-discovers via examples/* glob in pnpm-workspace.yaml)
+# 2. Install (pnpm auto-discovers via examples/* glob in pnpm-workspace.yaml)
 pnpm install
 
-# 4. Fill in credentials
-cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
+# 3. Fill in credentials + component lists
 $EDITOR examples/<your-tenant>/.env
-
-# 5. List the AEM components you want migrated
 $EDITOR examples/<your-tenant>/aem-component-paths
 $EDITOR examples/<your-tenant>/aem-content-roots
+$EDITOR examples/<your-tenant>/aem-tag-roots   # optional
 
-# 6. Run the pipeline
+# 4. Verify before running
+pnpm -w migrate:doctor <your-tenant>
+
+# 5. Run the pipeline
 pnpm -F example-<your-tenant> migrate:schema   # AEM dialogs → Sanity schemas
 pnpm -F example-<your-tenant> extract          # AEM pages → output/cache/raw/
+pnpm -F example-<your-tenant> tags             # cq:Tag nodes → output/cache/categories/
 pnpm -F example-<your-tenant> transform        # raw → output/cache/clean/
 pnpm -F example-<your-tenant> assets           # DAM → Media Library + link
 pnpm -F example-<your-tenant> import           # clean docs → Sanity dataset
@@ -50,6 +53,23 @@ pnpm -F example-<your-tenant> import           # clean docs → Sanity dataset
 # Or one shot (with destructive --discard-drafts at the end):
 pnpm -F example-<your-tenant> migrate
 ```
+
+## Keeping a tenant in sync with the template
+
+The template grows over time — new env vars, new pipeline stages, new defaults. To check whether an existing tenant folder lags behind:
+
+```bash
+pnpm -w migrate:doctor <your-tenant>          # report drift + missing env vars
+pnpm -w migrate:doctor <your-tenant> --fix    # auto-repair the package.json scripts block
+pnpm -w migrate:doctor --all                  # check every tenant under examples/
+```
+
+Doctor checks:
+- `package.json` scripts block matches the template (auto-fixable)
+- `.env` contains every required var from `.env.example` with no leftover placeholder values
+- At least one AEM authentication flow is configured (service credentials, developer token, or basic auth)
+- `MIGRATION_DRY_RUN=false` runs have `SANITY_MEDIA_LIBRARY_ID` set
+- Template files (`README.md`, `.env.example`, `aem-content-roots.example`) are not silently out of date
 
 All five run in dry-run mode by default. Set `MIGRATION_DRY_RUN=false` in `.env` once the dry-run output looks right.
 

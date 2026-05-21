@@ -32,16 +32,16 @@ There are two `.env` files — one for the pipeline CLIs, one for the Studio. Th
 
 ### 1-pre. Bootstrap a tenant folder
 
-Every migration runs from a tenant folder under `examples/`. The only one tracked in git is `examples/tenant/` — the template. **Copy it** to start a new migration:
+Every migration runs from a tenant folder under `examples/`. The only one tracked in git is `examples/tenant/` — the template. **Scaffold a new tenant from it:**
 
 ```bash
-cp -R examples/tenant examples/<your-tenant>
-# Update the workspace name so `pnpm -F` matches:
-sed -i '' 's/"example-tenant"/"example-<your-tenant>"/' examples/<your-tenant>/package.json
-pnpm install   # pnpm auto-discovers via the `examples/*` glob in pnpm-workspace.yaml
+pnpm -w migrate:init <your-tenant>   # works from any cwd in the repo
+pnpm install                         # pnpm auto-discovers via the `examples/*` glob in pnpm-workspace.yaml
 ```
 
-`<your-tenant>` is any short slug — `acme`, `tmobile`, `davids-bridal`. The copy is gitignored — only `examples/tenant/` is committed, so each operator's working copy (with real credentials, customer-specific component lists, and per-run pipeline output) stays local.
+`<your-tenant>` is any short slug — `acme`, `tmobile`, `davids-bridal`. The new folder is gitignored — only `examples/tenant/` is committed, so each operator's working copy (with real credentials, customer-specific component lists, and per-run pipeline output) stays local.
+
+Existing tenant folders may lag the template as new env vars, scripts, or pipeline stages get added. Run `pnpm -w migrate:doctor <your-tenant>` to detect drift and missing env, and `pnpm -w migrate:doctor <your-tenant> --fix` to auto-repair the `package.json` scripts block. Use `pnpm -w migrate:doctor --all` to scan every tenant under `examples/` at once.
 
 ### 1a. Pipeline `.env` — `examples/<your-tenant>/.env`
 
