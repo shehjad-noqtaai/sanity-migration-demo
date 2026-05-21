@@ -34,9 +34,10 @@ Every user-facing change must update its documentation in the same commit. Drift
 The pipeline emits many artifacts into `output/cache/` and `apps/studio/schemas/generated/`. These are regenerable; never hand-edit.
 
 - `output/cache/content-type-registry.json` — written by `migrate:schema`. Shape: `entries: Array<{resourceType, sanityType, fields: Array<{name, type}>}>`. Legacy `fields: string[]` still loads but disables type-aware coercion (notably HTML → Portable Text).
-- `apps/studio/schemas/generated/*.ts` — written by `migrate:schema`. Each file carries a `// Generated from AEM component: …` banner.
+- `apps/studio/schemas/generated/*.ts` — written by `migrate:schema`. Each file carries a `// Generated from AEM component: …` banner. **Gitignored by default** (see `.gitignore`); each operator regenerates locally. Only `generated/index.ts` is tracked as a stub so the Studio boots on bare clone before any migration has run. Single-tenant projects that want the schemas source-controlled should comment out the `apps/studio/schemas/generated/` line in `.gitignore` and `git add` the regenerated files after `migrate:schema`.
 - `output/cache/raw/*.json` — written by `aem-extract`.
 - `output/cache/clean/*.json` — written by `aem-transform`, mutated in place by `aem-assets` phase 4 (DAM-path → asset ref rewrite).
+- `output/cache/categories/*.json` + `manifest.json` — written by `aem-tags`. One Sanity `category` doc per AEM `cq:Tag` node (parent-child taxonomy), plus a manifest keyed by AEM tag id that `aem-transform` consults when resolving authored `cq:tags` references.
 - `output/cache/assets/manifest.json` — per-DAM-path state; drives `aem-assets` resumability.
 
 When you change how any artifact is generated, **re-run the relevant stage against whichever local tenant folder you have set up** — don't just typecheck. Operator tenant folders (`examples/davids-bridal/`, `examples/<your-tenant>/`, etc.) are gitignored, so on a fresh clone there's nothing to run against — copy `examples/tenant/` first and fill in real credentials. Prefer `--link-only` on `aem-assets` for re-runs — it skips AEM downloads and ML uploads.
@@ -135,5 +136,6 @@ pnpm -r test
 
 - Small, focused commits. One logical change per commit.
 - Commit messages follow the style in `git log` (conventional-ish: `feat(content):`, `fix(schema):`, `chore:`, etc.).
-- Generated artifacts (`apps/studio/schemas/generated/*`, regenerated `content-type-registry.json`, regenerated docs) can be committed alongside the source change that produced them — makes the diff reviewable end-to-end.
-- Never commit `output/` artifacts that are local caches (raw/, clean/, assets/). Emitted *schema* files under `apps/studio/schemas/generated/` are different — those ship with the Studio.
+- Regenerated docs (`docs/aem-to-sanity-mapping.md`) can be committed alongside the source change that produced them — makes the diff reviewable end-to-end.
+- Never commit `output/` artifacts (raw/, clean/, categories/, assets/) — these are local caches, gitignored by default.
+- `apps/studio/schemas/generated/*` is **gitignored by default** — each operator regenerates from their own AEM via `pnpm migrate:schema`, so committing them creates merge conflicts between tenants and surfaces one customer's component vocabulary in another's repo. The `generated/index.ts` stub stays tracked so the Studio boots + typechecks on a bare clone. Single-tenant repos that want the schemas under source control should comment out the `apps/studio/schemas/generated/` line in `.gitignore` and `git add` the regenerated files explicitly.

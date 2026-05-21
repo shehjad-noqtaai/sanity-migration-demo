@@ -294,18 +294,22 @@ On start-up the CLI prints a banner summarizing what it's connecting to: AEM env
 | `--verbose` / `-v` or `AEM_VERBOSE=true` | Elevates the logger to `debug` level. Surfaces every `GET {url}` the AEM fetcher issues plus Sling `.N.json` depth-fallback retries. |
 | `--continue-on-auth` or `AEM_CONTINUE_ON_AUTH=true` | Treat per-component 401/403 as per-path ACL skips and keep going, as long as at least one component succeeds. A circuit breaker still aborts on `N` consecutive auth failures with zero successes (signals credentials-wide failure, not ACL). |
 
-**Outputs under `output/`:**
+**Outputs:**
+
+Schema files are written to `apps/studio/schemas/generated/` (relative to the repo root, not the tenant folder — they're consumed by `apps/studio`). Reports and dialog snapshots live under the tenant's `output/` directory.
 
 | Path | What it is |
 | --- | --- |
-| `schemas/*.ts` | One Sanity object type per AEM component, named `componentNameInCamelCase`. Each carries a `preview.prepare` that returns a guaranteed-non-empty title (AEM `jcr:title` → title-cased type name → raw type name fallback), so array/Page Builder rows never render as "Untitled" even before the row has any data. |
-| `schemas/pageBuilder.ts` | Array type with every emitted block in `of: [...]`. Each member is emitted as `defineArrayMember({ type, title })` so the "+ Add" menu and row previews carry friendly labels. Regenerated each run. |
-| `schemas/page.ts` | Minimal document type (`title`, `slug`, `pageBuilder`). Preserved if you hand-author it. |
-| `schemas/index.ts` | Barrel exporting `allSchemaTypes` — plug straight into `defineConfig`. |
-| `content-type-registry.json` | AEM `sling:resourceType` → Sanity type + field names, consumed by stage 3. Preserved if you hand-edit. |
-| `aem/components/**/*.json` | Raw dialog snapshots — audit trail. |
-| `migration-report.json` | Pass/fail per component (including the resolved `sanityTypeName` and friendly `schemaTitle`) + unmapped props inventory. |
-| `audit/unmapped-examples.json` | Real-world examples per unmapped AEM type. Feed these back into `mapping-table.ts` when adding new mappings. |
+| `apps/studio/schemas/generated/*.ts` | One Sanity object type per AEM component, named `componentNameInCamelCase`. Each carries a `preview.prepare` that returns a guaranteed-non-empty title (AEM `jcr:title` → title-cased type name → raw type name fallback), so array/Page Builder rows never render as "Untitled" even before the row has any data. **Gitignored by default** — every operator regenerates their own from their own AEM. The `generated/index.ts` stub stays tracked so the Studio boots on bare clone; `migrate:schema` overwrites it locally. |
+| `apps/studio/schemas/generated/pageBuilder.ts` | Array type with every emitted block in `of: [...]`. Each member is emitted as `defineArrayMember({ type, title })` so the "+ Add" menu and row previews carry friendly labels. Regenerated each run. |
+| `apps/studio/schemas/generated/page.ts` | Minimal document type (`title`, `slug`, `tags`, `pageBuilder`). Preserved if you hand-author it. |
+| `apps/studio/schemas/generated/index.ts` | Barrel exporting `allSchemaTypes` — re-exported by `apps/studio/schemas/index.ts` (which also adds the hand-authored `category` type) and plugged into `defineConfig`. |
+| `output/content-type-registry.json` (under the tenant folder) | AEM `sling:resourceType` → Sanity type + field names, consumed by stage 3. Preserved if you hand-edit. |
+| `output/aem/components/**/*.json` | Raw dialog snapshots — audit trail. |
+| `output/migration-report.json` | Pass/fail per component (including the resolved `sanityTypeName` and friendly `schemaTitle`) + unmapped props inventory. |
+| `output/audit/unmapped-examples.json` | Real-world examples per unmapped AEM type. Feed these back into `mapping-table.ts` when adding new mappings. |
+
+**Source-controlling the generated schemas (opt-in).** The default — schemas gitignored, regenerated per-operator — keeps multi-tenant clones clean. Single-tenant projects that want the emitted vocabulary checked in (so it doubles as documentation, or to review schema drift in PRs) should comment out the `apps/studio/schemas/generated/` line in `.gitignore` and `git add` the regenerated files after each `migrate:schema` run. Don't do this on a repo that's shared across tenant migrations — one tenant's component vocabulary will conflict with another's on every push.
 
 Re-run any time — output is deterministic, so `git diff` shows only real changes. Each CLI appends an `Elapsed:` line to its summary (and `aem-assets` prints a `Per phase:` breakdown) so you can see where time is going across runs.
 
@@ -652,7 +656,7 @@ The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `examples/<your
 | `aem-assets` → `Missing env var: SANITY_MEDIA_LIBRARY_ID` | Set it to the org-level ML id that the project belongs to. `sanity media library list` on the org shows available ids. |
 | `aem-extract` fails with `HTTP 300` on a root | AEM returned an ambiguous-path response (the path may point at a folder). Check `output/extract-report.json` → `ambiguous[]` for the resolution suggestion. |
 | `aem-transform` → `No raw files in output/raw` | Run `aem-extract` first. The transform stage only reads from disk — it never hits AEM. |
-| Studio boots but shows no schemas | `output/schemas/index.ts` is missing or stale. Run `pnpm --filter example-<your-tenant> migrate:schema`. |
+| Studio boots but shows no schemas (only `category`) | `apps/studio/schemas/generated/index.ts` is the bare-clone stub (exports `[]`). Run `pnpm --filter example-<your-tenant> migrate:schema` to regenerate the real barrel locally. |
 | `sanity schema validate` → `Type has property "fields", but is not an object/document type` | The sanitizer is injecting placeholder fields into a non-object type. Confirm you're on the latest schema package (this is fixed). |
 | `ERR_PACKAGE_PATH_NOT_EXPORTED` when running sanity CLI | Rebuild: `pnpm build`. The bundled CJS loader the Sanity CLI uses needs the `default` export condition that `dist/` ships. |
 | Depth-5 follow-ups never fire on a deep page | Make sure you're calling `aem-extract`, not hitting `.infinity.json` manually. Raise `maxDepthExpansions` if you have pages > 6 follow-up rounds deep. |
@@ -662,5 +666,5 @@ The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `examples/<your
 ## 8. What's **not** automated yet
 
 - **`pathfield` → Sanity `reference`** — AEM path fields stay as strings. Resolving them to document references is still a follow-up.
-- **Custom page document types** — the generator writes one generic `page` doc. Hand-author `landingPage` / `productPage` types in `output/schemas/` (or a separate authored directory you merge into `allSchemaTypes`); the generator won't touch files missing the `GENERATED` marker.
+- **Custom page document types** — the generator writes one generic `page` doc. Hand-author `landingPage` / `productPage` types under `apps/studio/schemas/` (alongside the hand-authored `category.ts`, NOT inside `generated/` which is gitignored + regenerated). Merge them into `allSchemaTypes` in `apps/studio/schemas/index.ts`. The generator won't touch the `page.ts` it produces if you remove the `GENERATED` marker comment.
 - **CI publish** — `changeset publish` is wired but not yet triggered from GitHub Actions.

@@ -57,13 +57,10 @@ Flags / env vars:
 
 Component type-name resolution happens up front via `resolveSanityTypeNames` (in `aem-to-sanity-schema/naming.ts`): any AEM path whose base name collides with a Sanity built-in (`image`, `file`, `slug`, `text`, etc.) is emitted with an `aem` prefix (so `/apps/aem-integration/components/image` → `aemImage.ts`). The same resolved name is written into the content registry and the `pageBuilder.of[]` array, so ingested documents will carry a `_type` that matches the Studio-registered schema name with no Studio-side renaming needed.
 
-Outputs land under `examples/<your-tenant>/output/`:
-- `schemas/*.ts` — one Sanity object type per AEM component. Each carries a non-empty preview title (AEM `jcr:title` → title-cased type name → raw type name fallback) so Page Builder rows never render as "Untitled".
-- `schemas/pageBuilder.ts` — array type listing every emitted block. Each member is emitted as `defineArrayMember({ type, title })` so the "+ Add" menu and row previews render friendly labels even before the row has any data.
-- `schemas/page.ts` — minimal `page` document type (`title`, `slug`, `pageBuilder`).
-- `schemas/index.ts` — barrel that exports `allSchemaTypes` for `defineConfig`.
-- `content-type-registry.json` — `sling:resourceType` → Sanity type mapping, consumed by stage 3.
-- `migration-report.json` + `audit/unmapped-examples.json` — what mapped, what didn't, and real examples of unmapped AEM props.
+Outputs:
+- `apps/studio/schemas/generated/*.ts` (repo-root, consumed by the Studio) — one Sanity object type per AEM component, plus `pageBuilder.ts`, `page.ts`, and a barrel `index.ts`. **Gitignored by default** — each operator regenerates from their own AEM. The `index.ts` stub is the only tracked file in there so the Studio boots on a bare clone. To source-control the schemas (single-tenant repos only), comment out the `apps/studio/schemas/generated/` line in `.gitignore` and `git add` the regenerated files.
+- `examples/<your-tenant>/output/content-type-registry.json` — `sling:resourceType` → Sanity type mapping, consumed by stage 3.
+- `examples/<your-tenant>/output/migration-report.json` + `audit/unmapped-examples.json` — what mapped, what didn't, and real examples of unmapped AEM props.
 
 Output is deterministic, so re-runs produce clean `git diff`s.
 
