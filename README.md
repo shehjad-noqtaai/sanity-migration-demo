@@ -1,1 +1,237 @@
 # aem-to-sanity
+
+**An end-to-end toolkit for migrating Adobe Experience Manager (AEM) content into Sanity** — reads AEM component dialogs and authored pages over HTTP, emits a real Sanity Studio schema, transforms content into Sanity-shaped documents (with Portable Text, image refs, taxonomy references), and writes everything via `@sanity/client`. Deterministic, resumable, dry-run by default.
+
+> 🎞️ **Start here:** open [`docs/aem-to-sanity-standalone.html`](docs/aem-to-sanity-standalone.html) in a browser. Seven slides that walk through the pipeline, asset flow, operating modes, commands, run output, implementation, and architecture. Best for reviewers, stakeholders, and new operators getting oriented in 10 minutes.
+
+---
+
+## What this is
+
+AEM exposes two things over HTTP as JSON:
+
+- `{host}{componentPath}/_cq_dialog.infinity.json` — the Granite UI form that defines a component's fields.
+- `{host}{contentPath}.infinity.json` — the authored content tree under `/content/...`, truncated at depth ~5.
+
+Sanity expects TypeScript `defineType` / `defineField` schemas and JSON documents with `_type`, `_id`, `_key`, references, Portable Text, and asset refs.
+
+**This repo is the bridge.** Two stages plus a content pipeline:
+
+```
+ AEM author/publish               aem-to-sanity                       Sanity
+┌──────────────────┐          ┌────────────────────┐          ┌────────────────┐
+│ _cq_dialog       │── (1) ──▶│ migrate:schema     │── emits ▶│ Studio schemas │
+│ .infinity.json   │          │  + typegen         │          │ + sanity.types │
+├──────────────────┤          ├────────────────────┤          ├────────────────┤
+│ /content/...     │── (2) ──▶│ extract → tags     │── writes▶│ documents      │
+│ .infinity.json   │          │  → transform       │          │ in dataset     │
+│ /content/dam/... │          │  → assets → import │── uploads▶ Media Library  │
+└──────────────────┘          └────────────────────┘          └────────────────┘
+```
+
+Every artifact has a content-derived identity (JCR path → `_id`, JCR UUID → `_key`, DAM path → manifest key), so **re-runs converge instead of duplicating**.
+
+---
+
+## How it works (5-minute version)
+
+| Stage | CLI | What it does |
+|---|---|---|
+| **Schemas** | `migrate:schema` | Fetches each `_cq_dialog.infinity.json`, walks the Granite UI tree (supertype chain included), auto-discovers named-slot children and container drop-zones, emits one Sanity object type per AEM component plus a `pageBuilder` array and per-template page document types. |
+| **Types** | `typegen` | Generates `sanity.types.ts` from the emitted schemas via `@sanity/schema` (in-process — no network call, no Studio required). |
+| **Extract** | `aem-extract` | Walks `{root}.infinity.json` for each content root, transparently following depth-5 truncation markers. Writes `output/cache/raw/*.json`. |
+| **Tags** | `aem-tags` | Walks `/content/cq:tags/...` and emits one Sanity `category` doc per `cq:Tag` (parent-child taxonomy). Optional; skip for migrations without AEM tags. |
+| **Transform** | `aem-transform` | Maps `sling:resourceType` → Sanity types via the generated registry. Coerces AEM's JSON strings into proper types: HTML → Portable Text, `"true"` → `boolean`, `"10"` → `number`, tag refs → resolved Sanity references, recursively through nested multifields. Writes `output/cache/clean/*.json`. |
+| **Assets** | `aem-assets` | Five phases — ML dedup, AEM download, Media Library upload, dataset link, in-place rewrite of clean docs. Resumable via `output/cache/assets/manifest.json`. Work-stealing pool sized by `ASSET_CONCURRENCY`. |
+| **Import** | `aem-import` | Commits docs via `@sanity/client` `transaction().createOrReplace().commit()`. Categories first, pages second. Optional `--discard-drafts` for re-imports. |
+
+**Dry-run by default.** Real writes are an explicit opt-in via `MIGRATION_DRY_RUN=false`.
+
+For the full operator's runbook (every env var, every flag, troubleshooting), see [`docs/running-the-migration.md`](docs/running-the-migration.md).
+
+---
+
+## Quickstart
+
+```bash
+# 0. Install + build (pnpm ≥ 9, Node ≥ 20)
+pnpm install
+pnpm build
+
+# 1. Scaffold a tenant folder from the committed template
+pnpm migrate:init my-tenant
+pnpm install
+
+# 2. Fill in credentials
+$EDITOR examples/my-tenant/.env       # AEM source + Sanity destination
+$EDITOR apps/studio/.env              # Sanity Studio project id
+
+# 3. Verify the tenant is wired up correctly
+pnpm migrate:doctor my-tenant
+
+# 4. Dry-run the whole pipeline
+pnpm --filter example-my-tenant migrate
+
+# 5. Real write to Sanity
+MIGRATION_DRY_RUN=false pnpm --filter example-my-tenant migrate
+
+# 6. Open the Studio to verify
+pnpm --filter studio dev              # http://localhost:3333
+```
+
+Need `AEM_*` and `SANITY_*` credentials before step 4 — see [`docs/running-the-migration.md` § 1a](docs/running-the-migration.md) for the full env table, including the **AEMaaCS Service Credentials** flow (recommended over basic auth / dev tokens).
+
+---
+
+## Where everything lives
+
+```
+aem-to-sanity/
+├── packages/                          npm-publishable runtime packages
+│   ├── aem-to-sanity-core/            Shared AEM fetcher, auth, config, logger, depth-handling
+│   ├── aem-to-sanity-schema/          Dialog → Sanity object types + TypeGen + pageBuilder synthesizer
+│   └── aem-to-sanity-content/         extract → tags → transform → assets → import CLIs
+│
+├── apps/                              Local apps consuming the pipeline output
+│   ├── studio/                        Sanity Studio — loads emitted schemas; visual verification
+│   ├── web/                           Vite + React 19 preview — renders migrated pageBuilder
+│   └── storefront/                    Hydrogen (Shopify + Remix) — future commerce frontend
+│
+├── examples/                          Per-tenant working folders
+│   ├── tenant/                        Committed template (copy this to start a new migration)
+│   ├── davids-bridal/                 (gitignored) operator working copy
+│   └── t-mobile/                      (gitignored) operator working copy
+│
+├── functions/                         Sanity Functions (event-driven content automation)
+│   └── auto-colorize/
+│
+├── scripts/                           Repo-wide tooling
+│   ├── migrate-init.ts                Scaffold a new tenant from examples/tenant/
+│   ├── migrate-doctor.ts              Detect tenant drift + auto-repair package.json scripts
+│   ├── aem-probe.ts                   Resolve a single AEM dialog (supertype chain) without running the full migrator
+│   ├── wipe-media-library.ts          Delete every Sanity ML asset (test environments only)
+│   └── ensure-studio-stub.ts          Writes a minimal schemas/generated stub so Studio boots on bare clone
+│
+├── docs/
+│   ├── aem-to-sanity-standalone.html  📊 Slide deck — pipeline / assets / commands / architecture
+│   ├── overview.md                    Architecture + repo layout (single page)
+│   ├── running-the-migration.md       Canonical operator's runbook
+│   ├── aem-to-sanity-mapping.md       (auto-generated) AEM ↔ Sanity field-level mapping
+│   ├── DESIGN.md                      Design system for apps/web
+│   └── …                              (refactor plans, mapping reviews — historical context)
+│
+├── CLAUDE.md                          Project-level guidance for AI assistants
+├── turbo.json                         Turbo task graph
+├── pnpm-workspace.yaml                Workspace globs
+└── tsconfig.base.json                 Strict, NodeNext, noUncheckedIndexedAccess
+```
+
+### Tenant folders
+
+Every migration runs from `examples/<your-tenant>/`. Only `examples/tenant/` (the template) is committed; operator copies are gitignored so credentials, customer-specific component lists, and run output stay local. Inside a tenant folder:
+
+| File | Role |
+|---|---|
+| `.env` | AEM creds + Sanity destination |
+| `aem-component-paths` | JCR paths of components to migrate, one per line |
+| `aem-content-roots` | Content paths to walk during extract, with `@base` sections |
+| `aem-tag-roots` | AEM tag namespaces to migrate (optional) |
+| `aem-component-exceptions` | `sling:resourceType` values to skip |
+| `aem-component-containers.json` | Components with drop-zone children (`cq:isContainer=true`) |
+| `aem-component-hints.json` | Components opting into AEM authoring hints (`cq:panelTitle` etc.) |
+| `aem-page-components.json` | Page-shell components + their `cq:template` paths |
+| `output/cache/…` | Per-stage artifacts — gitignored caches, regenerable |
+
+---
+
+## Packages
+
+Three packages designed so external teams can consume only what they need.
+
+### `aem-to-sanity-core`
+Shared primitives — AEM client (basic auth / bearer / Service Credentials via Adobe IMS), config loader, logger, depth-truncation handler. No business logic. → [README](packages/aem-to-sanity-core/README.md)
+
+### `aem-to-sanity-schema`
+Dialog walker → mapper → emitter → registry → pageBuilder synthesizer → TypeGen. Resolves `sling:resourceSuperType` chains automatically. Emits deterministic prettier-formatted output. → [README](packages/aem-to-sanity-schema/README.md)
+
+### `aem-to-sanity-content`
+Five CLIs (`aem-extract`, `aem-tags`, `aem-transform`, `aem-assets`, `aem-import`) chained through on-disk artifacts. Type-aware coercion via the registry. Resumable per-stage. → [README](packages/aem-to-sanity-content/README.md)
+
+---
+
+## Apps
+
+| App | Purpose |
+|---|---|
+| [`apps/studio`](apps/studio/) | Sanity Studio that loads the migrated schemas from `apps/studio/schemas/generated/`. Used for visual verification and content editing post-migration. |
+| [`apps/web`](apps/web/README.md) | Vite + React 19 preview that reads the migrated home doc and renders its `pageBuilder` through block primitives — see [`docs/DESIGN.md`](docs/DESIGN.md). |
+| [`apps/storefront`](apps/storefront/README.md) | Hydrogen (Shopify + Remix) skeleton — future commerce frontend that will replace `apps/web`. |
+
+---
+
+## Documentation map
+
+| Doc | When to read |
+|---|---|
+| 📊 [`docs/aem-to-sanity-standalone.html`](docs/aem-to-sanity-standalone.html) | First — 10-minute walkthrough of the whole system. |
+| [`docs/overview.md`](docs/overview.md) | Architecture, design principles, minimum commands — one page. |
+| [`docs/running-the-migration.md`](docs/running-the-migration.md) | Operator's runbook — every env var, every flag, per-stage outputs, troubleshooting. |
+| [`docs/aem-to-sanity-mapping.md`](docs/aem-to-sanity-mapping.md) | Auto-generated field-level mapping (AEM Granite UI ↔ Sanity types). |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | Design system for the `apps/web` preview. |
+| Per-package READMEs | API contracts, flag tables, output shapes for each runtime package. |
+| [`CLAUDE.md`](CLAUDE.md) | Project conventions for AI assistants (and a useful map for new contributors). |
+
+---
+
+## Common workflows
+
+```bash
+# Re-run a single stage without redoing the others
+pnpm --filter example-<tenant> extract
+pnpm --filter example-<tenant> transform
+
+# Re-link assets without re-uploading (e.g. ML already has the binaries)
+pnpm --filter example-<tenant> assets -- --link-only
+
+# Discard shadowing drafts in the Studio after re-import
+pnpm --filter example-<tenant> import -- --discard-drafts
+
+# Probe a single AEM dialog (resolve the supertype chain without running the migrator)
+pnpm exec tsx scripts/aem-probe.ts /apps/<site>/components/proxy/foo
+
+# Validate emitted schemas
+pnpm --filter studio exec sanity schema validate
+
+# Audit every tenant under examples/ for template drift
+pnpm migrate:doctor --all
+```
+
+---
+
+## Design principles
+
+- **Deterministic output.** Same input → byte-identical files. `git diff` shows only real changes.
+- **Dry-run by default.** Anything that writes to Sanity is opt-in via `MIGRATION_DRY_RUN=false`.
+- **Upserts, not duplicates.** Content-derived `_id`s mean re-runs converge.
+- **Unknown shapes are findings, not failures.** The pipeline keeps going; the audit reports tell you what to fix next.
+- **Soft on content drift, loud on misconfig.** Malformed config / missing env / schema validation errors fail fast. Unmapped resource types become action items in the report.
+- **Separation of concerns.** Core owns fetching + auth + config; schema and content packages own their transforms. External projects depend on only what they need.
+
+---
+
+## Stack
+
+**pnpm workspaces + Turborepo** · TypeScript strict / NodeNext · `tsup` for ESM+CJS+`.d.ts` · `zod` for runtime validation of AEM payloads · `@portabletext/block-tools` + `jsdom` for HTML → Portable Text · `@sanity/client` for ingest · `changesets` for releases.
+
+---
+
+## Status & contributing
+
+The three runtime packages and the Studio app are production-shaped — `examples/davids-bridal/` and `examples/t-mobile/` are the integration suites. CI publish via Changesets is wired but not yet automated. See [`CLAUDE.md`](CLAUDE.md) for contribution conventions (doc-refresh rules, commit discipline, regeneration recipes).
+
+```bash
+pnpm -r typecheck
+pnpm -r test
+```
+
+are the gates every change goes through.
