@@ -14,9 +14,16 @@ import {
 
 // Roots file format:
 //   @base /content/site/us/en   → sets base for lines that follow
-//   home                        → relative slug, resolved to <base>/home
+//   home                        → relative, resolved to <base>/home
+//   plans/consumer/phones/foo   → relative + nested, resolved to <base>/plans/consumer/phones/foo
 //   /content/other/top          → absolute, slug = last segment
 //   # ...                       → comment (inline after `#` also ignored)
+//
+// For both relative and absolute entries, `slug` is the last segment of the
+// resolved JCR path. So `plans/consumer/phones/experience-beyond-plan` joined
+// onto `@base /content/uxp/us/en` yields jcrPath
+// `/content/uxp/us/en/plans/consumer/phones/experience-beyond-plan` with
+// slug `experience-beyond-plan` — matching AEM's own page-slug semantics.
 
 interface RootEntry {
   jcrPath: string;
@@ -45,10 +52,19 @@ function parseRoots(raw: string): RootEntry[] {
     if (!base) {
       throw new Error(`Relative slug ${JSON.stringify(line)} needs an @base above it.`);
     }
-    if (line.includes("/")) {
-      throw new Error(`Slugs cannot contain "/" (got ${JSON.stringify(line)}). Use an absolute path instead.`);
+    // Relative — may be a single slug (`home`) or a nested path
+    // (`customer-support/plans/consumer/phones/foo`). Tolerate a leading
+    // `./` and trim surrounding slashes so the join produces exactly one
+    // separator between base and tail.
+    const cleaned = line
+      .replace(/^\.\//, "")
+      .replace(/^\/+/, "")
+      .replace(/\/+$/, "");
+    if (!cleaned) {
+      throw new Error(`Empty relative entry under @base ${JSON.stringify(base)}.`);
     }
-    out.push({ jcrPath: `${base}/${line}`, slug: line });
+    const jcrPath = `${base}/${cleaned}`;
+    out.push({ jcrPath, slug: lastSegment(jcrPath) });
   }
   return out;
 }

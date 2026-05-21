@@ -241,13 +241,78 @@ function readExceptionResourceTypes(file: string): Set<string> {
   }
 }
 
+/**
+ * Derive a Sanity document `_id` from an AEM JCR path.
+ *
+ * Two operator knobs control the output:
+ *
+ *   - `MIGRATION_DOC_ID_PREFIX_STRIP` (env, optional) — a leading path
+ *     fragment to remove before generating the id. Typical value is the
+ *     `@base` from `aem-content-roots` (e.g. `/content/uxp/us/en`), so the
+ *     resulting id is page-relative (`customer-support-plans-...`) instead
+ *     of carrying the unchanging site/locale prefix on every doc. Multiple
+ *     prefixes can be passed comma-separated; the longest matching one wins.
+ *
+ *   - Path separator is `-` (hyphen). The previous implementation used `.`
+ *     for separators, but Sanity treats any `_id` containing `.` as a
+ *     **private** doc — readable only with an auth token. Hyphenated ids
+ *     are public-CDN-readable, which matters for read-only frontends that
+ *     don't ship a token. Studio reads always carry auth, so dotted ids
+ *     would also work there — but defaulting to hyphens means operators
+ *     don't have to debug the auth-only behavior later.
+ *
+ * Long paths (>80 chars after sanitization) fall back to
+ * `{first-60-chars}-{sha1-10}` so ids stay collision-free + within Sanity's
+ * 128-char id limit even for deep JCR trees.
+ *
+ * Idempotency note: changing `MIGRATION_DOC_ID_PREFIX_STRIP` between runs
+ * changes every doc's id. The previous docs aren't deleted — they get
+ * orphaned. Operators repointing the prefix on a live dataset should either
+ * start from a fresh dataset or run an `unpublishDocuments` pass on the
+ * previous id space.
+ */
 function pathToDocId(jcrPath: string): string {
-  const normalized = jcrPath.replace(/^\/+/, "");
-  const rawSlug = normalized.replace(/\//g, ".");
-  const safeSlug = rawSlug.replace(/[^A-Za-z0-9_.-]/g, "-");
-  if (safeSlug === rawSlug && safeSlug.length <= 80) return safeSlug;
+  const stripped = stripPrefix(jcrPath, getStripPrefixes());
+  const normalized = stripped.replace(/^\/+/, "");
+  const slug = normalized
+    .replace(/\//g, "-")
+    .replace(/[^A-Za-z0-9_-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (slug.length === 0) {
+    // Stripping removed every meaningful character. Hash the original path
+    // so the id is at least deterministic + collision-free.
+    return createHash("sha1").update(jcrPath).digest("hex").slice(0, 16);
+  }
+  if (slug.length <= 80) return slug;
   const hash = createHash("sha1").update(jcrPath).digest("hex").slice(0, 10);
-  return `${safeSlug.slice(0, 60).replace(/[.-]+$/, "")}.${hash}`;
+  return `${slug.slice(0, 60).replace(/-+$/, "")}-${hash}`;
+}
+
+/**
+ * Cached list of prefixes to strip, parsed from
+ * `MIGRATION_DOC_ID_PREFIX_STRIP`. Sorted longest-first so that overlapping
+ * configurations (e.g. `/content/uxp,/content`) match the most specific
+ * prefix.
+ */
+let cachedStripPrefixes: string[] | undefined;
+function getStripPrefixes(): string[] {
+  if (cachedStripPrefixes !== undefined) return cachedStripPrefixes;
+  const raw = process.env.MIGRATION_DOC_ID_PREFIX_STRIP ?? "";
+  cachedStripPrefixes = raw
+    .split(",")
+    .map((s) => s.trim().replace(/\/+$/, ""))
+    .filter((s) => s.length > 0 && s.startsWith("/"))
+    .sort((a, b) => b.length - a.length);
+  return cachedStripPrefixes;
+}
+
+function stripPrefix(jcrPath: string, prefixes: string[]): string {
+  for (const p of prefixes) {
+    if (jcrPath === p) return "";
+    if (jcrPath.startsWith(p + "/")) return jcrPath.slice(p.length);
+  }
+  return jcrPath;
 }
 
 function stableKey(jcrUuid: string | undefined, jcrPath: string): string {
@@ -256,20 +321,72 @@ function stableKey(jcrUuid: string | undefined, jcrPath: string): string {
 }
 
 /**
- * For a container node, the list of direct child keys that are themselves
- * full AEM components (have a `sling:resourceType`). These are the drop-zone
- * items that become pageBuilder blocks inside the container, NOT inline
- * fields. Ordered by JCR insertion order (JavaScript object-key iteration).
+ * For a container node, the list of direct child keys whose subtree contains
+ * AEM component instances (anything with `sling:resourceType`, at any depth).
+ * The caller strips these keys from `transformInline` so their data doesn't
+ * end up in the dialog-field area — `collectContainerItems` then re-walks
+ * the same subtree to emit the components as pageBuilder blocks under
+ * `childrenField`.
+ *
+ * Transitive (not just direct) because AEM's **responsive grid** wraps every
+ * authored drop-zone in intermediate `nt:unstructured` nodes that hold layout
+ * config and nothing else (`container_64909622` → `layout: ...` + a nested
+ * `container_64909` → ... → eventually `container` with `sling:resourceType`).
+ * Treating only the deep `container` as a child would leave the wrappers in
+ * place as undeclared fields on the parent; treating only the topmost wrapper
+ * as a child would lose the resourceType-bearing leaves. Stripping the whole
+ * subtree gets it right.
  */
 function collectContainerChildKeys(node: AemNode): string[] {
   const out: string[] = [];
   for (const [key, value] of Object.entries(node)) {
     if (!isChildNode(value)) continue;
-    const childType = asString((value as AemNode)["sling:resourceType"]);
-    if (!childType) continue;
-    out.push(key);
+    if (subtreeHasResourceType(value as AemNode)) out.push(key);
   }
   return out;
+}
+
+function subtreeHasResourceType(node: AemNode): boolean {
+  if (asString(node["sling:resourceType"])) return true;
+  for (const value of Object.values(node)) {
+    if (isChildNode(value) && subtreeHasResourceType(value as AemNode)) return true;
+  }
+  return false;
+}
+
+/**
+ * Walk a container's subtree and produce the flat ordered list of AEM
+ * component nodes to emit as pageBuilder items. Layout-only wrapper nodes
+ * (no `sling:resourceType`) are descended through transparently — their
+ * authored `layout` config has no Sanity counterpart and is dropped.
+ *
+ * Returns `{ jcrPath, node }` pairs so the caller's recursive
+ * `collectPageBuilder` can hand each item its correct JCR path (used for
+ * stable key generation + audit messages). Paths are joined with `/` from
+ * the supplied `basePath`.
+ */
+interface ContainerItem {
+  jcrPath: string;
+  node: AemNode;
+}
+
+function collectContainerItems(node: AemNode, basePath: string): ContainerItem[] {
+  const out: ContainerItem[] = [];
+  walkForContainerItems(node, basePath, out);
+  return out;
+}
+
+function walkForContainerItems(node: AemNode, currentPath: string, out: ContainerItem[]): void {
+  for (const [key, value] of Object.entries(node)) {
+    if (!isChildNode(value)) continue;
+    const childNode = value as AemNode;
+    const childPath = `${currentPath}/${key}`;
+    if (asString(childNode["sling:resourceType"])) {
+      out.push({ jcrPath: childPath, node: childNode });
+    } else {
+      walkForContainerItems(childNode, childPath, out);
+    }
+  }
 }
 
 /**
@@ -730,17 +847,31 @@ function collectPageBuilder(
       }
 
       if (containerEntry && containerChildKeys) {
+        // Emit one nested pageBuilder block per AEM component found in the
+        // container's subtree — descending through `nt:unstructured` layout
+        // wrappers (the responsive-grid pattern) so the actual content
+        // surfaces at the top level of `childrenField` rather than being
+        // hidden inside an undeclared wrapper hierarchy.
         const items: PageBuilderItem[] = [];
-        for (const key of containerChildKeys) {
-          const child = frame.node[key] as AemNode;
+        for (const containerItem of collectContainerItems(frame.node, frame.jcrPath)) {
           const childItems = collectPageBuilder(
-            child,
-            `${frame.jcrPath}/${key}`,
+            containerItem.node,
+            containerItem.jcrPath,
             ctx,
             filter,
             exceptions,
           );
           items.push(...childItems);
+        }
+        if (containerEntry.flatten) {
+          // Layout-only container — drop the wrapper and emit its items
+          // directly in the parent's pageBuilder array. Without this, deeply
+          // nested AEM responsive-grid layouts (container → container →
+          // container → …) produce block-in-block trees that hit Sanity's
+          // 20-level attribute-depth limit at import time.
+          out.push(...items);
+          ctx.audit.tick();
+          continue;
         }
         inline[containerEntry.childrenField] = items;
       }

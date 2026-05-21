@@ -1,5 +1,10 @@
 import { join } from "node:path";
-import { writeJson, type DialogNode, type Logger } from "aem-to-sanity-core";
+import {
+  resolveDialogViaSuperType,
+  writeJson,
+  type DialogNode,
+  type Logger,
+} from "aem-to-sanity-core";
 import type { Report } from "./report.ts";
 import type { NodeFetcher } from "./mapper.ts";
 
@@ -60,10 +65,13 @@ export async function auditUnmappedTypes(
     for (const componentPath of comps) {
       let dialog: DialogNode;
       try {
-        dialog = await dialogFetcher(`${componentPath}/_cq_dialog`);
+        // Use the same supertype-aware resolution the main migrator uses, so
+        // proxy components don't silently miss audit examples.
+        const resolution = await resolveDialogViaSuperType(componentPath, dialogFetcher);
+        dialog = resolution.dialog;
       } catch (err) {
         logger?.debug(
-          `audit: failed to fetch ${componentPath} for ${resourceType}: ${(err as Error).message}`,
+          `audit: failed to resolve dialog for ${componentPath} (${resourceType}): ${(err as Error).message}`,
         );
         continue;
       }

@@ -41,9 +41,26 @@ The pipeline emits many artifacts into `output/cache/` and `apps/studio/schemas/
 
 When you change how any artifact is generated, **re-run the relevant stage against whichever local tenant folder you have set up** — don't just typecheck. Operator tenant folders (`examples/davids-bridal/`, `examples/<your-tenant>/`, etc.) are gitignored, so on a fresh clone there's nothing to run against — copy `examples/tenant/` first and fill in real credentials. Prefer `--link-only` on `aem-assets` for re-runs — it skips AEM downloads and ML uploads.
 
+## Document ID generation
+
+`pathToDocId` in `packages/aem-to-sanity-content/src/transform.ts` derives each Sanity doc `_id` from the JCR path. Two operator knobs:
+
+- **`MIGRATION_DOC_ID_PREFIX_STRIP`** — comma-separated list of path prefixes to remove before generating the id. The intent is to drop the AEM site/locale rootpage (e.g. `/content/uxp/us/en`) so ids stay short and page-relative. Longest match wins when prefixes overlap. Unset → full path goes into the id.
+- **Separator is `-`** (hyphen), not `.`. Sanity treats any `_id` containing `.` as a **private** doc — readable only with an auth token. Hyphenated ids work over the public CDN, which matters for read-only frontends that don't ship a token. Studio reads always carry auth, so dotted ids would work there too — but hyphens are the safe default.
+
+Idempotency hazard: **changing `MIGRATION_DOC_ID_PREFIX_STRIP` between runs reshapes every id and orphans previously imported docs.** Set it once at the start of a migration and leave it alone. If you must change it on a live dataset, run an `unpublishDocuments` pass against the old id space first.
+
+Long paths (>80 chars after sanitization) fall back to `{first-60-chars}-{sha1-10}` so ids stay under Sanity's 128-char limit without collisions.
+
 ## Type-name resolution (reserved names)
 
 `/apps/.../image` would collide with Sanity's built-in `image` type. `resolveSanityTypeNames` (in `packages/aem-to-sanity-schema/src/naming.ts`) applies an `aem` prefix at emission time so the on-disk schema, the content registry, `pageBuilder.of[]`, and ingested document `_type` values all agree — no Studio-side rename, no orphaned content. Don't reintroduce per-import renames in `sanitize.ts`; it's a defense-in-depth pass for hand-authored schemas only.
+
+## Dialog resolution via `sling:resourceSuperType`
+
+`migrate:schema` walks the `sling:resourceSuperType` chain when a listed component has no `cq:dialog` of its own — same lookup AEM runs at request time. Logic lives in `packages/aem-to-sanity-core/src/aem/dialog-resolution.ts` (`resolveDialogViaSuperType`); the schema migrator (`api.ts:processOne`) and the audit step (`audit.ts`) both call it, and so does the standalone `scripts/aem-probe.ts` so what the probe shows is exactly what the migrator will see.
+
+Chain: try `{path}/_cq_dialog` → on 404, read `sling:resourceSuperType` from the component, resolve `/apps/<rt>` then `/libs/<rt>` for relative supertypes (absolutes used as-is), recurse with cycle guard + 10-hop cap. Successful runs record the chain in `migration-report.json → results[].supertypeChain` (omitted for direct hits) and log an info line per inherited component. **The registry key remains the original proxy path's resource type** — authored content references the proxy at ingest time, not the supertype that supplied the dialog. Two proxies sharing one supertype produce two distinct Sanity types with identical fields; this is intentional, not a duplicate.
 
 ## Type-aware coercion at transform
 

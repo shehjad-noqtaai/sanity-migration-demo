@@ -3,6 +3,7 @@ import { readFile, readdir, unlink } from "node:fs/promises";
 import {
   AEM_AUTHORING_HINTS,
   AemFetchError,
+  resolveDialogViaSuperType,
   writeJson,
   writeTextFile,
   type AuthoringHintConfig,
@@ -373,6 +374,11 @@ async function processOne(
 
   let dialog: DialogNode;
   let schemaTitle: string | undefined;
+  // Populated when the dialog came from a `sling:resourceSuperType` ancestor
+  // rather than the component's own `cq:dialog`. Reported so operators can
+  // see inheritance in the schema report (and so audit reasons like "field
+  // came from supertype X" remain inspectable later).
+  let supertypeChain: string[] | undefined;
   try {
     const componentNode = await fetcher(componentPath);
     const rawTitle = componentNode["jcr:title"];
@@ -383,7 +389,19 @@ async function processOne(
     if (embeddedDialog) {
       dialog = embeddedDialog;
     } else {
-      dialog = await fetcher(`${componentPath}/_cq_dialog`);
+      // Try direct, then walk `sling:resourceSuperType` across /apps + /libs.
+      // Mirrors AEM's runtime dialog-resolution so proxy components
+      // (`/apps/<site>/components/foo` extending Adobe Core or a versioned
+      // base) migrate without operators having to flatten the inheritance
+      // by hand.
+      const resolution = await resolveDialogViaSuperType(componentPath, fetcher);
+      dialog = resolution.dialog;
+      if (resolution.chain.length > 1) {
+        supertypeChain = resolution.chain;
+        deps.logger?.info(
+          `${componentPath}: dialog inherited via supertype — chain ${resolution.chain.join(" → ")}`,
+        );
+      }
     }
   } catch (err) {
     if (err instanceof AemFetchError) {
@@ -588,6 +606,7 @@ async function processOne(
     fields: describeSchemaFields(mapped.fields),
     unmapped: mapped.unmapped,
     renamed: mapped.renamed,
+    supertypeChain,
   });
   return { authFailure: false, success: true };
 }

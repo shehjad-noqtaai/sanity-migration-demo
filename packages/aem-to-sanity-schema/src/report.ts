@@ -25,6 +25,13 @@ export type Outcome =
       fields: SchemaFieldInfo[];
       unmapped: UnmappedField[];
       renamed: RenamedField[];
+      /**
+       * Set when the dialog was resolved via the `sling:resourceSuperType`
+       * chain rather than the component's own `cq:dialog`. First entry is
+       * the original `path` above; last is where the dialog was actually
+       * found. Omitted (or single-entry) for direct dialog hits.
+       */
+      supertypeChain?: string[];
     }
   | {
       status: "failure";

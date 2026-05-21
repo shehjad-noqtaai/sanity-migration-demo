@@ -65,6 +65,7 @@ cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
 | `AEM_COMPONENT_CONTAINERS_FILE` | optional | JSON file mapping `sling:resourceType` → `{ childrenField }` for AEM container components whose drop-zone children should become a nested `pageBuilder` array. Default: `./aem-component-containers.json`. Missing file → no container behavior. |
 | `AEM_COMPONENT_HINTS_FILE` | optional | JSON file mapping `sling:resourceType` → `["cq:hintKey", …]`, opting individual components into AEM authoring-hint lifting (e.g. `cq:panelTitle` on accordion children). Default: `./aem-component-hints.json`. Missing file → no hint behavior. See § 1c-quinquies. |
 | `AEM_MAX_RESPONSE_MB` | optional | Cap per-fetch payload size during extract. Pages exceeding this are recorded as `tooLarge` failures. |
+| `MIGRATION_DOC_ID_PREFIX_STRIP` | optional | `aem-transform` only. Path prefix(es) to strip from JCR paths before deriving Sanity document `_id`s. Typical value is the `@base` from `aem-content-roots` (e.g. `/content/uxp/us/en`). Multiple prefixes allowed comma-separated; longest match wins. Without this, `_id`s carry the full path (`content-uxp-us-en-customer-support-plans-...`). With it, you get the page-relative form (`customer-support-plans-...`). Changing this between runs orphans previously imported docs — set once, leave alone. |
 | `OUTPUT_DIR` | optional | Where schemas, reports, and audit live. Default: `./output`. |
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
 | `MIGRATION_DRY_RUN` | optional | `aem-assets` and `aem-import` are dry-run unless this is explicitly set to `false`. Default (unset): dry-run. |
@@ -159,17 +160,19 @@ The schema CLI fetches `{path}/_cq_dialog.infinity.json` for each entry.
 
 ### 1c-bis. Content roots list — `examples/<your-tenant>/aem-content-roots`
 
-Consumed by `aem-extract` (stage 3). Supports `@base` sections to avoid repeating long paths, plus absolute JCR paths. Example:
+Consumed by `aem-extract` (stage 3). Supports `@base` sections to avoid repeating long paths, nested relative entries (slashes allowed), and absolute JCR paths. Example:
 
 ```
-@base /content/dbi/en
+@base /content/uxp/us/en
 
-homepage
+home
 about-us
-/content/dbi/en/sitemap
+customer-support/plans/consumer/phones/experience-beyond-plan   # nested relatives share the @base
+development-growth/news/magenta-accelerator-fall-2026
+/content/other-site/top                                          # absolute paths work too
 ```
 
-Each line becomes a Sanity page doc with its slug derived from the last segment. See `aem-content-roots.example` for the full syntax (comments, absolute paths, multiple `@base` blocks).
+Each line becomes a Sanity page doc with its `slug` derived from the **last segment** of the resolved JCR path — matching AEM's own page-slug semantics. So the nested entry above produces `slug: experience-beyond-plan`, not the full sub-path. See `aem-content-roots.example` for the full syntax (comments, absolute paths, multiple `@base` blocks).
 
 ### 1c-ter. Component exceptions — `examples/<your-tenant>/aem-component-exceptions`
 
@@ -191,7 +194,16 @@ Consumed by both `migrate:schema` and `aem-transform`. Declares which components
 For each listed resource type:
 
 - **Schema emission** appends a synthetic `defineField({ name: childrenField, title: "Items", type: "pageBuilder" })` to the component so the Studio palette inside the container matches the top-level page builder — every block type is droppable. The field is appended last so dialog-authored fields keep their declared order. Name collisions with dialog fields (same-name field already declared) leave the dialog field untouched and skip the synthetic append.
-- **Content transform** descends into the container node's direct child keys that themselves carry a `sling:resourceType`, recursively emits each as a pageBuilder block (same `_type` / `_key` / coercion pipeline as top-level blocks), and stores the array under `childrenField`. Containers nest: an expander containing boxes containing content paragraphs all roundtrip. Children without `sling:resourceType` stay inline on the container (that's how multifields keep working).
+- **Content transform** walks the container's subtree — including `nt:unstructured` layout-only wrappers (AEM's responsive-grid pattern that wraps drop-zones in nodes carrying just a `layout` field, no `sling:resourceType`) — and emits each resource-type-bearing descendant as a pageBuilder block (same `_type` / `_key` / coercion pipeline as top-level blocks) under `childrenField`. Containers nest: an expander containing boxes containing content paragraphs all roundtrip. Children without `sling:resourceType` stay inline on the container (that's how multifields keep working).
+
+**`flatten: true`** (optional, default `false`) — drops the container's own block at transform time and hoists its items into the parent's pageBuilder array. Use this for **pure layout containers** like AEM's responsive grid (`proxy/content/container`) where the wrapping component has no authored content of its own. Without `flatten`, deeply nested layouts (container-in-container-in-container, common in responsive-grid content) produce nested-block trees that can hit Sanity's hard **20-level attribute-depth limit** at import time. With `flatten`, every responsive-grid layer collapses and the actual content blocks end up at a sane depth. Containers with their own dialog fields you want preserved (accordions, expanders, named panels) should stay non-flatten.
+
+```json
+{
+  "uxp/components/structure/page":          { "childrenField": "items" },
+  "uxp/components/proxy/content/container": { "childrenField": "items", "flatten": true }
+}
+```
 
 Missing file → container behavior stays off. Malformed JSON or invalid entries are a hard error (fail loudly rather than silently drop child content).
 
@@ -289,6 +301,37 @@ Component type names are resolved up front via `resolveSanityTypeNames` (in `aem
 Example: `/apps/aem-integration/components/image` → `aemImage.ts` on disk, `aemImage` in `pageBuilder.of[]`, `"sanityType": "aemImage"` in the content registry, and `_type: "aemImage"` on every ingested document. Keeping all four artifacts aligned up front is what prevents ingested data from later appearing as "Untitled" + unknown-type warnings in the Studio.
 
 The Studio-side `sanitizeSchemaTypes` still exists and runs the same rename as a defense-in-depth pass for hand-authored schemas, but for the emitter path it's a no-op.
+
+### Dialog inheritance via `sling:resourceSuperType`
+
+`migrate:schema` resolves each component's Granite UI dialog using the same chain-walking AEM does at request time:
+
+1. Try the component's own `cq:dialog` (either embedded in the component node or fetched at `{componentPath}/_cq_dialog.infinity.json`).
+2. On 404, read `sling:resourceSuperType` off the component itself. Absent → the component is genuinely dialogless and `migrate:schema` records a `failure` for it.
+3. Resolve the supertype:
+   - **Absolute** (`/apps/...`, `/libs/...`) — used as-is.
+   - **Relative** (`<namespace>/components/...`) — AEM's lookup order is `/apps/<rt>` first (project + AMS overrides take precedence), `/libs/<rt>` second (Adobe defaults).
+4. Recurse with the resolved path. A 10-hop cap and per-component cycle guard prevent runaway walks.
+
+Why this matters in practice: **proxy components are the norm in AEMaaCS.** A site at `/apps/<site>/components/proxy/content/pageinfo` typically has no `cq:dialog` of its own — it extends a versioned base under `/apps/<site>/components/content/pageinfo/v1/pageinfo` (or, for Adobe-shipped components, something under `/libs`). Without chain resolution, those proxies fail with a 404 and the operator has to hand-list the supertype path in `aem-component-paths` — losing the proxy's identity in the process. With chain resolution, you list the proxy and the migrator finds the inherited dialog automatically.
+
+The resolved chain is recorded in `migration-report.json` under each successful component's `supertypeChain` field (omitted for direct hits). Operators auditing emitted schemas can see exactly which ancestor supplied the dialog fields. Each run also logs an `info` line per inherited dialog:
+
+```
+[info] /apps/uxp/components/proxy/content/pageinfo: dialog inherited via supertype — chain /apps/uxp/components/proxy/content/pageinfo → /apps/uxp/components/content/pageinfo/v1/pageinfo
+```
+
+Important: **the registry key remains the original proxy path's resource type**, not the supertype's. Authored content has `sling:resourceType: uxp/components/proxy/content/pageinfo`, so that's what the registry needs as a lookup key. Two proxy components sharing one supertype produce two distinct Sanity types with identical field sets — they render identically in the Studio but each has its own `_type` so ingestion stays unambiguous.
+
+You can verify a single component's dialog resolution before kicking off a full schema run with `scripts/aem-probe.ts`:
+
+```bash
+cd examples/<your-tenant>
+pnpm exec tsx ../../scripts/aem-probe.ts /apps/<site>/components/proxy/foo
+# → Prints the supertype chain + the dialog's top-level form fields.
+```
+
+The probe uses the same `resolveDialogViaSuperType` helper from `aem-to-sanity-core` that the migrator does, so the probe's output is exactly what the schema run will see.
 
 ### Registering new block types between migrations
 

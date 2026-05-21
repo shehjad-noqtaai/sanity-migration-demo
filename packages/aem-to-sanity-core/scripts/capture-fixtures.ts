@@ -84,7 +84,17 @@ function readContentTargets(): string[] {
     if (!base) {
       throw new Error(`Relative slug ${JSON.stringify(line)} needs an @base above it in ${file}.`);
     }
-    out.push(`${base}/${line}`);
+    // Tolerate nested relatives — `customer-support/plans/foo` joins onto
+    // `@base` the same way a single slug `home` does. Mirrors the parser in
+    // `aem-to-sanity-content/src/extract.ts::parseRoots`.
+    const cleaned = line
+      .replace(/^\.\//, "")
+      .replace(/^\/+/, "")
+      .replace(/\/+$/, "");
+    if (!cleaned) {
+      throw new Error(`Empty relative entry under @base ${JSON.stringify(base)} in ${file}.`);
+    }
+    out.push(`${base}/${cleaned}`);
   }
   if (out.length === 0) {
     throw new Error(`No content targets found in ${file}.`);
