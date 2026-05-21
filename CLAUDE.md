@@ -23,6 +23,21 @@ Every user-facing change must update its documentation in the same commit. Drift
 - **Mapping table change** (`packages/aem-to-sanity-schema/src/mapping-table.ts`) → rerun `pnpm migrate:schema` so `docs/aem-to-sanity-mapping.md` regenerates from the source of truth. `writeMappingDocs` can also be called standalone from the schema package's `dist/index.js` (no AEM round-trip needed).
 - **Container config shape change** (`packages/aem-to-sanity-core/src/config/containers.ts` or `aem-component-containers.json` fields) → update the "Container components" section in `packages/aem-to-sanity-schema/src/docs.ts`, regenerate `docs/aem-to-sanity-mapping.md`, and mirror in `docs/running-the-migration.md` § 1c-quater + content package README.
 - **Slot discovery shape change** (`packages/aem-to-sanity-schema/src/slots.ts` behavior, `slot-reference` field emission rules) → update the "Named slots (auto-discovered)" section in `packages/aem-to-sanity-schema/src/docs.ts`, regenerate the mapping doc, and mirror in `docs/running-the-migration.md` § 2 + content package README.
+- **Tenant template change** (anything under `examples/tenant/`) → keep `scripts/lib/tenant-template.ts` + `scripts/migrate-doctor.ts` in sync so `pnpm -w migrate:doctor` doesn't silently miss the new surface. Details below.
+
+**Tenant template ↔ doctor sync rules**
+
+`pnpm -w migrate:init` and `pnpm -w migrate:doctor` treat `examples/tenant/` as the source of truth, but the doctor classifies each file by hand. When the template grows, update the classification or the checks won't catch drift on the new surface.
+
+- **New file added to `examples/tenant/`** → add its basename to either `TEMPLATE_FILES` (template-owned content like `README.md`, `*.example`) or `OPERATOR_FILES` (operator-customized like `aem-*-roots`, `*.json`) in `scripts/lib/tenant-template.ts`. Files in neither set are silently ignored by doctor.
+- **New required env var added to `.env.example`** → no code change needed. The doctor parses `.env.example` at runtime and treats every uncommented `KEY=value` line as required. The placeholder regex (`PLACEHOLDER_RE` in `scripts/lib/tenant-template.ts`) detects leftover values; add a pattern there if you introduce a new placeholder shape (e.g. `<your-thing>`, `xxxx`).
+- **New optional env var added to `.env.example`** → no code change needed. Commented `# KEY=value` lines are picked up automatically and excluded from the "unknown var" warning.
+- **New conditional env requirement** (e.g. "var X is required only when var Y has a particular value") → add a special-case block in `checkEnv` inside `scripts/migrate-doctor.ts`. The `MIGRATION_DRY_RUN=false` → `SANITY_MEDIA_LIBRARY_ID` check is the existing template.
+- **New AEM authentication flow** → extend `AEM_AUTH_FLOWS` in `scripts/lib/tenant-template.ts` (name + keys + `any-of`/`all-of` mode). The doctor's "no AEM auth configured" error iterates that list.
+- **New pipeline stage script** (e.g. another `aem-foo` between extract and import) → add it to the `scripts` block in `examples/tenant/package.json` AND to the migrate chains (`migrate`, `migrate:content`). The doctor's `package.json` scripts-block check reads the template at runtime, so once the template is updated, `pnpm -w migrate:doctor --all --fix` propagates the new script to existing tenants.
+- **New ignored directory** (build output, cache, etc. that init must skip on copy) → add to `IGNORED_NAMES` in `scripts/lib/tenant-template.ts`.
+
+After any of the above, re-run `pnpm -w migrate:doctor --all` and confirm the report reflects the new expectation.
 
 **Anti-patterns:**
 - Don't duplicate content between the generated mapping doc and hand-authored docs. The generated file is the source of truth for field-level mapping; hand-authored docs describe architecture, phases, env vars, flags.

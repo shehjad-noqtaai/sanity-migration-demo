@@ -19,6 +19,9 @@ importers:
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       turbo:
         specifier: ^2.3.0
         version: 2.9.6
@@ -239,7 +242,7 @@ importers:
         specifier: ^6.0.0
         version: 6.4.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
 
-  examples/davids-bridal:
+  examples/dummy-from-tenant:
     devDependencies:
       aem-to-sanity-content:
         specifier: workspace:*
@@ -254,7 +257,22 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
 
-  examples/tmobile:
+  examples/t-mobile:
+    devDependencies:
+      aem-to-sanity-content:
+        specifier: workspace:*
+        version: link:../../packages/aem-to-sanity-content
+      aem-to-sanity-schema:
+        specifier: workspace:*
+        version: link:../../packages/aem-to-sanity-schema
+      sanity:
+        specifier: ^5.21.0
+        version: 5.21.0(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.10.5)(@sanity/cli-core@1.3.1(@noble/hashes@2.2.0)(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(yaml@2.8.3))(@types/node@25.6.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@10.2.0)(jiti@2.6.1)(lightningcss@1.32.0)(prismjs@1.27.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(styled-components@6.4.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(ts-toolbelt@9.6.0)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+
+  examples/tenant:
     devDependencies:
       aem-to-sanity-content:
         specifier: workspace:*
