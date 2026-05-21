@@ -57,6 +57,13 @@ export interface WriteTemplatePageArtifactsResult {
   excludeFromPageBuilder: string[];
   /** Files written for per-template document types. */
   documentFiles: string[];
+  /**
+   * Page-shell resource types declared in `aem-page-components.json` that
+   * weren't fetched as components (i.e. missing from `aem-component-paths`).
+   * Each was skipped — no per-template doc type was emitted for any of its
+   * templates. Surfaced so the CLI can log a high-visibility callout.
+   */
+  missingComponentPaths: string[];
 }
 
 /**
@@ -137,6 +144,7 @@ export async function writeTemplatePageArtifacts(
   };
   const excludeFromPageBuilder = new Set<string>();
   const documentFiles: string[] = [];
+  const missingComponentPaths: string[] = [];
 
   if (pageComponentsConfig.size === 0) {
     let manifestFile: string | undefined;
@@ -149,6 +157,7 @@ export async function writeTemplatePageArtifacts(
       manifest,
       excludeFromPageBuilder: [],
       documentFiles,
+      missingComponentPaths,
     };
   }
 
@@ -162,9 +171,18 @@ export async function writeTemplatePageArtifacts(
   for (const [resourceType, entry] of pageComponentsConfig.entries()) {
     const pageComponentSanityType = typeNameByResourceType.get(resourceType);
     if (!pageComponentSanityType) {
-      logger?.warn(
-        `template-pages: skipping page-component "${resourceType}" — no Sanity type emitted (is it listed in aem-component-paths?).`,
+      // No Sanity object type was emitted for this resource type — it's
+      // declared as a page-shell in `aem-page-components.json` but missing
+      // from `aem-component-paths`, so the dialog never got fetched. Drop
+      // every (resource type, template) pair on the floor and surface the
+      // gap loudly: returning the resource type so the caller can put a
+      // high-visibility callout in the schema CLI summary. Logging only
+      // here is too easy to miss — operators see `entries: []` in the
+      // manifest and assume the discovery scanner is broken.
+      logger?.error(
+        `template-pages: "${resourceType}" is declared as a page-shell but missing from aem-component-paths. Add this line and re-run migrate:schema:\n    /apps/${resourceType}`,
       );
+      missingComponentPaths.push(resourceType);
       continue;
     }
     excludeFromPageBuilder.add(pageComponentSanityType);
@@ -228,6 +246,7 @@ export async function writeTemplatePageArtifacts(
     manifest,
     excludeFromPageBuilder: Array.from(excludeFromPageBuilder),
     documentFiles,
+    missingComponentPaths,
   };
 }
 

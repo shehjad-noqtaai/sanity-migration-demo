@@ -186,7 +186,7 @@ async function main(): Promise<void> {
       return parsed.data;
     });
 
-  const { report, reportFile } = await migrateSchemas({
+  const { report, reportFile, missingPageComponentPaths } = await migrateSchemas({
     componentPaths: filtered,
     fetcher,
     outputDir: config.outputDir,
@@ -218,6 +218,20 @@ async function main(): Promise<void> {
   logger.info(`Report:              ${c.dim(reportFile)}`);
   logger.info(`Elapsed:             ${c.dim(timer.elapsed())}`);
   logger.info(sep);
+
+  // Page-shells declared in `aem-page-components.json` but missing from
+  // `aem-component-paths` get dropped silently inside the template-pages
+  // emitter — its `logger.error` line is easy to miss in a long schema run.
+  // Surface them again at the end with the exact paths to add.
+  if (missingPageComponentPaths && missingPageComponentPaths.length > 0) {
+    logger.error(
+      `${missingPageComponentPaths.length} page-shell(s) skipped — declared in aem-page-components.json but missing from aem-component-paths. Add these lines and re-run migrate:schema:`,
+    );
+    for (const rt of missingPageComponentPaths) {
+      logger.error(`    /apps/${rt}`);
+    }
+    logger.info(sep);
+  }
 
   if (s.failures > 0) {
     const failures = report.results.filter(

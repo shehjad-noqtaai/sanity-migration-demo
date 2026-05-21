@@ -163,6 +163,12 @@ export interface MigrateSchemasResult {
   pageTemplatesFile?: string;
   /** Per-template document .ts files written under `schemasDir`. */
   templatePageFiles?: string[];
+  /**
+   * Resource types listed in `aem-page-components.json` but missing from
+   * `aem-component-paths`. Their declared (or discovered) templates are
+   * dropped silently — re-add them to `aem-component-paths` and re-run.
+   */
+  missingPageComponentPaths?: string[];
 }
 
 export async function migrateSchemas(
@@ -299,6 +305,7 @@ export async function migrateSchemas(
 
   let pageTemplatesFile: string | undefined;
   let templatePageFiles: string[] | undefined;
+  let missingPageComponentPaths: string[] | undefined;
   if (emitPageBuilder && pageComponents && pageComponents.size > 0) {
     const tp = await writeTemplatePageArtifacts({
       schemasDir,
@@ -309,6 +316,9 @@ export async function migrateSchemas(
     });
     pageTemplatesFile = tp.manifestFile;
     templatePageFiles = tp.documentFiles;
+    missingPageComponentPaths = tp.missingComponentPaths.length > 0
+      ? tp.missingComponentPaths
+      : undefined;
   }
 
   // Per-template document files count as "expected" — protect them from the
@@ -372,6 +382,7 @@ export async function migrateSchemas(
     contentRegistryFile: registryFile,
     pageTemplatesFile,
     templatePageFiles,
+    missingPageComponentPaths,
   };
 }
 
