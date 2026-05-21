@@ -1,9 +1,0 @@
-# Content roots for migration
-# Scope widens later by adding more @base sections / slug lines below.
-
-@base /content/aem-integration/us/en
-
-home
-travel
-labubu
-vows

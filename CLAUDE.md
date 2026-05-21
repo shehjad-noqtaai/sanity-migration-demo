@@ -13,7 +13,7 @@ Every user-facing change must update its documentation in the same commit. Drift
 - `docs/running-the-migration.md` — exhaustive operator's guide (env vars table, per-stage flag tables, troubleshooting).
 - `docs/overview.md` — architecture + layout.
 - `docs/aem-to-sanity-mapping.md` — **auto-generated** by `packages/aem-to-sanity-schema/src/docs.ts`. Do not edit by hand; regenerate.
-- `examples/davids-bridal/.env.example` — must list every env var a CLI reads.
+- `examples/tenant/.env.example` — must list every env var a CLI reads. `examples/tenant/` is the **committed template**; operator working copies live at `examples/<their-tenant>/` and are gitignored.
 
 **Triggers:**
 - **New CLI flag** → update the package README + the stage section in `docs/running-the-migration.md` + the short summary in `docs/run.md` + `.env.example` if there's a matching env var.
@@ -34,16 +34,34 @@ Every user-facing change must update its documentation in the same commit. Drift
 The pipeline emits many artifacts into `output/cache/` and `apps/studio/schemas/generated/`. These are regenerable; never hand-edit.
 
 - `output/cache/content-type-registry.json` — written by `migrate:schema`. Shape: `entries: Array<{resourceType, sanityType, fields: Array<{name, type}>}>`. Legacy `fields: string[]` still loads but disables type-aware coercion (notably HTML → Portable Text).
-- `apps/studio/schemas/generated/*.ts` — written by `migrate:schema`. Each file carries a `// Generated from AEM component: …` banner.
+- `apps/studio/schemas/generated/*.ts` — written by `migrate:schema`. Each file carries a `// Generated from AEM component: …` banner. **Gitignored by default** (see `.gitignore`); each operator regenerates locally. Only `generated/index.ts` is tracked as a stub so the Studio boots on bare clone before any migration has run. Single-tenant projects that want the schemas source-controlled should comment out the `apps/studio/schemas/generated/` line in `.gitignore` and `git add` the regenerated files after `migrate:schema`.
 - `output/cache/raw/*.json` — written by `aem-extract`.
 - `output/cache/clean/*.json` — written by `aem-transform`, mutated in place by `aem-assets` phase 4 (DAM-path → asset ref rewrite).
+- `output/cache/categories/*.json` + `manifest.json` — written by `aem-tags`. One Sanity `category` doc per AEM `cq:Tag` node (parent-child taxonomy), plus a manifest keyed by AEM tag id that `aem-transform` consults when resolving authored `cq:tags` references.
 - `output/cache/assets/manifest.json` — per-DAM-path state; drives `aem-assets` resumability.
 
-When you change how any artifact is generated, **re-run the relevant stage against `examples/davids-bridal/` to verify** — don't just typecheck. The example has `MIGRATION_DRY_RUN=false` configured, so schema + transform runs are free; assets and import writes go to a real dataset (`rolz99xh` / `production`). Prefer `--link-only` on `aem-assets` for re-runs — it skips AEM downloads and ML uploads.
+When you change how any artifact is generated, **re-run the relevant stage against whichever local tenant folder you have set up** — don't just typecheck. Operator tenant folders (`examples/davids-bridal/`, `examples/<your-tenant>/`, etc.) are gitignored, so on a fresh clone there's nothing to run against — copy `examples/tenant/` first and fill in real credentials. Prefer `--link-only` on `aem-assets` for re-runs — it skips AEM downloads and ML uploads.
+
+## Document ID generation
+
+`pathToDocId` in `packages/aem-to-sanity-content/src/transform.ts` derives each Sanity doc `_id` from the JCR path. Two operator knobs:
+
+- **`MIGRATION_DOC_ID_PREFIX_STRIP`** — comma-separated list of path prefixes to remove before generating the id. The intent is to drop the AEM site/locale rootpage (e.g. `/content/uxp/us/en`) so ids stay short and page-relative. Longest match wins when prefixes overlap. Unset → full path goes into the id.
+- **Separator is `-`** (hyphen), not `.`. Sanity treats any `_id` containing `.` as a **private** doc — readable only with an auth token. Hyphenated ids work over the public CDN, which matters for read-only frontends that don't ship a token. Studio reads always carry auth, so dotted ids would work there too — but hyphens are the safe default.
+
+Idempotency hazard: **changing `MIGRATION_DOC_ID_PREFIX_STRIP` between runs reshapes every id and orphans previously imported docs.** Set it once at the start of a migration and leave it alone. If you must change it on a live dataset, run an `unpublishDocuments` pass against the old id space first.
+
+Long paths (>80 chars after sanitization) fall back to `{first-60-chars}-{sha1-10}` so ids stay under Sanity's 128-char limit without collisions.
 
 ## Type-name resolution (reserved names)
 
 `/apps/.../image` would collide with Sanity's built-in `image` type. `resolveSanityTypeNames` (in `packages/aem-to-sanity-schema/src/naming.ts`) applies an `aem` prefix at emission time so the on-disk schema, the content registry, `pageBuilder.of[]`, and ingested document `_type` values all agree — no Studio-side rename, no orphaned content. Don't reintroduce per-import renames in `sanitize.ts`; it's a defense-in-depth pass for hand-authored schemas only.
+
+## Dialog resolution via `sling:resourceSuperType`
+
+`migrate:schema` walks the `sling:resourceSuperType` chain when a listed component has no `cq:dialog` of its own — same lookup AEM runs at request time. Logic lives in `packages/aem-to-sanity-core/src/aem/dialog-resolution.ts` (`resolveDialogViaSuperType`); the schema migrator (`api.ts:processOne`) and the audit step (`audit.ts`) both call it, and so does the standalone `scripts/aem-probe.ts` so what the probe shows is exactly what the migrator will see.
+
+Chain: try `{path}/_cq_dialog` → on 404, read `sling:resourceSuperType` from the component, resolve `/apps/<rt>` then `/libs/<rt>` for relative supertypes (absolutes used as-is), recurse with cycle guard + 10-hop cap. Successful runs record the chain in `migration-report.json → results[].supertypeChain` (omitted for direct hits) and log an info line per inherited component. **The registry key remains the original proxy path's resource type** — authored content references the proxy at ingest time, not the supertype that supplied the dialog. Two proxies sharing one supertype produce two distinct Sanity types with identical fields; this is intentional, not a duplicate.
 
 ## Type-aware coercion at transform
 
@@ -82,7 +100,7 @@ The Studio edits `drafts.{id}` whenever one exists. `aem-import` by default only
 
 ## Storefront preview (apps/web)
 
-A Vite + React 19 app lives at `apps/web/` that reads the migrated home doc from Sanity and renders its pageBuilder through a set of block primitives styled per `docs/DESIGN.md` (the "Ethereal Atelier" system). Use it to eyeball the output of a migration run end-to-end — `pnpm -F web dev` → http://localhost:4321. Env plumbing falls back to `examples/davids-bridal/.env` so the demo tracks the migration destination automatically.
+A Vite + React 19 app lives at `apps/web/` that reads the migrated home doc from Sanity and renders its pageBuilder through a set of block primitives styled per `docs/DESIGN.md` (the "Ethereal Atelier" system). Use it to eyeball the output of a migration run end-to-end — `pnpm -F web dev` → http://localhost:4321. Env plumbing falls back to the first non-template tenant folder under `examples/` that has a `.env` (so the demo tracks whichever migration destination you have configured locally).
 
 Design tokens live in `apps/web/src/styles.css` under a Tailwind v4 `@theme` block. Block renderers are one-per-`_type` under `apps/web/src/blocks/`, wired through a switch-based dispatcher in `blocks/index.tsx`; unknown `_type`s fall through to a visible `UnknownBlock` placeholder so missing primitives surface immediately instead of rendering as blank space. When adding a new block type to the schema side, drop a primitive into this dispatcher in the same change so the preview stays usable.
 
@@ -94,8 +112,8 @@ After code changes that affect the pipeline output:
 # 1. Rebuild so dist/ reflects source changes (Node runs from dist/)
 pnpm -r build
 
-# 2. Full schema + content run on the reference example
-cd examples/davids-bridal
+# 2. Full schema + content run against your local tenant folder
+cd examples/<your-tenant>             # e.g. examples/davids-bridal, examples/acme
 pnpm migrate:schema
 pnpm extract
 pnpm transform
@@ -118,5 +136,6 @@ pnpm -r test
 
 - Small, focused commits. One logical change per commit.
 - Commit messages follow the style in `git log` (conventional-ish: `feat(content):`, `fix(schema):`, `chore:`, etc.).
-- Generated artifacts (`apps/studio/schemas/generated/*`, regenerated `content-type-registry.json`, regenerated docs) can be committed alongside the source change that produced them — makes the diff reviewable end-to-end.
-- Never commit `output/` artifacts that are local caches (raw/, clean/, assets/). Emitted *schema* files under `apps/studio/schemas/generated/` are different — those ship with the Studio.
+- Regenerated docs (`docs/aem-to-sanity-mapping.md`) can be committed alongside the source change that produced them — makes the diff reviewable end-to-end.
+- Never commit `output/` artifacts (raw/, clean/, categories/, assets/) — these are local caches, gitignored by default.
+- `apps/studio/schemas/generated/*` is **gitignored by default** — each operator regenerates from their own AEM via `pnpm migrate:schema`, so committing them creates merge conflicts between tenants and surfaces one customer's component vocabulary in another's repo. The `generated/index.ts` stub stays tracked so the Studio boots + typechecks on a bare clone. Single-tenant repos that want the schemas under source control should comment out the `apps/studio/schemas/generated/` line in `.gitignore` and `git add` the regenerated files explicitly.

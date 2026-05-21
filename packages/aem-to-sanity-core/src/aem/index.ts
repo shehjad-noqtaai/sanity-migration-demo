@@ -31,3 +31,14 @@ export type {
   FetchInfinityTreeOptions,
   FetchInfinityTreeResult,
 } from "./fetch-tree.ts";
+export {
+  exchangeImsToken,
+  parseServiceCredentials,
+  readServiceCredentialsFile,
+} from "./ims.ts";
+export type { ExchangedToken, ServiceCredentials } from "./ims.ts";
+export { resolveDialogViaSuperType } from "./dialog-resolution.ts";
+export type {
+  DialogResolution,
+  ResolveDialogOptions,
+} from "./dialog-resolution.ts";

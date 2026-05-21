@@ -63,7 +63,13 @@ export function logStartupBanner(
 
   const authDesc =
     config.auth.kind === "bearer"
-      ? `bearer ${maskBearer(config.auth.token)}`
+      ? config.auth.source === "ims"
+        ? `IMS access token ${maskBearer(config.auth.token)}${
+            config.auth.expiresAt
+              ? ` (expires ${new Date(config.auth.expiresAt).toISOString()})`
+              : ""
+          }`
+        : `bearer ${maskBearer(config.auth.token)}`
       : `basic (user=${config.auth.username})`;
 
   logger.info("AEM");

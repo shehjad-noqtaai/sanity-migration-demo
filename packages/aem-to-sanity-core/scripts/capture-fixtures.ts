@@ -4,9 +4,9 @@
  * extract pipeline can be unit-tested (and the depth-5 splice can be
  * TDD-ed) without hitting live AEM.
  *
- * Usage (run from the monorepo root):
+ * Usage (run from a tenant example folder so `dotenv/config` picks up its `.env`):
  *
- *   pnpm --filter example-davids-bridal tsx ../../packages/aem-to-sanity-core/scripts/capture-fixtures.ts
+ *   pnpm --filter example-<your-tenant> tsx ../../packages/aem-to-sanity-core/scripts/capture-fixtures.ts
  *
  * Or directly from the core package:
  *
@@ -14,7 +14,7 @@
  *
  * Reads the same env vars as `aem-extract` (`AEM_AUTHOR_URL`,
  * `AEM_AUTHOR_USERNAME`, `AEM_AUTHOR_PASSWORD`, or `AEM_TOKEN`). Writes under
- * `examples/davids-bridal/output/cache/fixtures/aem/` by default, overridable via
+ * `<cwd>/output/cache/fixtures/aem/` by default, overridable via
  * `FIXTURES_OUT_DIR`.
  *
  * For each target: performs the fetch, writes the JSON body as a file with a
@@ -27,8 +27,7 @@
  * Safety: only reads from AEM; no mutations. Every request is GET.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, resolve } from "node:path";
 import {
   AemFetchError,
   fetchInfinityJson,
@@ -39,29 +38,29 @@ import { fixtureFilenameForUrl } from "../src/aem/fetcher-fixtures.ts";
 import { detectTruncations } from "../src/aem/infinity.ts";
 
 const MARKER_FOLLOW_BUDGET = 3;
-const DIALOG_TARGETS = [
-  // Shallow dialog (the audit confirmed case 2 resolves cleanly).
-  "/apps/dbi/components/content/about/_cq_dialog",
-  // Try for a couple of additional dialogs — skip silently if they 404.
-  "/apps/dbi/components/content/hero/_cq_dialog",
-  "/apps/dbi/components/content/carousel/_cq_dialog",
-];
+// Dialog paths to capture. Defaults are empty so this script is tenant-agnostic
+// — set FIXTURE_DIALOG_PATHS to a comma-separated list of JCR paths (the
+// `_cq_dialog` suffix is appended automatically) if you want dialog fixtures.
+const DIALOG_TARGETS = (process.env.FIXTURE_DIALOG_PATHS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter((s) => s.length > 0)
+  .map((p) => (p.endsWith("/_cq_dialog") ? p : `${p}/_cq_dialog`));
 const NOT_FOUND_TARGET = "/content/does-not-exist-abc123";
 
 /**
  * Content targets come from a roots file (same format as the migrator
- * consumes). Defaults to `examples/davids-bridal/aem-content-roots.fixtures`
- * so the script stays aligned with whatever the operator wants captured,
- * rather than hardcoding a tenant path. Override with `FIXTURE_ROOTS_FILE`.
+ * consumes). Defaults to `<cwd>/aem-content-roots.fixtures` so the script
+ * runs against whatever tenant folder you invoked it from, rather than
+ * hardcoding a specific tenant path. Override with `FIXTURE_ROOTS_FILE`.
  *
  * Parser mirrors `aem-to-sanity-content/src/extract.ts::parseRoots` (small
  * duplication kept intentionally so this script has no cross-package runtime
  * dependency on `aem-to-sanity-content`).
  */
-function readContentTargets(repoRoot: string): string[] {
+function readContentTargets(): string[] {
   const file = resolve(
-    process.env.FIXTURE_ROOTS_FILE ??
-      join(repoRoot, "examples/davids-bridal/aem-content-roots.fixtures"),
+    process.env.FIXTURE_ROOTS_FILE ?? join(process.cwd(), "aem-content-roots.fixtures"),
   );
   const raw = readFileSync(file, "utf8");
   const out: string[] = [];
@@ -85,7 +84,17 @@ function readContentTargets(repoRoot: string): string[] {
     if (!base) {
       throw new Error(`Relative slug ${JSON.stringify(line)} needs an @base above it in ${file}.`);
     }
-    out.push(`${base}/${line}`);
+    // Tolerate nested relatives — `customer-support/plans/foo` joins onto
+    // `@base` the same way a single slug `home` does. Mirrors the parser in
+    // `aem-to-sanity-content/src/extract.ts::parseRoots`.
+    const cleaned = line
+      .replace(/^\.\//, "")
+      .replace(/^\/+/, "")
+      .replace(/\/+$/, "");
+    if (!cleaned) {
+      throw new Error(`Empty relative entry under @base ${JSON.stringify(base)} in ${file}.`);
+    }
+    out.push(`${base}/${cleaned}`);
   }
   if (out.length === 0) {
     throw new Error(`No content targets found in ${file}.`);
@@ -107,12 +116,10 @@ interface CaptureStats {
 }
 
 async function main(): Promise<void> {
-  const config = resolveConfig(process.env);
-  const here = dirname(fileURLToPath(import.meta.url));
-  const repoRoot = resolve(here, "../../..");
+  const config = await resolveConfig(process.env);
   const outDir = resolve(
     process.env.FIXTURES_OUT_DIR ??
-      join(repoRoot, "examples/davids-bridal/output/cache/fixtures/aem"),
+      join(process.cwd(), "output/cache/fixtures/aem"),
   );
   mkdirSync(outDir, { recursive: true });
 
@@ -146,7 +153,7 @@ async function main(): Promise<void> {
   }
 
   // Phase 2: content roots + follow-up markers (marker chain).
-  const contentTargets = readContentTargets(repoRoot);
+  const contentTargets = readContentTargets();
   console.log(`[capture] content targets: ${contentTargets.length}`);
   for (const contentPath of contentTargets) {
     await captureWithFollowups(
@@ -278,7 +285,7 @@ async function captureSingle(
   try {
     const tree = await fetchInfinityJson(
       {
-        config: resolveConfig(process.env),
+        config: await resolveConfig(process.env),
         fetch: recordingFetch,
       },
       jcrPath,

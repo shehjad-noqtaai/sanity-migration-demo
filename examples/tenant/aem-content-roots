@@ -1,0 +1,11 @@
+# Content roots for migration. See `aem-content-roots.example` for full syntax.
+#
+# Set @base to your site's locale root, then list slug names (one per line)
+# for each page you want migrated.
+
+# @base /content/<your-site>/<locale>
+
+# home
+# about
+# products
+# support

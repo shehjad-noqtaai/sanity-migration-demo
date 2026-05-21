@@ -20,7 +20,7 @@ import { scanSlotsFromRawDir } from "./slots.ts";
 
 async function main(): Promise<void> {
   const timer = startTimer();
-  const config = resolveConfig(process.env);
+  const config = await resolveConfig(process.env);
 
   // `--verbose` / `-v` elevates log level to `debug`, which surfaces the
   // per-request `GET <url>` line already emitted by the AEM fetcher

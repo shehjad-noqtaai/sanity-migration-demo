@@ -1,13 +1,16 @@
 # aem-to-sanity-content
 
-AEM → Sanity content migration as four flat scripts. Each step is inspectable on disk, so you can stop between phases and re-run just one.
+AEM → Sanity content migration as five flat scripts. Each step is inspectable on disk, so you can stop between phases and re-run just one.
 
 ```
-aem-extract    AEM  → output/raw/*.json           + output/extract-report.json
-aem-transform  raw  → output/clean/*.json         + output/transform-report.json
-aem-assets     DAM  → output/assets/* + Sanity    + output/assets/manifest.json (resumable)
-aem-import     clean → Sanity (dry-run by default)
+aem-extract    AEM  → output/raw/*.json                       + output/extract-report.json
+aem-tags       AEM  → output/cache/categories/*.json + manifest.json + output/cache/tags-report.json   (optional)
+aem-transform  raw + categories manifest → output/clean/*.json + output/transform-report.json
+aem-assets     DAM  → output/assets/* + Sanity                + output/assets/manifest.json           (resumable)
+aem-import     clean + categories → Sanity (dry-run by default)
 ```
+
+`aem-tags` is optional — skip it for migrations that don't use AEM taxonomy. When present, it produces Sanity `category` docs (parent-child taxonomy) that `aem-transform` resolves authored `cq:tags` strings against and that `aem-import` publishes ahead of pages.
 
 ## Configure
 
@@ -16,11 +19,14 @@ Env vars (can live in `.env`):
 ```
 AEM_ENV=author                                # or publish
 AEM_AUTHOR_URL=https://author.example.com
-AEM_AUTHOR_USERNAME=...
+AEM_AUTHOR_USERNAME=...                       # on-prem / AMS only — AEMaaCS rejects basic auth
 AEM_AUTHOR_PASSWORD=...
-# or: AEM_TOKEN=...
+# or: AEM_TOKEN=...                           # AEMaaCS developer token (24h) or any pre-minted bearer
+# or: AEM_SERVICE_CREDENTIALS_FILE=...        # AEMaaCS Service Credentials JSON (exchanged with Adobe IMS at startup)
+# or: AEM_SERVICE_CREDENTIALS='{"CLIENT_ID":...}'  # same, inlined as JSON (for CI)
 
 AEM_CONTENT_ROOTS_FILE=./aem-content-roots    # default
+AEM_TAG_ROOTS_FILE=./aem-tag-roots            # default — only namespaces listed here are migrated
 OUTPUT_DIR=./output                           # default
 
 # Writes (import only)
@@ -34,16 +40,19 @@ MIGRATION_DRY_RUN=false                       # opt-in to commit. Default: dry-r
 SANITY_MEDIA_LIBRARY_ID=ml...                 # required when MIGRATION_DRY_RUN=false
 SANITY_ML_LINK_TOKEN=...                      # personal auth token for /assets/media-library-link
                                               # (required when SANITY_TOKEN is a project robot token —
-                                              #  the link API rejects non-global sessions)
+                                              #  the link API rejects non-global sessions).
+                                              # Generate via `sanity login` + `sanity debug --secrets`,
+                                              # or from sanity.io/manage → user → Personal access tokens.
+                                              # See docs/running-the-migration.md § 4c-bis.
 # SANITY_API_VERSION=2025-02-19               # pinned for aem-assets; ML endpoints require it
 
 # Optional
 # AEM_MAX_RESPONSE_MB=100                     # abort any single response larger than this
 ```
 
-## Roots file
+## Roots files
 
-`aem-content-roots` — one page per line:
+`aem-content-roots` — pages to migrate, one per line:
 
 ```
 @base /content/site/us/en
@@ -52,18 +61,28 @@ about-us
 /content/other-site/top           # absolute path also fine
 ```
 
+`aem-tag-roots` — AEM tag namespaces to migrate, one per line. Same format. Only namespaces (or subtrees) listed here are walked — there's no canonical "always skip" set in AEM, so sample-content namespaces like `wknd` are simply absent from this file.
+
+```
+@base /content/cq:tags
+promotion
+page-type
+/content/cq:tags/wknd
+```
+
 ## Run
 
 ```sh
 pnpm aem-extract                                         # fetches everything in roots file
+pnpm aem-tags                                            # walks /content/cq:tags/<each listed root>
 pnpm aem-transform --registry ./content-type-registry.json
 pnpm aem-assets                                          # dry run: downloads only
 MIGRATION_DRY_RUN=false pnpm aem-assets                  # uploads to Sanity, rewrites clean docs
 pnpm aem-import                                          # dry run
-MIGRATION_DRY_RUN=false pnpm aem-import                  # commit docs
+MIGRATION_DRY_RUN=false pnpm aem-import                  # commit docs (categories first, then pages)
 ```
 
-`--overwrite` on `aem-extract` re-fetches roots that already exist on disk. `--include <resourceTypes>` on `aem-transform` restricts the walk to a comma-separated allow-list. `aem-assets` processes one file at a time (sequential, low memory) and is resumable via `manifest.json`; flags:
+`--overwrite` on `aem-extract` re-fetches roots that already exist on disk. `--overwrite` on `aem-tags` re-emits category doc files (the manifest is always rewritten). `--include <resourceTypes>` on `aem-transform` restricts the walk to a comma-separated allow-list. `aem-assets` processes one file at a time (sequential, low memory) and is resumable via `manifest.json`; flags:
 
 - `--upload-only` — skip phase 1 (download from AEM); assumes local cache is populated.
 - `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup finds assets already in the Media Library and links them into the dataset. Useful for re-runs, for iterating on link/rewrite logic without re-hitting AEM, or when assets were pushed out-of-band. Mutually exclusive with `--upload-only`. See § *aem-assets — Media Library flow* below for the caveat about the `aemSource` aspect.
@@ -80,6 +99,7 @@ AEM's JCR is schemaless on dialog inputs — every authored value arrives in `.i
 - **`array-of-blocks`** (richtext) — converted to Portable Text via `@portabletext/block-tools` (parsed through `jsdom`). Decorators (`strong`, `em`, `underline`, `strike-through`, `code`), styles (`normal`, `h1`–`h4`, `blockquote`), lists (`bullet`, `number`), and `link` annotations are preserved. Keys are derived from a SHA1 of `{jcrPath}::{field}:{counter}` so re-runs produce byte-identical clean docs.
 - **`number`** — `Number(v)`; kept as-is on `NaN`.
 - **`boolean`** — `"true"` / `"false"` literal strings only; kept as-is otherwise so unrecognized values surface in Studio validation rather than being silently remapped.
+- **`array-of-reference`** (AEM tagfield) — string array of tag ids (`promotion:payout/recurring-device-credits`) becomes `[{_type:"reference", _key:..., _ref:"category-..."}]` by lookup in `output/cache/categories/manifest.json` (produced by `aem-tags`). Follows `cq:movedTo` aliases. Page-level `cq:tags` on `jcr:content` are lifted onto the page doc's `tags` field via the same resolver. Tag ids not in the manifest get dropped and surfaced in `transform-report.json → unresolvedTagRefs`.
 
 Coercion walks the registry tree recursively — nested `array-of-object` items (e.g. `variableColumn.columnContents[]` rows) get the same treatment as top-level fields via the `itemFields` entries. AEM stores multifield rows in two shapes: canonical ordered (`item0`/`item1`/…) and named-key (`colors: {weddingDresses: {...}, ...}`). Both are materialized into proper arrays — the ordered form by `deepCoerceAemMultifieldMapsToArrays` during `transformInline`, the named-key form by `coerceFieldTypes` when the registry declares the field as `array-of-object` but the value is a plain object. `Object.values` preserves authored order.
 
@@ -159,8 +179,8 @@ Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (de
 
 0. **Dedup against the Media Library + manifest staleness check** — GROQ on `aspects.aemSource.damPath`. A hit populates the manifest with both ids so phases 1+2 skip entirely for that asset. When the lookup misses but the manifest claims an `mediaLibraryAssetId`, phase 0 verifies the doc still exists in the ML by id; if it's been deleted (e.g. ML wipe), the stale linkage is cleared so phases 2-3 re-upload + re-link for real. Transport errors are treated conservatively — manifest state is preserved and the next healthy-network run re-verifies. Requires the `aemSource` aspect to be deployed once per ML. Skipped on dry-run by default; `--link-only` forces it to run (safe, read-only).
 1. **Download** AEM DAM binary → local cache in `output/assets/`.
-2. **Upload to Media Library** — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload`. Response `{asset: {_id}, assetInstance: {_id}}` captures the parent asset id and the versioned instance id (both needed for step 3). Uses `SANITY_TOKEN` — a project robot token works for this step.
-3. **Link to dataset** — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Response `{document: {_id, media: {_ref}, ...}}` — `document._id` is the dataset-local asset ref that goes into docs. **Requires a personal auth token** (`SANITY_ML_LINK_TOKEN`) because the endpoint rejects project robot tokens with `401 Invalid non-global session`.
+2. **Upload to Media Library** — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload`. Response `{asset: {_id}, assetInstance: {_id}}` captures the parent asset id and the versioned instance id (both needed for step 3). Uses `SANITY_TOKEN`. A project robot token historically worked here, but newer Media Library API versions reject project-scoped sessions with `401 SIO-401-ANF "Session not found"` — when that happens, swap in a **personal auth token** (see `docs/running-the-migration.md` § 4c-bis for how to mint one).
+3. **Link to dataset** — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Response `{document: {_id, media: {_ref}, ...}}` — `document._id` is the dataset-local asset ref that goes into docs. **Requires a personal auth token** (`SANITY_ML_LINK_TOKEN`) because the endpoint rejects project robot tokens with `401 Invalid non-global session`. See `docs/running-the-migration.md` § 4c-bis.
 4. **Rewrite clean docs** in place — every `/content/dam/...` string becomes `{_type:'image'|'file', asset:{_ref:'<linked-ref>'}}`. Pattern A (Studio-compatible), matches existing doc shape.
 
 ### `--link-only` mode

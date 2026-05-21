@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs";
  * unrelated components stay clean. The transform still drops colon-
  * bearing keys for every other component as before.
  *
- * Example (`examples/davids-bridal/aem-component-hints.json`):
+ * Example (`examples/<your-tenant>/aem-component-hints.json`):
  *
  * ```json
  * {

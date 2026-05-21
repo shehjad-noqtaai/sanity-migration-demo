@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import "dotenv/config";
 import { join, resolve } from "node:path";
-import { createLogger, resolveConfig } from "aem-to-sanity-core";
+import { createLogger } from "aem-to-sanity-core";
 import {
   rewriteBarrelFromDisk,
   scanSchemaTypeNames,
@@ -17,7 +17,9 @@ interface Args {
 }
 
 function parseArgs(argv: string[]): Args {
-  const envOutput = safeResolveOutputDir();
+  // pagebuilder-cli doesn't talk to AEM, so it shouldn't trigger the
+  // IMS exchange in `resolveConfig`. Read OUTPUT_DIR directly.
+  const envOutput = process.env.OUTPUT_DIR;
   const result: Args = {
     outputDir: envOutput ?? "./output",
     schemasDir: process.env.SCHEMAS_OUT_DIR,
@@ -67,14 +69,6 @@ function parseArgs(argv: string[]): Args {
     }
   }
   return result;
-}
-
-function safeResolveOutputDir(): string | undefined {
-  try {
-    return resolveConfig(process.env).outputDir;
-  } catch {
-    return undefined;
-  }
 }
 
 function printHelp(): void {

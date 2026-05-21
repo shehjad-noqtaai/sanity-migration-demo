@@ -1,4 +1,0 @@
-{
-  "aem-integration/components/box": ["cq:panelTitle"],
-  "aem-integration/components/content": ["cq:panelTitle"]
-}

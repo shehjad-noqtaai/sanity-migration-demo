@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import "dotenv/config";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
   AEM_AUTHORING_HINTS,
@@ -15,6 +15,7 @@ import {
 import { htmlToBlocks } from "@portabletext/block-tools";
 import { compileSchema, defineSchema, type Schema } from "@portabletext/schema";
 import { JSDOM } from "jsdom";
+import type { Manifest as CategoryManifest, ManifestEntry as CategoryManifestEntry } from "./tags.ts";
 
 interface AemNode {
   [key: string]: unknown;
@@ -69,6 +70,14 @@ interface PageDoc {
   title: string;
   slug: { _type: "slug"; current: string };
   pageBuilder: PageBuilderItem[];
+  /**
+   * AEM page-level `cq:tags` (on the `jcr:content` node) lifted into a
+   * Sanity reference array. Only present when at least one tag resolved
+   * through the categories manifest produced by `aem-tags` — fully empty
+   * `cq:tags` arrays drop entirely so the Studio doesn't show an empty
+   * field on every page.
+   */
+  tags?: Array<{ _type: "reference"; _key: string; _ref: string }>;
 }
 
 const JCR_METADATA = new Set<string>([
@@ -99,6 +108,23 @@ const JCR_METADATA = new Set<string>([
  *   otherwise surface in the Studio as "Unknown field found".
  */
 const AEM_DIALOG_RUNTIME_KEYS = new Set<string>(["textIsRich"]);
+
+/**
+ * AEM-authored property keys that bear a `:` and would normally fail
+ * `isValidSanityAttributeKey` (which forbids `:`). For each key listed here,
+ * `transformInline` camelCases the JCR property name so the value lands on
+ * the corresponding Sanity field — same rule the schema mapper applies to
+ * `node.name` (`./cq:tags` → `cqTags`). Today this is just `cq:tags`; add
+ * more if dialog widgets that store authored content under colon-bearing
+ * JCR properties surface in the migration report.
+ *
+ * Why not a blanket "camelCase every colon-bearing key" rule: AEM also
+ * writes replication-status bookkeeping (`cq:lastReplicated`,
+ * `cq:isDelivered`, `cq:lastReplicatedBy_publish`, etc.) onto pages that we
+ * already correctly drop. A blanket rule would start surfacing those as
+ * dialog fields. Allowlist keeps the behavior precise.
+ */
+const AEM_AUTHORED_COLON_KEYS = new Set<string>(["cq:tags"]);
 
 /**
  * AEM structural wrappers we always recurse through — the page root and the
@@ -241,13 +267,78 @@ function readExceptionResourceTypes(file: string): Set<string> {
   }
 }
 
+/**
+ * Derive a Sanity document `_id` from an AEM JCR path.
+ *
+ * Two operator knobs control the output:
+ *
+ *   - `MIGRATION_DOC_ID_PREFIX_STRIP` (env, optional) — a leading path
+ *     fragment to remove before generating the id. Typical value is the
+ *     `@base` from `aem-content-roots` (e.g. `/content/uxp/us/en`), so the
+ *     resulting id is page-relative (`customer-support-plans-...`) instead
+ *     of carrying the unchanging site/locale prefix on every doc. Multiple
+ *     prefixes can be passed comma-separated; the longest matching one wins.
+ *
+ *   - Path separator is `-` (hyphen). The previous implementation used `.`
+ *     for separators, but Sanity treats any `_id` containing `.` as a
+ *     **private** doc — readable only with an auth token. Hyphenated ids
+ *     are public-CDN-readable, which matters for read-only frontends that
+ *     don't ship a token. Studio reads always carry auth, so dotted ids
+ *     would also work there — but defaulting to hyphens means operators
+ *     don't have to debug the auth-only behavior later.
+ *
+ * Long paths (>80 chars after sanitization) fall back to
+ * `{first-60-chars}-{sha1-10}` so ids stay collision-free + within Sanity's
+ * 128-char id limit even for deep JCR trees.
+ *
+ * Idempotency note: changing `MIGRATION_DOC_ID_PREFIX_STRIP` between runs
+ * changes every doc's id. The previous docs aren't deleted — they get
+ * orphaned. Operators repointing the prefix on a live dataset should either
+ * start from a fresh dataset or run an `unpublishDocuments` pass on the
+ * previous id space.
+ */
 function pathToDocId(jcrPath: string): string {
-  const normalized = jcrPath.replace(/^\/+/, "");
-  const rawSlug = normalized.replace(/\//g, ".");
-  const safeSlug = rawSlug.replace(/[^A-Za-z0-9_.-]/g, "-");
-  if (safeSlug === rawSlug && safeSlug.length <= 80) return safeSlug;
+  const stripped = stripPrefix(jcrPath, getStripPrefixes());
+  const normalized = stripped.replace(/^\/+/, "");
+  const slug = normalized
+    .replace(/\//g, "-")
+    .replace(/[^A-Za-z0-9_-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (slug.length === 0) {
+    // Stripping removed every meaningful character. Hash the original path
+    // so the id is at least deterministic + collision-free.
+    return createHash("sha1").update(jcrPath).digest("hex").slice(0, 16);
+  }
+  if (slug.length <= 80) return slug;
   const hash = createHash("sha1").update(jcrPath).digest("hex").slice(0, 10);
-  return `${safeSlug.slice(0, 60).replace(/[.-]+$/, "")}.${hash}`;
+  return `${slug.slice(0, 60).replace(/-+$/, "")}-${hash}`;
+}
+
+/**
+ * Cached list of prefixes to strip, parsed from
+ * `MIGRATION_DOC_ID_PREFIX_STRIP`. Sorted longest-first so that overlapping
+ * configurations (e.g. `/content/uxp,/content`) match the most specific
+ * prefix.
+ */
+let cachedStripPrefixes: string[] | undefined;
+function getStripPrefixes(): string[] {
+  if (cachedStripPrefixes !== undefined) return cachedStripPrefixes;
+  const raw = process.env.MIGRATION_DOC_ID_PREFIX_STRIP ?? "";
+  cachedStripPrefixes = raw
+    .split(",")
+    .map((s) => s.trim().replace(/\/+$/, ""))
+    .filter((s) => s.length > 0 && s.startsWith("/"))
+    .sort((a, b) => b.length - a.length);
+  return cachedStripPrefixes;
+}
+
+function stripPrefix(jcrPath: string, prefixes: string[]): string {
+  for (const p of prefixes) {
+    if (jcrPath === p) return "";
+    if (jcrPath.startsWith(p + "/")) return jcrPath.slice(p.length);
+  }
+  return jcrPath;
 }
 
 function stableKey(jcrUuid: string | undefined, jcrPath: string): string {
@@ -256,20 +347,72 @@ function stableKey(jcrUuid: string | undefined, jcrPath: string): string {
 }
 
 /**
- * For a container node, the list of direct child keys that are themselves
- * full AEM components (have a `sling:resourceType`). These are the drop-zone
- * items that become pageBuilder blocks inside the container, NOT inline
- * fields. Ordered by JCR insertion order (JavaScript object-key iteration).
+ * For a container node, the list of direct child keys whose subtree contains
+ * AEM component instances (anything with `sling:resourceType`, at any depth).
+ * The caller strips these keys from `transformInline` so their data doesn't
+ * end up in the dialog-field area — `collectContainerItems` then re-walks
+ * the same subtree to emit the components as pageBuilder blocks under
+ * `childrenField`.
+ *
+ * Transitive (not just direct) because AEM's **responsive grid** wraps every
+ * authored drop-zone in intermediate `nt:unstructured` nodes that hold layout
+ * config and nothing else (`container_64909622` → `layout: ...` + a nested
+ * `container_64909` → ... → eventually `container` with `sling:resourceType`).
+ * Treating only the deep `container` as a child would leave the wrappers in
+ * place as undeclared fields on the parent; treating only the topmost wrapper
+ * as a child would lose the resourceType-bearing leaves. Stripping the whole
+ * subtree gets it right.
  */
 function collectContainerChildKeys(node: AemNode): string[] {
   const out: string[] = [];
   for (const [key, value] of Object.entries(node)) {
     if (!isChildNode(value)) continue;
-    const childType = asString((value as AemNode)["sling:resourceType"]);
-    if (!childType) continue;
-    out.push(key);
+    if (subtreeHasResourceType(value as AemNode)) out.push(key);
   }
   return out;
+}
+
+function subtreeHasResourceType(node: AemNode): boolean {
+  if (asString(node["sling:resourceType"])) return true;
+  for (const value of Object.values(node)) {
+    if (isChildNode(value) && subtreeHasResourceType(value as AemNode)) return true;
+  }
+  return false;
+}
+
+/**
+ * Walk a container's subtree and produce the flat ordered list of AEM
+ * component nodes to emit as pageBuilder items. Layout-only wrapper nodes
+ * (no `sling:resourceType`) are descended through transparently — their
+ * authored `layout` config has no Sanity counterpart and is dropped.
+ *
+ * Returns `{ jcrPath, node }` pairs so the caller's recursive
+ * `collectPageBuilder` can hand each item its correct JCR path (used for
+ * stable key generation + audit messages). Paths are joined with `/` from
+ * the supplied `basePath`.
+ */
+interface ContainerItem {
+  jcrPath: string;
+  node: AemNode;
+}
+
+function collectContainerItems(node: AemNode, basePath: string): ContainerItem[] {
+  const out: ContainerItem[] = [];
+  walkForContainerItems(node, basePath, out);
+  return out;
+}
+
+function walkForContainerItems(node: AemNode, currentPath: string, out: ContainerItem[]): void {
+  for (const [key, value] of Object.entries(node)) {
+    if (!isChildNode(value)) continue;
+    const childNode = value as AemNode;
+    const childPath = `${currentPath}/${key}`;
+    if (asString(childNode["sling:resourceType"])) {
+      out.push({ jcrPath: childPath, node: childNode });
+    } else {
+      walkForContainerItems(childNode, childPath, out);
+    }
+  }
 }
 
 /**
@@ -346,6 +489,17 @@ interface TransformContext {
    * hint behavior — colon-bearing keys still drop as before.
    */
   authoringHints: AuthoringHintConfig;
+  /**
+   * AEM tag id → Sanity category info. Populated from
+   * `output/cache/categories/manifest.json` produced by `aem-tags`. Used by
+   * `coerceFieldTypes` to rewrite authored tag id strings (e.g.
+   * `promotion:payout/recurring-device-credits`) into Sanity reference
+   * objects pointing at the matching `category` doc. Empty when the
+   * operator hasn't run `aem-tags` yet — content with `cq:tags` will then
+   * surface as unresolved findings in the transform report, which is the
+   * correct signal.
+   */
+  categoryManifest: CategoryManifest;
 }
 
 /**
@@ -501,6 +655,7 @@ function coerceFieldTypes(
   inline: Record<string, unknown>,
   fieldTypes: Map<string, FieldTypeNode>,
   jcrPath: string,
+  ctx: TransformContext,
 ): void {
   if (fieldTypes.size === 0) return;
   for (const [name, node] of fieldTypes) {
@@ -521,6 +676,22 @@ function coerceFieldTypes(
       if (typeof v !== "string") continue;
       if (v === "true") inline[name] = true;
       else if (v === "false") inline[name] = false;
+      continue;
+    }
+    if (node.type === "array-of-reference") {
+      // AEM tagfield: authored as an array of tag id strings
+      // (`namespace:parent/child` or `parent/child` for default namespace).
+      // Resolve each through the category manifest produced by `aem-tags`.
+      // A missing entry means either the operator hasn't included the tag's
+      // namespace in `aem-tag-roots` or AEM has stale references to a
+      // deleted tag — drop the reference and surface in the audit.
+      const refs = resolveTagReferences(
+        v,
+        ctx.categoryManifest,
+        `${jcrPath}::${name}`,
+        ctx.audit,
+      );
+      if (refs !== null) inline[name] = refs;
       continue;
     }
     if (node.type === "array-of-object" && node.itemFields) {
@@ -554,11 +725,79 @@ function coerceFieldTypes(
             item as Record<string, unknown>,
             node.itemFields,
             `${jcrPath}::${name}[${i}]`,
+            ctx,
           );
         }
       }
     }
   }
+}
+
+/**
+ * Resolve an AEM `cq:tags` value (string array of tag ids) into a Sanity
+ * array of `_type:"reference"` objects pointing at `category` docs. Returns:
+ *
+ *   - The resolved array on success (possibly partial — entries that didn't
+ *     resolve are dropped and audited individually).
+ *   - `[]` when the input was an empty array.
+ *   - `null` when the input wasn't an array of strings at all (keep the
+ *     original value so Studio validation surfaces the shape mismatch).
+ *
+ * Alias chains (`cq:movedTo`) are followed transitively with a cycle guard
+ * — in practice AEM doesn't create alias loops, but a misbehaving manifest
+ * shouldn't be able to hang transform.
+ */
+function resolveTagReferences(
+  value: unknown,
+  manifest: CategoryManifest,
+  refPath: string,
+  audit: Audit,
+): Array<{ _type: "reference"; _key: string; _ref: string }> | null {
+  if (!Array.isArray(value)) {
+    // Single-string variants of `cq:tags` are rare but legal in JCR (a
+    // mv-string property with one value). Coerce to a single-item array
+    // so it round-trips into the array reference shape.
+    if (typeof value === "string") {
+      return resolveTagReferences([value], manifest, refPath, audit);
+    }
+    return null;
+  }
+  const out: Array<{ _type: "reference"; _key: string; _ref: string }> = [];
+  for (const raw of value) {
+    if (typeof raw !== "string" || raw.length === 0) continue;
+    const resolved = followTagAlias(raw, manifest);
+    if (!resolved) {
+      audit.unresolvedTagRef(raw, refPath);
+      continue;
+    }
+    out.push({
+      _type: "reference",
+      _key: createHash("sha1").update(`${refPath}::${raw}`).digest("hex").slice(0, 12),
+      _ref: resolved.sanityCategoryId,
+    });
+  }
+  return out;
+}
+
+/**
+ * Walk `cq:movedTo` aliases until we land on a non-tombstone entry. Returns
+ * `undefined` when the chain ends at an entry the operator didn't migrate
+ * (or breaks because a moved-to target isn't in the manifest either).
+ */
+function followTagAlias(
+  tagId: string,
+  manifest: CategoryManifest,
+): CategoryManifestEntry | undefined {
+  const seen = new Set<string>();
+  let cursor: string | undefined = tagId;
+  while (cursor && !seen.has(cursor)) {
+    seen.add(cursor);
+    const entry: CategoryManifestEntry | undefined = manifest[cursor];
+    if (!entry) return undefined;
+    if (!entry.movedTo) return entry;
+    cursor = entry.movedTo;
+  }
+  return undefined;
 }
 
 function deepCoerceAemMultifieldMapsToArrays(val: unknown): unknown {
@@ -624,6 +863,17 @@ function transformInline(node: AemNode, jcrPath: string, ctx: TransformContext):
         const hintKey = AEM_AUTHORING_HINTS.get(key);
         if (hintKey && out[hintKey] === undefined) {
           out[hintKey] = value;
+        }
+        continue;
+      }
+      // Allowlisted AEM-authored colon-bearing properties (today: `cq:tags`)
+      // get camelCased to match the Sanity field name the schema mapper
+      // produced from the dialog's `name="./cq:tags"`. Without this they'd
+      // fall through to `isValidSanityAttributeKey` and silently drop.
+      if (AEM_AUTHORED_COLON_KEYS.has(key)) {
+        const renamed = toCamelCase(key);
+        if (renamed && out[renamed] === undefined) {
+          out[renamed] = value;
         }
         continue;
       }
@@ -701,7 +951,7 @@ function collectPageBuilder(
 
       const inline = transformInline(nodeForInline, frame.jcrPath, inlineCtx);
       splitAemFileUploadDamPaths(inline, entry.fieldNames);
-      coerceFieldTypes(inline, entry.fieldTypes, frame.jcrPath);
+      coerceFieldTypes(inline, entry.fieldTypes, frame.jcrPath, ctx);
 
       for (const slotKey of slotKeys) {
         const child = frame.node[slotKey] as AemNode;
@@ -730,17 +980,31 @@ function collectPageBuilder(
       }
 
       if (containerEntry && containerChildKeys) {
+        // Emit one nested pageBuilder block per AEM component found in the
+        // container's subtree — descending through `nt:unstructured` layout
+        // wrappers (the responsive-grid pattern) so the actual content
+        // surfaces at the top level of `childrenField` rather than being
+        // hidden inside an undeclared wrapper hierarchy.
         const items: PageBuilderItem[] = [];
-        for (const key of containerChildKeys) {
-          const child = frame.node[key] as AemNode;
+        for (const containerItem of collectContainerItems(frame.node, frame.jcrPath)) {
           const childItems = collectPageBuilder(
-            child,
-            `${frame.jcrPath}/${key}`,
+            containerItem.node,
+            containerItem.jcrPath,
             ctx,
             filter,
             exceptions,
           );
           items.push(...childItems);
+        }
+        if (containerEntry.flatten) {
+          // Layout-only container — drop the wrapper and emit its items
+          // directly in the parent's pageBuilder array. Without this, deeply
+          // nested AEM responsive-grid layouts (container → container →
+          // container → …) produce block-in-block trees that hit Sanity's
+          // 20-level attribute-depth limit at import time.
+          out.push(...items);
+          ctx.audit.tick();
+          continue;
         }
         inline[containerEntry.childrenField] = items;
       }
@@ -779,6 +1043,14 @@ interface Audit {
   unknownType(resourceType: string, path: string): void;
   unknownProps(component: string, path: string, props: Array<{ prop: string; value: unknown }>): void;
   bail(path: string, reason: "maxDepth" | "cycle", depth: number): void;
+  /**
+   * An authored `cq:tags` value referenced an AEM tag id that isn't in the
+   * category manifest. Either the operator hasn't added the relevant
+   * namespace to `aem-tag-roots`, or the AEM tag was deleted after content
+   * was authored. The reference is dropped and surfaced here so the
+   * operator can decide which case applies.
+   */
+  unresolvedTagRef(tagId: string, path: string): void;
   report(): unknown;
 }
 
@@ -788,6 +1060,7 @@ function createAudit(maxExamples = 3): Audit {
   const unknownTypes = new Map<string, { hits: number; examples: string[] }>();
   const unknownProps = new Map<string, Map<string, Array<{ path: string; value: unknown }>>>();
   const bails: Array<{ path: string; reason: string; depth: number }> = [];
+  const unresolvedTags = new Map<string, string[]>();
 
   function bump<T>(list: T[], item: T): void {
     if (list.length < maxExamples) list.push(item);
@@ -825,6 +1098,15 @@ function createAudit(maxExamples = 3): Audit {
       totalFindings++;
       bump(bails, { path, reason, depth });
     },
+    unresolvedTagRef(tagId, path) {
+      totalFindings++;
+      let examples = unresolvedTags.get(tagId);
+      if (!examples) {
+        examples = [];
+        unresolvedTags.set(tagId, examples);
+      }
+      bump(examples, path);
+    },
     report() {
       return {
         summary: {
@@ -833,6 +1115,7 @@ function createAudit(maxExamples = 3): Audit {
           unknownTypes: unknownTypes.size,
           componentsWithUnknownProps: unknownProps.size,
           transformBails: bails.length,
+          unresolvedTagRefs: unresolvedTags.size,
         },
         unknownResourceTypes: [...unknownTypes.entries()].map(([resourceType, { hits, examples }]) => ({
           resourceType,
@@ -845,6 +1128,10 @@ function createAudit(maxExamples = 3): Audit {
             [...props.entries()].map(([prop, examples]) => ({ prop, examples })),
           ]),
         ),
+        unresolvedTagRefs: [...unresolvedTags.entries()].map(([tagId, examples]) => ({
+          tagId,
+          examples,
+        })),
         transformBails: bails,
       };
     },
@@ -892,6 +1179,32 @@ function derivePageTitle(tree: AemNode, slug: string | undefined, jcrPath: strin
   return jcrPath;
 }
 
+/**
+ * Page-level `cq:tags` live on the `jcr:content` (cq:PageContent) node, not
+ * on any content component. Lift them onto the page doc the same way we
+ * lift the page title — resolved through the categories manifest produced
+ * by `aem-tags`. Returns `undefined` when there are no tags or none
+ * resolved, so the field can be omitted entirely on tag-less pages.
+ */
+function derivePageTags(
+  tree: AemNode,
+  ctx: TransformContext,
+  jcrPath: string,
+): Array<{ _type: "reference"; _key: string; _ref: string }> | undefined {
+  const content = isChildNode(tree["jcr:content"]) ? (tree["jcr:content"] as AemNode) : undefined;
+  if (!content) return undefined;
+  const raw = content["cq:tags"];
+  if (raw === undefined || raw === null) return undefined;
+  const refs = resolveTagReferences(
+    raw,
+    ctx.categoryManifest,
+    `${jcrPath}/jcr:content::cq:tags`,
+    ctx.audit,
+  );
+  if (!refs || refs.length === 0) return undefined;
+  return refs;
+}
+
 function main(): void {
   const timer = startTimer();
   const c = createColors({ stream: process.stderr });
@@ -918,6 +1231,34 @@ function main(): void {
   const rawDir = join(outputDir, "cache", "raw");
   const cleanDir = join(outputDir, "cache", "clean");
   mkdirSync(cleanDir, { recursive: true });
+
+  // Categories manifest is optional — when missing, tagfield values surface
+  // as unresolved-tag-ref findings in the audit. The full migration order
+  // is: aem-extract → aem-tags → aem-transform, but `transform` should still
+  // run usefully (just without tag resolution) when an operator hasn't yet
+  // added a tag-roots file. Loading the manifest here means transform stays
+  // a single non-AEM-touching pass.
+  const categoriesManifestFile = join(outputDir, "cache", "categories", "manifest.json");
+  let categoryManifest: CategoryManifest = {};
+  if (existsSync(categoriesManifestFile)) {
+    try {
+      categoryManifest = JSON.parse(
+        readFileSync(categoriesManifestFile, "utf8"),
+      ) as CategoryManifest;
+    } catch (err) {
+      console.error(
+        `[transform] categories manifest at ${categoriesManifestFile} is unparseable; tag references will be dropped. ${(err as Error).message}`,
+      );
+    }
+  }
+  const categoryCount = Object.values(categoryManifest).filter(
+    (e) => !e.movedTo,
+  ).length;
+  if (categoryCount > 0) {
+    console.error(
+      `[transform] resolving cq:tags against ${categoryCount} categor${categoryCount === 1 ? "y" : "ies"} from ${categoriesManifestFile}`,
+    );
+  }
 
   const rawFiles = readdirSync(rawDir).filter((f) => f.endsWith(".json")).sort();
   if (rawFiles.length === 0) {
@@ -964,6 +1305,7 @@ function main(): void {
       registry,
       containers,
       authoringHints,
+      categoryManifest,
       audit,
     };
 
@@ -982,6 +1324,8 @@ function main(): void {
       slug: { _type: "slug", current: currentSlug },
       pageBuilder,
     };
+    const pageTags = derivePageTags(tree, ctx, jcrPath);
+    if (pageTags) pageDoc.tags = pageTags;
 
     const outFile = join(cleanDir, file);
     writeFileSync(

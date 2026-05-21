@@ -2,7 +2,7 @@ import { fetchInfinityJson, resolveConfig, type AmbiguousResolution } from "./sr
 import { detectTruncations } from "./src/aem/infinity.ts";
 
 async function main() {
-  const config = resolveConfig(process.env);
+  const config = await resolveConfig(process.env);
   console.log("baseUrl:", config.baseUrl, "auth.kind:", config.auth.kind);
 
   // Case 1: /content/dbi.infinity.json → 300 on real AEM

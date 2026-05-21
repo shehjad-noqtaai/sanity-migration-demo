@@ -63,7 +63,7 @@ Runs `@sanity/schema` in-process to produce `output/sanity.types.ts` — no netw
 Drift findings (unknown resource types, unknown props per mapped component, transform bails) are captured in `output/transform-report.json` with first-N example paths per finding — feed these back into `mapping-table.ts` when extending the mapping.
 
 **Studio app** (`apps/studio`)
-A real Sanity Studio. `apps/studio/schemas/index.ts` re-exports `allSchemaTypes` from `examples/davids-bridal/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import. It's a consumer test — if emitted schemas break `sanity schema validate`, this is where it surfaces.
+A real Sanity Studio. `apps/studio/schemas/index.ts` re-exports `allSchemaTypes` from `examples/<your-tenant>/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import. It's a consumer test — if emitted schemas break `sanity schema validate`, this is where it surfaces.
 
 **Storefront preview** (`apps/web`)
 A Vite + React 19 app that reads the migrated home doc and renders its pageBuilder through a set of block primitives styled per `docs/DESIGN.md`. Mirrors the `hydrogen-sanity` data pattern — when this graduates into a full Shopify + Hydrogen storefront, the renderers + Portable Text setup carry over unchanged. Run with `pnpm -F web dev`.
@@ -91,7 +91,8 @@ aem-migration/
 ├── apps/
 │   └── studio/                   example Sanity Studio consuming emitted schemas
 ├── examples/
-│   └── davids-bridal/            reference consumer — env, path lists, pnpm scripts
+│   ├── tenant/                   committed template — copy to start a new migration
+│   └── <your-tenant>/            operator working copy (gitignored): env, path lists, pnpm scripts, output/
 ├── docs/
 └── turbo.json / pnpm-workspace.yaml / tsconfig.base.json
 ```
@@ -110,23 +111,23 @@ pnpm install
 pnpm build
 
 # 1. Fill in env (see Configuration section below)
-cp examples/davids-bridal/.env.example examples/davids-bridal/.env
+cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
 cp apps/studio/.env.example            apps/studio/.env
-$EDITOR examples/davids-bridal/.env
+$EDITOR examples/<your-tenant>/.env
 $EDITOR apps/studio/.env
 
 # 2. Stage 1 — emit Sanity schemas from AEM dialogs
-pnpm --filter example-davids-bridal migrate:schema
+pnpm --filter example-<your-tenant> migrate:schema
 
 # 3. Stage 2 — generate TypeScript types from those schemas
-pnpm --filter example-davids-bridal typegen
+pnpm --filter example-<your-tenant> typegen
 
 # 4. Stage 3 — content migration (dry-run by default)
-pnpm --filter example-davids-bridal migrate:content
+pnpm --filter example-<your-tenant> migrate:content
 #    (chains extract → transform → assets → import)
 
 # 5. Real write to Sanity — opt in explicitly via env var
-MIGRATION_DRY_RUN=false pnpm --filter example-davids-bridal migrate:content
+MIGRATION_DRY_RUN=false pnpm --filter example-<your-tenant> migrate:content
 #    (or export MIGRATION_DRY_RUN=false once, for the whole shell)
 
 # 6. Visually verify in a Sanity Studio that loads the emitted schemas
@@ -134,20 +135,20 @@ pnpm --filter studio dev                     # http://localhost:3333
 pnpm --filter studio exec sanity schema validate
 
 # — Or orchestrate the whole pipeline with Turbo —
-pnpm turbo run migrate:schema typegen migrate:content --filter=example-davids-bridal
+pnpm turbo run migrate:schema typegen migrate:content --filter=example-<your-tenant>
 ```
 
 ### Incremental tasks
 
 ```bash
 # Re-register hand-authored block types without re-running migrate:schema
-pnpm --filter example-davids-bridal pagebuilder:refresh
+pnpm --filter example-<your-tenant> pagebuilder:refresh
 
 # Run a single content stage on its own
-pnpm --filter example-davids-bridal extract
-pnpm --filter example-davids-bridal transform
-pnpm --filter example-davids-bridal assets
-pnpm --filter example-davids-bridal import
+pnpm --filter example-<your-tenant> extract
+pnpm --filter example-<your-tenant> transform
+pnpm --filter example-<your-tenant> assets
+pnpm --filter example-<your-tenant> import
 ```
 
 ---
@@ -156,15 +157,21 @@ pnpm --filter example-davids-bridal import
 
 Two `.env` files. They can share values; each tool loads `.env` from its own cwd.
 
-### Pipeline — `examples/davids-bridal/.env`
+### Pipeline — `examples/<your-tenant>/.env`
 
 ```bash
 # AEM source
 AEM_ENV=author                     # or `publish`
 AEM_AUTHOR_URL=https://author.example.com
+
+# Pick one (see running-the-migration.md § 1a-bis):
+# (a) AEMaaCS Service Credentials — exchanged via Adobe IMS at startup
+# AEM_SERVICE_CREDENTIALS_FILE=/path/to/service-credentials.json
+# (b) AEMaaCS developer token (24h) or any pre-minted bearer
+# AEM_TOKEN=...
+# (c) on-prem / AMS basic auth (rejected by AEMaaCS)
 AEM_AUTHOR_USERNAME=migration-user
 AEM_AUTHOR_PASSWORD=***
-# AEM_TOKEN=...                    # optional; Bearer, overrides basic auth
 
 # Optional plumbing
 AEM_COMPONENT_PATHS_FILE=./aem-component-paths
@@ -189,7 +196,7 @@ SANITY_STUDIO_PROJECT_ID=your-project-id
 SANITY_STUDIO_DATASET=production
 ```
 
-### Input files (under `examples/davids-bridal/`)
+### Input files (under `examples/<your-tenant>/`)
 
 | File | Purpose |
 | --- | --- |
@@ -200,7 +207,7 @@ SANITY_STUDIO_DATASET=production
 
 ### Auth precedence
 
-`AEM_TOKEN` > (`AEM_{ENV}_USERNAME` + `AEM_{ENV}_PASSWORD`). If neither is set for the active `AEM_ENV`, the CLI fails fast with a clear message.
+`AEM_SERVICE_CREDENTIALS_FILE` / `AEM_SERVICE_CREDENTIALS` (AEMaaCS via IMS) > `AEM_TOKEN` (developer / pre-minted bearer) > (`AEM_{ENV}_USERNAME` + `AEM_{ENV}_PASSWORD`) (on-prem / AMS basic auth). If none are set for the active `AEM_ENV`, the CLI fails fast and lists all three options.
 
 ### What you almost certainly don't need to touch
 

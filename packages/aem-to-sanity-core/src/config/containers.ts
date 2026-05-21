@@ -29,6 +29,21 @@ import { readFileSync } from "node:fs";
 export interface ContainerConfigEntry {
   /** Field name on the Sanity object that carries the child blocks. Typically `"items"`. */
   childrenField: string;
+  /**
+   * When true, the container's own block is NOT emitted — its drop-zone
+   * children are hoisted directly into the parent's pageBuilder array.
+   *
+   * Use this for pure layout containers (AEM responsive grid, `proxy/content/container`)
+   * where the wrapping component carries no authored content of its own. Without
+   * `flatten`, deeply nested layouts produce nested-block-in-block trees that
+   * can hit Sanity's 20-level attribute-depth limit during import. With it,
+   * the layout wrapper is dropped at transform time and the actual content
+   * blocks sit at a manageable depth.
+   *
+   * Default: false. Containers with dialog fields you want preserved
+   * (accordions, expanders) should stay non-flatten.
+   */
+  flatten?: boolean;
 }
 
 export type ContainerConfig = Map<string, ContainerConfigEntry>;
@@ -84,7 +99,8 @@ export function loadContainerConfig(
         `container config: entry for "${resourceType}" needs a non-empty string childrenField`,
       );
     }
-    out.set(resourceType, { childrenField });
+    const flatten = v.flatten === true ? true : undefined;
+    out.set(resourceType, flatten ? { childrenField, flatten } : { childrenField });
   }
   return out;
 }

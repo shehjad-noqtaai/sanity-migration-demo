@@ -173,7 +173,7 @@ import {
 } from "aem-to-sanity-core";
 import { migrateSchemas } from "aem-to-sanity-schema";
 
-const config = resolveConfig(process.env);
+const config = await resolveConfig(process.env);
 const logger = createLogger({ level: "info" });
 
 const fetcher = (jcrPath: string): Promise<DialogNode> =>
@@ -249,7 +249,7 @@ Rebuild, rerun — unmapped fields land in `migration-report.json` under `unmapp
 Skip unless you actually want the content side:
 
 - `packages/aem-to-sanity-content/` — content extract/transform/import pipeline
-- `examples/davids-bridal/aem-content-roots*` — pages-to-fetch config
+- `examples/<your-tenant>/aem-content-roots*` — pages-to-fetch config
 - All `aem-extract`/`aem-transform`/`aem-assets`/`aem-import` CLIs and their env vars (`AEM_CONTENT_ROOTS_FILE`, `SANITY_*`, `MIGRATION_DRY_RUN`)
 
 ## Smoke test in the new project

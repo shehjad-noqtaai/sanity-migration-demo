@@ -25,6 +25,7 @@ export type SanityKind =
   | "hidden"
   | "pathfield"
   | "pathbrowser"
+  | "tags"
   | "include";
 
 export interface MappingEntry {
@@ -89,6 +90,16 @@ export const MAPPING: Record<string, MappingEntry> = {
     kind: "file",
     description:
       "Image/video upload: read-only `{fileReferenceParameter}AemPath` (DAM path) + `{fileReference}` image/file asset; required only on asset when AEM required",
+  },
+  "cq/gui/components/coral/common/form/tagfield": {
+    kind: "tags",
+    description:
+      "AEM tag picker → Sanity array of references to `category` documents (parent-child taxonomy). Categories are populated by the `aem-tags` CLI from `/content/cq:tags`.",
+  },
+  "granite/ui/components/coral/foundation/form/tagfield": {
+    kind: "tags",
+    description:
+      "Granite tagfield alias → same `array of reference-to-category` shape as the cq/gui tagfield.",
   },
   "granite/ui/components/coral/foundation/form/multifield": {
     kind: "multifield",

@@ -16,18 +16,40 @@ apps/storefront/
 .env.local
 .env.*.local
 
-# Project-specific input (contains customer component paths + content roots)
-# Operator-authored lists stay untracked; the example's canonical lists are checked in.
-aem-component-paths
-aem-content-roots
-!examples/davids-bridal/aem-component-paths
-!examples/davids-bridal/aem-content-roots
+# Per-tenant example folders are operator working copies that hold real
+# customer credentials, component lists, and pipeline output. Only the
+# `examples/tenant/` template is tracked — operators copy it to
+# `examples/<their-tenant>/` and run the migration from there. The unignore
+# list below uses literal paths so `git check-ignore` is predictable; if you
+# add a new file to the template, also add it here.
+examples/*
+!examples/tenant
+!examples/tenant/.env.example
+!examples/tenant/aem-component-containers.json
+!examples/tenant/aem-component-exceptions
+!examples/tenant/aem-component-hints.json
+!examples/tenant/aem-component-paths
+!examples/tenant/aem-content-roots
+!examples/tenant/aem-content-roots.example
+!examples/tenant/aem-tag-roots
+!examples/tenant/package.json
+!examples/tenant/README.md
 
-# The davids-bridal example's `output/` holds only regenerable pipeline
-# state (raw AEM trees, clean transformed docs, asset cache, captured
-# fixtures, reports, content-type-registry). Everything under it is ignored.
-# Generated Sanity schemas live under `apps/studio/schemas/generated/` now —
-# committed so apps/studio builds + validates on bare clone.
+# Tenant-emitted Sanity schemas are gitignored by default. Each operator
+# regenerates them from their own AEM via `pnpm migrate:schema`, so
+# checking them in causes merge conflicts between tenants and surfaces one
+# customer's component vocabulary in another's repo. The `index.ts` stub
+# stays tracked so apps/studio boots + typechecks on a bare clone before
+# any migration has run; `migrate:schema` overwrites it locally with the
+# real barrel.
+#
+# Operators who DO want their generated schemas source-controlled (e.g. a
+# single-tenant repo where the schema doubles as documentation) should
+# comment out the next line AND `git add` the regenerated files after
+# `migrate:schema`. The `!index.ts` exception below stays — it's harmless
+# either way and keeps the bare-clone bootstrap working.
+apps/studio/schemas/generated/
+!apps/studio/schemas/generated/index.ts
 
 # Logs
 *.log

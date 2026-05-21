@@ -14,7 +14,7 @@ const dataset = (import.meta.env.VITE_SANITY_DATASET as string | undefined) ?? "
 
 if (!projectId) {
   throw new Error(
-    "VITE_SANITY_PROJECT_ID is not set. Populate apps/web/.env (or examples/davids-bridal/.env — the dev server falls back to it).",
+    "VITE_SANITY_PROJECT_ID is not set. Populate apps/web/.env (or examples/<your-tenant>/.env — the dev server picks up the first non-template tenant under examples/ that has a .env).",
   );
 }
 

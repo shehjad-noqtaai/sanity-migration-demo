@@ -1,0 +1,14 @@
+# JCR paths of the AEM components to migrate. One per line; `#` for comments.
+# `aem-to-sanity-schema` reads each `{path}/_cq_dialog.infinity.json` and emits
+# a Sanity schema type. Add paths in waves as you migrate; unmapped resource
+# types surface in the schema audit (`output/cache/schema-audit.json`) so you
+# know what's still pending.
+#
+# Discover paths by browsing CRXDE at `<AEM_AUTHOR_URL>/crx/de/` under
+# `/apps/<your-namespace>/components/`, or hit
+# `<AEM_AUTHOR_URL>/apps/<your-namespace>/components.1.json` for a tree view.
+#
+# Example shape (replace with your own):
+# /apps/acme/components/content/hero-banner
+# /apps/acme/components/content/promo
+# /apps/acme/components/content/feature-list

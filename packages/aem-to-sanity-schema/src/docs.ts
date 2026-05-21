@@ -25,6 +25,23 @@ ${rows}
 - **Missing \`name\`** → field is skipped and recorded.
 - **Hidden field** → skipped (not emitted, not a failure).
 
+## Dialog inheritance via \`sling:resourceSuperType\`
+
+\`migrate:schema\` resolves each component's dialog the same way AEM does at request time — by walking the \`sling:resourceSuperType\` chain when the component itself has no \`cq:dialog\`. This makes proxy components (the AEMaaCS norm where \`/apps/<site>/components/proxy/foo\` extends \`<site>/components/foo/v1/foo\` or a \`/libs\` ancestor) migrate without operators having to hand-flatten the inheritance.
+
+Resolution rules:
+
+1. Try the component's own \`cq:dialog\` (either embedded in the component node or at \`{path}/_cq_dialog.infinity.json\`).
+2. On 404, read \`sling:resourceSuperType\` off the component. Absent → record a \`failure\` for the component (genuinely dialogless).
+3. Resolve the supertype:
+   - **Absolute** (\`/apps/...\`, \`/libs/...\`) — used as-is.
+   - **Relative** (\`<namespace>/components/...\`) — AEM's lookup order is \`/apps/<rt>\` first, then \`/libs/<rt>\`.
+4. Recurse with the resolved path. Cycle guard + 10-hop cap prevent runaway walks.
+
+The resolved chain is recorded on each successful component's \`supertypeChain\` in \`migration-report.json\` (omitted for direct hits). The registry key (the AEM resource type used at content-ingest time) remains the **original proxy path's resource type** — authored content with \`sling:resourceType: <proxy>\` keeps matching its emitted Sanity type even though the dialog fields came from an ancestor. Two proxies sharing one supertype produce two distinct Sanity types with identical fields.
+
+A standalone probe (\`scripts/aem-probe.ts\`) uses the same resolver, useful for inspecting a single component's resolution before kicking off a full schema run.
+
 ## Composite multifields (dialog + authored JCR)
 
 When a dialog node has \`sling:resourceType\`: \`granite/ui/components/coral/foundation/form/multifield\` and \`composite\` is \`true\`, AEM stores authored values under a **persisted property** named by the nested **\`field\`** child (usually a fieldset), **not** by the Granite sibling key under \`items\`:
@@ -64,7 +81,9 @@ AEM marks these with \`cq:isContainer=true\` in component definitions, but that 
 \`\`\`
 
 - **Schema side:** \`migrate:schema\` appends \`defineField({ name: childrenField, title: "Items", type: "pageBuilder" })\` to each listed component so the palette inside the container matches the top-level page builder. Name collisions with a dialog-declared field skip the append (dialog field wins).
-- **Content side:** \`aem-transform\` descends into the container node's direct child keys that themselves carry a \`sling:resourceType\`, recursively emits each as a pageBuilder block (full \`_type\` / \`_key\` / coercion pipeline), and stores the array under \`childrenField\`. Children without \`sling:resourceType\` stay inline on the container so multifield handling keeps working.
+- **Content side:** \`aem-transform\` walks the container's subtree — descending through \`nt:unstructured\` layout-only wrappers (AEM's responsive-grid pattern: \`container_64909622 → layout: ... → nested container_64909 → ...\`) — and emits each resource-type-bearing descendant as a pageBuilder block (full \`_type\` / \`_key\` / coercion pipeline) under \`childrenField\`. Children without \`sling:resourceType\` stay inline on the container so multifield handling keeps working.
+
+**\`flatten: true\`** (optional, default \`false\`) tells the transform to drop the container's own wrapper block and hoist its items into the **parent's** pageBuilder array. Designed for AEM responsive-grid containers (\`proxy/content/container\`) and similar pure-layout components: their wrapping block carries no authored content, and deep nesting (container-in-container-in-container) trips Sanity's hard 20-level attribute-depth limit at import time. With \`flatten\`, every responsive-grid layer collapses and content surfaces at a manageable depth. Use the default (\`false\`) for containers with meaningful dialog fields you want preserved (accordions, expanders).
 
 Containers nest without special-casing — expander → box → content → Portable Text roundtrips through the same recursive call. Missing file → container behavior stays off. Malformed JSON / invalid entries are a hard error so a typo doesn't silently drop children.
 
@@ -95,6 +114,7 @@ AEM stores numberfield values as strings (\`"10"\`) and checkbox values as liter
 
 - \`number\` → \`Number(v)\`; kept as-is on \`NaN\`.
 - \`boolean\` → \`true\` when value is the literal string \`"true"\`, \`false\` when \`"false"\`; kept as-is otherwise. Unrecognized literals surface as Studio validation errors rather than being silently remapped (e.g. \`"yes"\`, \`"1"\`, \`""\` are not assumed).
+- \`array-of-reference\` → AEM tagfield values arrive as string arrays of canonical tag ids (e.g. \`["promotion:payout/recurring-device-credits", "promotion:status/in-market"]\`). Resolved through the categories manifest produced by \`aem-tags\` into \`[{_type:"reference", _key:..., _ref:"category-..."}]\`. Follows \`cq:movedTo\` aliases when AEM has redirected the source tag. Page-level \`cq:tags\` on the \`jcr:content\` node are lifted onto the page doc's \`tags\` field via the same resolver. Authored tag ids not present in the manifest get dropped (no opaque string left dangling in a reference array) and surfaced in \`transform-report.json → unresolvedTagRefs\` so the operator can either include the missing namespace in \`aem-tag-roots\` or accept that AEM had a stale reference.
 
 ### Legacy registries
 
@@ -143,6 +163,29 @@ The migrator handles this in two layers — a global rename vocabulary and a per
 1. Add the AEM-key → Sanity-field row to \`AEM_AUTHORING_HINTS\`.
 2. Add the AEM key to the relevant component's array in \`aem-component-hints.json\`.
 3. Re-run \`pnpm migrate:schema\` and \`pnpm transform\`. The field surfaces in the registry and clean docs in the same step; nothing else needs editing.
+
+## AEM tagfield (\`cq/gui/components/coral/common/form/tagfield\`)
+
+AEM tagfields multiselect from the canonical tag tree at \`/content/cq:tags/<namespace>/...\`. The migration maps them to **arrays of references to a \`category\` document type** that implements Sanity's [parent-child taxonomy pattern](https://www.sanity.io/docs/developer-guides/parent-child-taxonomy).
+
+**Schema** — \`mapping-table.ts\` maps both \`cq/gui/components/coral/common/form/tagfield\` and the Granite alias \`granite/ui/components/coral/foundation/form/tagfield\` to the \`tags\` kind. The mapper emits \`array of reference-to-category\` (always multiselect — AEM tagfield has no single-value mode). The dialog's \`rootPath\` (the namespace it narrows to) is not yet enforced on the Sanity side; reference filtering by ancestor would require walking the parent chain at query time and is left to the consumer.
+
+**\`category\` doc type** — Hand-authored at \`apps/studio/schemas/category.ts\`. Fields: \`title\`, \`slug\`, \`parent\` (\`reference\` to \`category\`, empty on namespace docs), \`tagId\` (read-only, canonical AEM tag id for traceability), \`description\`. Hand-authored so it survives schema regeneration.
+
+**Content** — Populated by the \`aem-tags\` CLI, which walks every namespace listed in \`aem-tag-roots\` and emits one Sanity \`category\` doc per AEM \`cq:Tag\` node. Tag id → Sanity \`_id\`:
+
+| AEM tag id | Sanity \`_id\` |
+| --- | --- |
+| \`promotion:payout/recurring-device-credits\` | \`category-promotion-payout-recurring-device-credits\` |
+| \`color/red\` (default namespace, prefix dropped) | \`category-color-red\` |
+
+\`aem-tags\` and \`aem-transform\` compute the same \`_id\` from the same AEM tag id, without sharing state — both sides hyphenate, lowercase, and hash-truncate long values the same way \`pathToDocId\` handles page paths.
+
+**Allowlist, not denylist** — only namespaces listed in \`aem-tag-roots\` are walked. There's no canonical "always skip" set in AEM, so sample-content namespaces like \`wknd\` are simply absent from the file.
+
+**\`cq:movedTo\` aliases** — when AEM has merged a tag into another, the tombstone carries \`cq:movedTo\` pointing at the new tag id. \`aem-tags\` records the alias in the manifest (no category doc is emitted for the tombstone), and \`aem-transform\` follows the alias chain when resolving authored references. Cycle guard prevents pathological alias loops.
+
+**Page-level \`cq:tags\`** — AEM stores page tags as a multi-valued string property on the \`jcr:content\` (cq:PageContent) node, not on any descendant component. \`aem-transform\` lifts these onto the page doc's \`tags\` field via the same resolver — the \`page\` schema declares the field by default; remove it from \`apps/studio/schemas/generated/page.ts\` if your migration has no page-level tags.
 `;
 
   await writeTextFile(outputFile, md);
