@@ -43,6 +43,25 @@ async function main(): Promise<void> {
     process.argv.includes("--discard-drafts") ||
     process.env.MIGRATION_DISCARD_DRAFTS === "true";
 
+  // `--recreate-on-type-change` (or `MIGRATION_RECREATE_ON_TYPE_CHANGE=true`)
+  // handles the case where a doc's `_type` is changing between runs — most
+  // commonly when an operator declares a page-shell in
+  // `aem-page-components.json` and a page that previously imported as
+  // `_type: "page"` is now `_type: "planDetailsPage"`. Sanity treats `_type`
+  // as immutable, so a plain `createOrReplace` fails with "immutable
+  // attribute _type may not be modified". With this flag we pre-fetch
+  // existing `_type` values, and for docs whose type would change, do
+  // `tx.delete(id).delete(draftId).create(doc)` so the old doc is replaced
+  // atomically inside one transaction.
+  //
+  // Opt-in because it destroys the publish history (and any draft) of the
+  // affected docs. Safe to use whenever you're confident the new schema
+  // shape is correct; not safe to run on a populated dataset without
+  // understanding what types are about to flip.
+  const recreateOnTypeChange =
+    process.argv.includes("--recreate-on-type-change") ||
+    process.env.MIGRATION_RECREATE_ON_TYPE_CHANGE === "true";
+
   const files = readdirSync(cleanDir).filter((f) => f.endsWith(".json")).sort();
   // Category docs come from `aem-tags`. They live in their own cache dir so
   // they don't get swept up by `clean/` operations that target pages, and
@@ -87,6 +106,40 @@ async function main(): Promise<void> {
   let categories = 0;
   let docs = 0;
   let draftsDiscarded = 0;
+  let typeChangedDocs = 0;
+
+  // Pre-load every clean file once so we can do a single GROQ pre-fetch for
+  // existing `_type`s before we start committing. Otherwise the
+  // recreate-on-type-change branch would need N round-trips, one per page.
+  const cleanFiles: Array<{ file: string; clean: CleanFile }> = [];
+  for (const file of files) {
+    const clean = JSON.parse(readFileSync(join(cleanDir, file), "utf8")) as CleanFile;
+    if (clean.docs.length > 0) cleanFiles.push({ file, clean });
+  }
+
+  // Map<docId, newType>. Used to decide which docs need a delete-then-create.
+  const typeChangedIds = new Set<string>();
+  if (recreateOnTypeChange && !dryRun && client && cleanFiles.length > 0) {
+    const ids = cleanFiles.flatMap(({ clean }) => clean.docs.map((d) => d._id));
+    if (ids.length > 0) {
+      const existing = (await (client as SanityClientLike).fetch(
+        '*[_id in $ids]{_id, _type}',
+        { ids },
+      )) as Array<{ _id: string; _type: string }>;
+      const existingType = new Map(existing.map((e) => [e._id, e._type] as const));
+      for (const { clean } of cleanFiles) {
+        for (const doc of clean.docs) {
+          const prev = existingType.get(doc._id);
+          if (prev && prev !== doc._type) typeChangedIds.add(doc._id);
+        }
+      }
+      if (typeChangedIds.size > 0) {
+        console.error(
+          `[import] ${typeChangedIds.size} doc(s) will be re-created (existing _type differs from new _type).`,
+        );
+      }
+    }
+  }
 
   // 1) Categories first. They're independent docs (only reference each
   // other via `parent`, never references on a page side). Committing them
@@ -131,20 +184,47 @@ async function main(): Promise<void> {
   }
 
   // 2) Pages — one transaction per page, same as before.
-  for (const file of files) {
-    const clean = JSON.parse(readFileSync(join(cleanDir, file), "utf8")) as CleanFile;
-    if (clean.docs.length === 0) continue;
+  for (const { clean } of cleanFiles) {
     if (!dryRun && client) {
       const tx = (client as SanityClientLike).transaction();
       for (const doc of clean.docs) {
-        if (discardDrafts) {
-          const draftId = doc._id.startsWith("drafts.") ? doc._id : `drafts.${doc._id}`;
+        const draftId = doc._id.startsWith("drafts.") ? doc._id : `drafts.${doc._id}`;
+        if (typeChangedIds.has(doc._id)) {
+          // Sanity treats `_type` as immutable, so a re-import that changes
+          // the type fails with "immutable attribute _type may not be
+          // modified". Delete the published doc (and any draft, regardless
+          // of `--discard-drafts` — drafts inherit the same constraint and
+          // would otherwise shadow the freshly-created doc) before
+          // re-creating it under the new type.
+          tx.delete(doc._id);
           tx.delete(draftId);
-          draftsDiscarded++;
+          if (discardDrafts) draftsDiscarded++;
+          tx.create(doc);
+          typeChangedDocs++;
+        } else {
+          if (discardDrafts) {
+            tx.delete(draftId);
+            draftsDiscarded++;
+          }
+          tx.createOrReplace(doc);
         }
-        tx.createOrReplace(doc);
       }
-      await tx.commit();
+      try {
+        await tx.commit();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("immutable attribute") && msg.includes("_type")) {
+          throw new Error(
+            `${msg}\n\n` +
+              `  This doc exists in Sanity with a different _type than what the migration is\n` +
+              `  writing. Re-run with --recreate-on-type-change (or set\n` +
+              `  MIGRATION_RECREATE_ON_TYPE_CHANGE=true) to delete + create the affected docs\n` +
+              `  atomically. This destroys their publish history and any drafts, so opt in\n` +
+              `  only when you're confident the new schema shape is correct.`,
+          );
+        }
+        throw err;
+      }
     }
     pages++;
     docs += clean.docs.length;
@@ -160,16 +240,21 @@ async function main(): Promise<void> {
   if (discardDrafts && !dryRun) {
     console.error(`${c.dim("Drafts discarded:")} ${c.green(draftsDiscarded)}`);
   }
+  if (typeChangedDocs > 0) {
+    console.error(`${c.dim("Re-created (_type changed):")} ${c.green(typeChangedDocs)}`);
+  }
   console.error(`${c.dim("Elapsed:         ")} ${c.dim(timer.elapsed())}`);
 }
 
 interface SanityTransactionLike {
+  create(doc: SanityDoc): SanityTransactionLike;
   createOrReplace(doc: SanityDoc): SanityTransactionLike;
   delete(id: string): SanityTransactionLike;
   commit(): Promise<{ transactionId?: string; results?: Array<{ id: string; operation: string }> }>;
 }
 interface SanityClientLike {
   transaction(): SanityTransactionLike;
+  fetch(query: string, params?: Record<string, unknown>): Promise<unknown>;
 }
 
 main().catch((err) => {

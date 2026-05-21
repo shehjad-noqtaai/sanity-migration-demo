@@ -148,6 +148,34 @@ To support a new hint: add the AEM-key → Sanity-field row to `AEM_AUTHORING_HI
 
 Missing file → no hint behavior on any component. Malformed JSON or invalid entries are a hard error.
 
+## Page-shell components and per-template documents (`aem-page-components.json`)
+
+AEM stores page-level dialog values on the page's `jcr:content` node, and a sibling `cq:template` identifies which template the page was built from. Declare the page-shell `sling:resourceType` and the `cq:template` paths it's authored under in `aem-page-components.json` (override with `AEM_PAGE_COMPONENTS_FILE`):
+
+```json
+{
+  "uxp/components/structure/page": {
+    "templates": [
+      "/conf/uxp/settings/wcm/templates/plan-details",
+      "/conf/uxp/settings/wcm/templates/news-article"
+    ]
+  }
+}
+```
+
+`migrate:schema` emits one Sanity document type per (resourceType, template) pair (`planDetailsPage`, `newsArticlePage`, …) and writes an `output/cache/page-templates.json` manifest. `aem-transform` reads that manifest and, for each raw page whose `jcr:content` matches a declared pair, emits a document with:
+
+- `_type` set to the per-template doc type (e.g. `"planDetailsPage"`).
+- `title` from `jcr:content/jcr:title` (existing rule; unchanged).
+- `pageProperties` — every authored value on `jcr:content` lifted via the same camelCase rule used for ordinary fields, then coerced against the page-shell's `cq:dialog` types (`"true"` → `true`, HTML → Portable Text, etc.). AEM bookkeeping (replication agents, versioning, ContextHub paths) is dropped via an explicit `JCR_CONTENT_BOOKKEEPING_KEYS` denylist so dialog drift surfaces but noise doesn't.
+- `featuredImage` lifted from `jcr:content/cq:featuredimage`. The DAM path is moved to `fileReferenceAemPath` so `aem-assets` rewrites it to a real Sanity asset ref the same way it does for fileupload widgets.
+- `cqTemplate` — the raw template path, retained for traceability.
+- `pageBuilder` walked from `jcr:content/root` (unchanged).
+
+Pages with a declared page-shell `sling:resourceType` but an undeclared `cq:template` fall back to the generic `_type: "page"` document and surface in the transform report under `unknownPageTemplates`. Add the missing template to `aem-page-components.json`, re-run `migrate:schema`, then re-run `transform` + `import` to upgrade them.
+
+Missing / empty file → every page uses the generic `page` doc (today's behavior). Fully backwards compatible — existing tenants need no changes.
+
 ## Named-slot components (auto-detected)
 
 A different AEM pattern shows up on components like `media-paragraph`: a single nested child under a **fixed** JCR key (e.g. `content`) whose value is itself a full component with its own `sling:resourceType`. Not a dialog field, not a drop-zone container — just a named slot.

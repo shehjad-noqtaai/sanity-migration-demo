@@ -35,6 +35,7 @@ export const OPERATOR_FILES = [
   "aem-component-containers.json",
   "aem-component-hints.json",
   "aem-component-exceptions",
+  "aem-page-components.json",
   "aem-tag-roots",
 ] as const;
 

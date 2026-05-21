@@ -9,6 +9,7 @@ import {
   fetchInfinityJson,
   loadAuthoringHintConfig,
   loadContainerConfig,
+  loadPageComponentConfig,
   logStartupBanner,
   resolveConfig,
   startTimer,
@@ -88,6 +89,23 @@ async function main(): Promise<void> {
     );
   }
 
+  // AEM page-shell components (the components used as `sling:resourceType`
+  // on `jcr:content`) paired with the `cq:template` paths each is authored
+  // under. For every (resourceType, template) pair the schema emitter
+  // writes one Sanity document type and the page-shell type is excluded
+  // from `pageBuilder.of[]`.
+  const pageComponentsFile = resolve(
+    process.env.AEM_PAGE_COMPONENTS_FILE ?? "./aem-page-components.json",
+  );
+  const pageComponents = loadPageComponentConfig({ file: pageComponentsFile });
+  if (pageComponents.size > 0) {
+    let templateCount = 0;
+    for (const v of pageComponents.values()) templateCount += v.templates.length;
+    logger.info(
+      `Applied ${pageComponents.size} page-component(s) (${templateCount} template${templateCount === 1 ? "" : "s"}) from ${pageComponentsFile}`,
+    );
+  }
+
   // Slot discovery — scan already-extracted AEM content for named-slot
   // child components (dialog-less nested components under a fixed JCR key,
   // e.g. media-paragraph.content). First-ever run has no raw/ yet and
@@ -147,6 +165,7 @@ async function main(): Promise<void> {
     containers,
     discoveredSlots,
     authoringHints,
+    pageComponents,
   });
 
   const s = report.summary();
