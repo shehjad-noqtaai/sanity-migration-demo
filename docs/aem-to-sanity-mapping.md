@@ -12,6 +12,7 @@ Each AEM Granite UI `sling:resourceType` is mapped to a Sanity field kind. Unkno
 | `cq/gui/components/authoring/dialog/richtext` | `richtext` | Legacy rich text → Sanity array of PortableText blocks |
 | `granite/ui/components/coral/foundation/form/numberfield` | `number` | Number → Sanity number (min/max → validation) |
 | `granite/ui/components/coral/foundation/form/checkbox` | `boolean` | Checkbox → Sanity boolean |
+| `granite/ui/components/coral/foundation/form/switch` | `boolean` | Switch → Sanity boolean (rendered as a toggle in Studio v3+) |
 | `granite/ui/components/coral/foundation/form/select` | `select` | Dropdown → Sanity string with options.list |
 | `granite/ui/components/coral/foundation/form/radiogroup` | `radio` | Radio group → Sanity string with options.list and layout:'radio' |
 | `granite/ui/components/coral/foundation/form/datepicker` | `date` | Date picker → Sanity date or datetime based on `type` |
@@ -104,7 +105,7 @@ Containers nest without special-casing — expander → box → content → Port
 
 ## Type-aware coercion at transform
 
-AEM's JCR is schemaless on dialog inputs: `.infinity.json` serializes everything authored through a dialog widget as a **JSON string**, regardless of what the dialog thinks the type is. A numberfield storing `10` lands as `"10"`; a checkbox lands as `"true"` / `"false"`; a richtext widget lands as an HTML string. The emitted Sanity schemas declare proper types (`number`, `boolean`, `array-of-blocks`), so without coercion the Studio rejects every ingested value with "Expected type X, got String".
+AEM's JCR is schemaless on dialog inputs: `.infinity.json` serializes everything authored through a dialog widget as a **JSON string**, regardless of what the dialog thinks the type is. A numberfield storing `10` lands as `"10"`; a checkbox or switch lands as `"true"` / `"false"`; a richtext widget lands as an HTML string. The emitted Sanity schemas declare proper types (`number`, `boolean`, `array-of-blocks`), so without coercion the Studio rejects every ingested value with "Expected type X, got String".
 
 `content-type-registry.json` records each field's Sanity type as a tree (`fields: Array<{name, type, itemFields?}>`) so `aem-transform` can coerce at any depth. Nested array-of-object members carry their own field types under `itemFields`; the coercion pass recurses into every multifield item, so richtext / number / boolean inside a `variableColumn.columnContents[]` row is treated the same as a top-level field.
 
@@ -125,7 +126,7 @@ Both richtext variants — `cq/gui/components/authoring/dialog/richtext` (legacy
 
 ### Number and boolean
 
-AEM stores numberfield values as strings (`"10"`) and checkbox values as literal `"true"` / `"false"` strings. `aem-transform` coerces when the declared Sanity type is `number` or `boolean`:
+AEM stores numberfield values as strings (`"10"`) and checkbox / switch values as literal `"true"` / `"false"` strings. `aem-transform` coerces when the declared Sanity type is `number` or `boolean`:
 
 - `number` → `Number(v)`; kept as-is on `NaN`.
 - `boolean` → `true` when value is the literal string `"true"`, `false` when `"false"`; kept as-is otherwise. Unrecognized literals surface as Studio validation errors rather than being silently remapped (e.g. `"yes"`, `"1"`, `""` are not assumed).
