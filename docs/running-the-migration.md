@@ -61,6 +61,7 @@ cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
 | `AEM_SERVICE_CREDENTIALS` | optional | Same content as the file above, but inlined as a JSON string (useful for CI where you'd rather paste into a secret manager than mount a file). Mutually exclusive with `AEM_SERVICE_CREDENTIALS_FILE`. |
 | `AEM_COMPONENT_PATHS_FILE` | optional | File listing component JCR paths to migrate (one per line, `#` for comments). Default: `./aem-component-paths`. |
 | `AEM_CONTENT_ROOTS_FILE` | optional | File listing content roots to walk during extraction. Default: `./aem-content-roots`. See `aem-content-roots.example` for syntax. |
+| `AEM_TAG_ROOTS_FILE` | optional | File listing AEM tag namespaces / subtrees to walk during `aem-tags`. Default: `./aem-tag-roots`. Same format as `aem-content-roots` (slug semantics are irrelevant for tags). Only listed namespaces are migrated — there's no canonical "always skip" set in AEM. See § 1c-sexies. |
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | optional | File listing `sling:resourceType` values to skip during transform. Default: `./aem-component-exceptions`. |
 | `AEM_COMPONENT_CONTAINERS_FILE` | optional | JSON file mapping `sling:resourceType` → `{ childrenField }` for AEM container components whose drop-zone children should become a nested `pageBuilder` array. Default: `./aem-component-containers.json`. Missing file → no container behavior. |
 | `AEM_COMPONENT_HINTS_FILE` | optional | JSON file mapping `sling:resourceType` → `["cq:hintKey", …]`, opting individual components into AEM authoring-hint lifting (e.g. `cq:panelTitle` on accordion children). Default: `./aem-component-hints.json`. Missing file → no hint behavior. See § 1c-quinquies. |
@@ -230,6 +231,22 @@ For each listed resource type:
 
 Missing file → no hint behavior on any component. Malformed JSON or invalid entries are a hard error.
 
+### 1c-sexies. Tag roots — `examples/<your-tenant>/aem-tag-roots`
+
+Consumed by `aem-tags`. Plain-text list of AEM tag namespaces (or subtrees) to walk under `/content/cq:tags/`. Same format as `aem-content-roots`:
+
+```text
+@base /content/cq:tags
+
+promotion
+page-type
+/content/cq:tags/wknd     # absolute paths also OK
+```
+
+Only what's listed here is migrated. There is no canonical "always skip" set in AEM — sample-content namespaces like `wknd` or `we-retail` are simply absent from the file. Discovery tip: hit `<AEM_AUTHOR_URL>/content/cq:tags.1.json` while logged into AEM author to list every namespace under your tag root.
+
+Missing file → `aem-tags` exits 2 with an instruction to create one. Migrations that don't use AEM taxonomy can skip the `tags` stage entirely (the rest of the pipeline doesn't depend on it; `aem-transform` runs without tag resolution and content with `cq:tags` surfaces as unresolved findings instead).
+
 ### 1d. Resource-type registry — `output/content-type-registry.json`
 
 **Generated** by `migrate:schema`; you don't hand-author it. Maps AEM `sling:resourceType` values to the Sanity type names that stage 1 emitted, plus each field's name + Sanity type (used by the drift auditor and by `aem-transform` for type-aware coercion — e.g. HTML → Portable Text on `array-of-blocks` fields):
@@ -366,18 +383,19 @@ const doc = await client.fetch<HeroBanner>(`*[_type == "heroBanner"][0]`);
 
 ## 4. Stage 3 — content migration
 
-Stage 3 is four independent CLIs, run in order. The `migrate:content` pnpm script chains them (`extract && transform && assets && import`), but you can run each step on its own — each reads from the output directory of the previous one, so re-running just one stage is cheap.
+Stage 3 is five independent CLIs, run in order. The `migrate:content` pnpm script chains them (`extract && tags && transform && assets && import`), but you can run each step on its own — each reads from the output directory of the previous one, so re-running just one stage is cheap. `tags` is optional — skip it for migrations that don't use AEM taxonomy.
 
 ```bash
 pnpm --filter example-<your-tenant> migrate:content
 # equivalent to:
 pnpm --filter example-<your-tenant> extract
+pnpm --filter example-<your-tenant> tags         # optional — only when migrating AEM tags
 pnpm --filter example-<your-tenant> transform
 pnpm --filter example-<your-tenant> assets
 pnpm --filter example-<your-tenant> import
 ```
 
-**All writes to Sanity are dry-run unless `MIGRATION_DRY_RUN=false` is set.** The `extract` and `transform` stages are read/local-only regardless; only `assets` and `import` touch Sanity.
+**All writes to Sanity are dry-run unless `MIGRATION_DRY_RUN=false` is set.** The `extract`, `tags`, and `transform` stages are read/local-only regardless; only `assets` and `import` touch Sanity.
 
 ### 4a. `aem-extract` — AEM `.infinity.json` → `output/raw/`
 
@@ -393,6 +411,40 @@ Reads every entry in `aem-content-roots`, fetches `{root}.infinity.json` from AE
 
 **Outputs:** `output/raw/*.json`, `output/extract-report.json` (counts, categorized failures, ambiguous-path resolutions, and a `depthExpansions` array with per-root `markersFound`/`markersResolved`/`markersTruncated`/`markersFailed`/`expansionsUsed` stats), and `output/extract-404.log` if any roots weren't found.
 
+### 4a-bis. `aem-tags` — AEM `/content/cq:tags` → `output/cache/categories/`
+
+Walks every namespace (or subtree) listed in `aem-tag-roots`, fetching each via `fetchInfinityTree` (same depth-5 follow-up splicing the page extractor uses), and emits one Sanity `category` document per `cq:Tag` node — implementing Sanity's [parent-child taxonomy pattern](https://www.sanity.io/docs/developer-guides/parent-child-taxonomy). The hand-authored `category` document type lives at `apps/studio/schemas/category.ts`.
+
+ID derivation is deterministic on both sides — `aem-tags` and `aem-transform` compute the same Sanity `_id` from the same AEM tag id, without sharing state:
+
+| AEM tag id | Sanity category `_id` |
+| --- | --- |
+| `promotion` (namespace) | `category-promotion` |
+| `promotion:payout` | `category-promotion-payout` |
+| `promotion:payout/recurring-device-credits` | `category-promotion-payout-recurring-device-credits` |
+| `color/red` (default namespace, prefix dropped) | `category-color-red` |
+
+Long ids (>80 chars) fall back to `{first-60-chars}-{sha1-10}` so they stay under Sanity's 128-char `_id` limit even for deep tag trees. Hyphen-separated (not `.`) so the docs stay readable via the public CDN — same rule as `pathToDocId`.
+
+**Default-namespace asymmetry.** Adobe's reference syntax drops the `default:` prefix: a tag at `/content/cq:tags/default/color/red` is authored as `color/red`, not `default:color/red`. `aem-tags` records this in the manifest so `aem-transform` resolves both forms the same way.
+
+**Namespaces are categories too.** A namespace in AEM is a `cq:Tag` whose parent is not a `cq:Tag` (i.e. direct child of `/content/cq:tags`). The walker emits a category doc for the namespace itself, since authors expect to see it in the Studio reference picker as a grouping. Namespaces have no `parent` reference.
+
+**`cq:movedTo` aliases.** When a tag has been merged/moved in AEM, the tombstone node carries `cq:movedTo` pointing at the new tag id. The manifest records these as aliases (no category doc is emitted for the tombstone), and `aem-transform` follows the alias chain when resolving authored references. Cycle guard prevents pathological alias loops.
+
+**Allowlist, not denylist.** Only namespaces listed in `aem-tag-roots` are walked. AEM sample-content namespaces like `wknd` or `we-retail` are simply absent — there's no canonical "always skip" set to ship.
+
+| Flag / env | Effect |
+| --- | --- |
+| `--overwrite` | Re-emit category doc files even when they already exist on disk. The manifest is always rewritten. |
+| `AEM_TAG_ROOTS_FILE` | Path to tag roots file. Default: `./aem-tag-roots`. |
+| `AEM_MAX_RESPONSE_MB` / `AEM_MAX_DEPTH_EXPANSIONS` | Shared with `aem-extract` — same response cap and depth-splice budget. |
+
+**Outputs:**
+- `output/cache/categories/<sanityCategoryId>.json` — one Sanity category doc per `cq:Tag` node. Shape `{ jcrPath, docs: [categoryDoc] }` so `aem-import` ingests them via the same loader as pages.
+- `output/cache/categories/manifest.json` — keyed by AEM tag id (`namespace:parent/child` or `parent/child` for default-namespace tags). Value: `{ sanityCategoryId, title, slug, parentTagId, isNamespace, movedTo? }`. Consumed by `aem-transform` to resolve `cq:tags` strings on pages and components.
+- `output/cache/tags-report.json` — counts, failures, depth-splice stats, `aliases`, and `danglingParents` (tags whose parent namespace wasn't included in the listed roots).
+
 ### 4b. `aem-transform` — `output/raw/` → `output/clean/`
 
 Walks each raw JCR tree, maps `sling:resourceType` values via `content-type-registry.json`, and emits one `page` doc per input file with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key` (from `jcr:uuid` or path SHA1). Unknown resource types and nodes listed in `aem-component-exceptions` are skipped but noted in the audit.
@@ -403,6 +455,7 @@ Walks each raw JCR tree, maps `sling:resourceType` values via `content-type-regi
 - **`number`** — coerced via `Number(v)`; kept as-is on `NaN`. AEM numberfield values land as `"10"` etc.
 - **`boolean`** — coerced when the value is the literal string `"true"` or `"false"`; kept as-is otherwise. AEM checkbox values land as `"true"` / `"false"`.
 - **`array-of-object`** — recurses into nested multifield items. Handles both AEM shapes: the ordered `item0`/`item1` form (materialized earlier in `transformInline`) and the named-key form (e.g. `colorCarousel.colors: { weddingDresses: {...}, bridesmaidDresses: {...} }`) — materialized here by taking `Object.values` of the keyed map in authored order.
+- **`array-of-reference`** — AEM `cq/gui/components/coral/common/form/tagfield` values arrive as string arrays of canonical tag ids (`["promotion:payout/recurring-device-credits", "promotion:status/in-market"]`). Resolved through `output/cache/categories/manifest.json` (from `aem-tags`) into `[{_type:"reference", _key:..., _ref:"category-..."}]`. Follows `cq:movedTo` aliases. Page-level `cq:tags` on the `jcr:content` node are lifted onto the page doc's `tags` field via the same resolver. Tag ids not in the manifest get dropped and surfaced in `transform-report.json → unresolvedTagRefs` (operator either missed a namespace in `aem-tag-roots` or AEM has stale references to a deleted tag).
 
 Legacy `content-type-registry.json` files without `fields[].type` skip every coercion step — regenerate via `pnpm migrate:schema` to opt in.
 
@@ -523,14 +576,16 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 
 After updating the token, re-run `pnpm assets`. Phase 0 picks up where you left off — already-uploaded assets in the manifest are reconciled against the ML by id, so no duplicate uploads.
 
-### 4d. `aem-import` — `output/clean/` → Sanity
+### 4d. `aem-import` — `output/cache/categories/` + `output/clean/` → Sanity
 
-Reads every file under `output/clean/` and commits the docs via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Because `_id` values are derived from JCR paths, re-runs upsert rather than duplicate.
+Reads every file under `output/cache/categories/` (if present) and `output/clean/` and commits the docs via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Because `_id` values are derived from JCR paths (pages) and AEM tag ids (categories), re-runs upsert rather than duplicate.
+
+**Categories commit first**, batched 50 docs per transaction. That ordering matters: pages may reference categories via `tags` or via tagfield-mapped component fields, and Sanity's strong-ref validation would reject those refs if the target docs didn't yet exist when the page commit lands. Batching of 50 keeps each transaction well under Sanity's payload cap on tenants with thousands of tags.
 
 - **Dry-run default.** With `MIGRATION_DRY_RUN` unset or truthy, the command only prints what it *would* write.
 - **Requires** `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_TOKEN` when writing.
 - **Flags:**
-  - `--discard-drafts` (or `MIGRATION_DISCARD_DRAFTS=true`) — delete `drafts.{id}` in the same transaction as each published `createOrReplace`. The Studio opens a draft whenever one exists, so without this flag a stale draft from a prior migration run keeps shadowing freshly-imported published data — you re-run `aem-import`, the terminal shows "Committed", and the Studio still shows the old content. Opt-in because it also destroys any authored in-progress edits; use it when re-running migrations against a dataset that only this pipeline writes to.
+  - `--discard-drafts` (or `MIGRATION_DISCARD_DRAFTS=true`) — delete `drafts.{id}` in the same transaction as each published `createOrReplace`. The Studio opens a draft whenever one exists, so without this flag a stale draft from a prior migration run keeps shadowing freshly-imported published data — you re-run `aem-import`, the terminal shows "Committed", and the Studio still shows the old content. Opt-in because it also destroys any authored in-progress edits; use it when re-running migrations against a dataset that only this pipeline writes to. Also applied to category docs.
 
 ### Depth-5 truncation — handled for you
 
@@ -544,7 +599,7 @@ AEM's `.infinity.json` truncates the tree at depth ~5, inserting path-string mar
 pnpm --filter example-<your-tenant> migrate
 ```
 
-Chains `migrate:schema` → `extract` → `transform` → `assets` → `import --discard-drafts` in a single shell. Each stage's `Elapsed:` line surfaces as it runs, so timing breakdowns are visible without parsing logs after the fact. Use this for "blow away and re-run" workflows on datasets only the pipeline writes to — `--discard-drafts` is destructive of in-progress author edits.
+Chains `extract` → `tags` → `migrate:schema` → `transform` → `assets` → `import --discard-drafts` in a single shell. Each stage's `Elapsed:` line surfaces as it runs, so timing breakdowns are visible without parsing logs after the fact. Use this for "blow away and re-run" workflows on datasets only the pipeline writes to — `--discard-drafts` is destructive of in-progress author edits.
 
 More granular variants:
 

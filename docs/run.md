@@ -83,15 +83,26 @@ pnpm --filter example-<your-tenant> typegen
 
 ```bash
 pnpm --filter example-<your-tenant> extract
+pnpm --filter example-<your-tenant> tags
 pnpm --filter example-<your-tenant> transform
 pnpm --filter example-<your-tenant> assets
 pnpm --filter example-<your-tenant> import
 ```
 
-The four stages are independent CLIs chained through on-disk output; you can re-run any single one without redoing the others.
+The five stages are independent CLIs chained through on-disk output; you can re-run any single one without redoing the others. `tags` is optional — skip it for migrations that don't use AEM taxonomy.
 
 ### 4a. `extract`
 **What this does:** For every content root in `aem-content-roots`, fetches `{root}.infinity.json` from AEM and writes one JSON file per page into `output/raw/`. Automatically follows AEM's depth-5 truncation markers (issuing follow-up fetches in parallel and splicing subtrees back in) so the raw tree you get is complete. Also writes `output/extract-report.json` with counts, failures, and depth-expansion stats.
+
+### 4a-bis. `tags`
+**What this does:** For every namespace listed in `aem-tag-roots`, walks the AEM tag tree (`/content/cq:tags/<namespace>/...`) and emits one Sanity `category` document per `cq:Tag` node into `output/cache/categories/`. Each doc carries `title`, `slug`, `tagId` (canonical `namespace:parent/child`), and a `parent` reference to the next tag up the chain — implementing the parent-child taxonomy pattern from https://www.sanity.io/docs/developer-guides/parent-child-taxonomy. Default-namespace tags (those under `/content/cq:tags/default/...`) drop the `default:` prefix from `tagId` to match AEM's reference syntax. `cq:movedTo` aliases are recorded in the manifest so `transform` can follow them when resolving stale references.
+
+Also writes `output/cache/categories/manifest.json` (consumed by `transform` to rewrite `cq:tags` strings into `_type:"reference"` arrays) and `output/cache/tags-report.json` with counts, dangling-parent warnings, and depth-splice stats.
+
+Flags:
+- `--overwrite` — re-emit category docs even when the on-disk file already exists. Manifest is always rewritten in full.
+
+Operator allowlist: only namespaces (or subtrees) listed in `aem-tag-roots` are migrated. There's no canonical "always skip" set in AEM, so sample-content namespaces like `wknd` or `we-retail` are simply absent from the roots file.
 
 ### 4b. `transform`
 **What this does:** Walks each raw JCR tree under `output/raw/`, maps `sling:resourceType` values via `content-type-registry.json`, and emits one Sanity `page` doc per input into `output/clean/` — with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key`, so re-runs upsert instead of duplicating. Unknown types and entries in `aem-component-exceptions` are skipped but recorded in `output/transform-report.json`. Purely local — no AEM or Sanity calls.
@@ -104,7 +115,9 @@ AEM **authoring hints** like `cq:panelTitle` (the question heading on each accor
 
 AEM **named-slot** components (a single nested child under a fixed JCR key, e.g. `media-paragraph` > `content`) are auto-detected — no config needed. Every `migrate:schema` run scans the extracted raw content in `output/cache/raw/` and appends a typed field to each parent schema for each slot it finds. Transform emits nested components under their JCR key on every run, so data never gets dropped; the Studio stops showing "Unknown field" warnings once the schema pass picks up the slot shape. Container parents skip slot synthesis (their drop-zone logic already claims resourceType-carrying children).
 
-AEM's JCR serializes every authored dialog value as a JSON string; transform reads each field's declared Sanity type from the registry and coerces on the way in. `array-of-blocks` fields (richtext) are converted to Portable Text via `@portabletext/block-tools`; `number` fields are parsed via `Number(v)`; `boolean` fields are parsed from the literal strings `"true"` / `"false"`. Values that can't be coerced cleanly are left in place so they surface as Studio validation errors rather than being silently remapped. Deterministic `_key`s preserve clean diffs across re-runs.
+AEM's JCR serializes every authored dialog value as a JSON string; transform reads each field's declared Sanity type from the registry and coerces on the way in. `array-of-blocks` fields (richtext) are converted to Portable Text via `@portabletext/block-tools`; `number` fields are parsed via `Number(v)`; `boolean` fields are parsed from the literal strings `"true"` / `"false"`. `array-of-reference` fields (AEM tagfields) are resolved through `output/cache/categories/manifest.json` produced by `tags`: each authored tag id (`namespace:parent/child`) becomes a `_type:"reference"` to the matching `category` doc, following `cq:movedTo` aliases. Page-level `cq:tags` (on `jcr:content`) are lifted onto the page doc's `tags` field via the same resolver. Values that can't be coerced cleanly are left in place so they surface as Studio validation errors rather than being silently remapped. Deterministic `_key`s preserve clean diffs across re-runs.
+
+Tag references that don't resolve (the operator hasn't added that namespace to `aem-tag-roots`, or AEM has stale refs to a deleted tag) get dropped and surfaced in `transform-report.json` → `unresolvedTagRefs` with example paths.
 
 ### 4c. `assets`
 **What this does:** Scans `output/clean/` for `/content/dam/...` references and moves the binaries from AEM DAM into the Sanity Media Library in five phases:
@@ -122,7 +135,7 @@ Flags:
 - `--no-rewrite` — skip phase 4 (in-place rewrite of `clean/*.json`).
 
 ### 4d. `import`
-**What this does:** Reads every file under `output/clean/` and commits the docs into your Sanity dataset via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Because `_id` values are derived from JCR paths, re-runs upsert rather than duplicate. **Dry-run by default** — prints what it *would* write until you set `MIGRATION_DRY_RUN=false`.
+**What this does:** Reads every file under `output/cache/categories/` (if present) and `output/clean/` and commits the docs into your Sanity dataset via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. **Categories are committed first** in batches of 50 per transaction so page-side references resolve immediately when pages are written. Because `_id` values are derived from JCR paths and tag ids, re-runs upsert rather than duplicate. **Dry-run by default** — prints what it *would* write until you set `MIGRATION_DRY_RUN=false`.
 
 Flags:
 - `--discard-drafts` (or `MIGRATION_DISCARD_DRAFTS=true`) — also delete `drafts.{id}` in the same transaction. Without this, the Studio's draft pins stale content even after a successful re-import. Opt-in; destroys authored in-progress edits.
@@ -148,7 +161,7 @@ The `migrate` script chains every stage end-to-end, with `--discard-drafts` on i
 pnpm --filter example-<your-tenant> migrate
 ```
 
-**What this does:** runs in order — `migrate:schema` → `extract` → `transform` → `assets` (full download + upload + link) → `import --discard-drafts`. Each stage's `Elapsed:` line surfaces along the way. Use this for "blow away and re-run" workflows on a dataset only the pipeline writes to.
+**What this does:** runs in order — `extract` → `tags` → `migrate:schema` → `transform` → `assets` (full download + upload + link) → `import --discard-drafts`. Each stage's `Elapsed:` line surfaces along the way. Use this for "blow away and re-run" workflows on a dataset only the pipeline writes to.
 
 For more granular variants:
 

@@ -296,6 +296,16 @@ function fieldBody(field: SanityField, _indentLevel: number): string {
       props.of = `[{ type: "object"${memberTitle}, fields: [${itemFields}] }]`;
       break;
     }
+    case "array-of-reference": {
+      // AEM tagfield → Sanity array of refs. Always multiselect (AEM
+      // tagfield has no single-value mode). Each member is its own
+      // reference object, so they keep their own `_key`s. The referenced
+      // type (`category`) is populated by the `aem-tags` CLI.
+      props.type = '"array"';
+      const refType = JSON.stringify(field.refType);
+      props.of = `[{ type: "reference", to: [{ type: ${refType} }] }]`;
+      break;
+    }
     case "container-children": {
       // Emit a direct reference to the top-level page-builder array type.
       // Keeps the container's drop-zone palette in sync with the page's
@@ -324,13 +334,16 @@ function fieldBody(field: SanityField, _indentLevel: number): string {
     field.required &&
     props.validation === undefined &&
     field.type !== "array-of-blocks" &&
-    field.type !== "array-of-object"
+    field.type !== "array-of-object" &&
+    field.type !== "array-of-reference"
   ) {
     props.validation = "(Rule) => Rule.required()";
   }
   if (
     field.required &&
-    (field.type === "array-of-blocks" || field.type === "array-of-object") &&
+    (field.type === "array-of-blocks" ||
+      field.type === "array-of-object" ||
+      field.type === "array-of-reference") &&
     props.validation === undefined
   ) {
     props.validation = "(Rule) => Rule.required().min(1)";

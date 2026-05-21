@@ -29,6 +29,14 @@ export const page = defineType({
       options: { source: "title", maxLength: 96 },
       validation: (r) => r.required(),
     }),
+    // Lifted from AEM `jcr:content/cq:tags` by `aem-transform` and resolved
+    // through the categories manifest from `aem-tags`. Remove this field if
+    // the migration source has no page-level tags.
+    defineField({
+      name: "tags",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "category" }] }],
+    }),
     defineField({ name: "pageBuilder", type: "pageBuilder" }),
   ],
 });

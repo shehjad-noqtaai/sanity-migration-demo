@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import "dotenv/config";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
   AEM_AUTHORING_HINTS,
@@ -15,6 +15,7 @@ import {
 import { htmlToBlocks } from "@portabletext/block-tools";
 import { compileSchema, defineSchema, type Schema } from "@portabletext/schema";
 import { JSDOM } from "jsdom";
+import type { Manifest as CategoryManifest, ManifestEntry as CategoryManifestEntry } from "./tags.ts";
 
 interface AemNode {
   [key: string]: unknown;
@@ -69,6 +70,14 @@ interface PageDoc {
   title: string;
   slug: { _type: "slug"; current: string };
   pageBuilder: PageBuilderItem[];
+  /**
+   * AEM page-level `cq:tags` (on the `jcr:content` node) lifted into a
+   * Sanity reference array. Only present when at least one tag resolved
+   * through the categories manifest produced by `aem-tags` — fully empty
+   * `cq:tags` arrays drop entirely so the Studio doesn't show an empty
+   * field on every page.
+   */
+  tags?: Array<{ _type: "reference"; _key: string; _ref: string }>;
 }
 
 const JCR_METADATA = new Set<string>([
@@ -99,6 +108,23 @@ const JCR_METADATA = new Set<string>([
  *   otherwise surface in the Studio as "Unknown field found".
  */
 const AEM_DIALOG_RUNTIME_KEYS = new Set<string>(["textIsRich"]);
+
+/**
+ * AEM-authored property keys that bear a `:` and would normally fail
+ * `isValidSanityAttributeKey` (which forbids `:`). For each key listed here,
+ * `transformInline` camelCases the JCR property name so the value lands on
+ * the corresponding Sanity field — same rule the schema mapper applies to
+ * `node.name` (`./cq:tags` → `cqTags`). Today this is just `cq:tags`; add
+ * more if dialog widgets that store authored content under colon-bearing
+ * JCR properties surface in the migration report.
+ *
+ * Why not a blanket "camelCase every colon-bearing key" rule: AEM also
+ * writes replication-status bookkeeping (`cq:lastReplicated`,
+ * `cq:isDelivered`, `cq:lastReplicatedBy_publish`, etc.) onto pages that we
+ * already correctly drop. A blanket rule would start surfacing those as
+ * dialog fields. Allowlist keeps the behavior precise.
+ */
+const AEM_AUTHORED_COLON_KEYS = new Set<string>(["cq:tags"]);
 
 /**
  * AEM structural wrappers we always recurse through — the page root and the
@@ -463,6 +489,17 @@ interface TransformContext {
    * hint behavior — colon-bearing keys still drop as before.
    */
   authoringHints: AuthoringHintConfig;
+  /**
+   * AEM tag id → Sanity category info. Populated from
+   * `output/cache/categories/manifest.json` produced by `aem-tags`. Used by
+   * `coerceFieldTypes` to rewrite authored tag id strings (e.g.
+   * `promotion:payout/recurring-device-credits`) into Sanity reference
+   * objects pointing at the matching `category` doc. Empty when the
+   * operator hasn't run `aem-tags` yet — content with `cq:tags` will then
+   * surface as unresolved findings in the transform report, which is the
+   * correct signal.
+   */
+  categoryManifest: CategoryManifest;
 }
 
 /**
@@ -618,6 +655,7 @@ function coerceFieldTypes(
   inline: Record<string, unknown>,
   fieldTypes: Map<string, FieldTypeNode>,
   jcrPath: string,
+  ctx: TransformContext,
 ): void {
   if (fieldTypes.size === 0) return;
   for (const [name, node] of fieldTypes) {
@@ -638,6 +676,22 @@ function coerceFieldTypes(
       if (typeof v !== "string") continue;
       if (v === "true") inline[name] = true;
       else if (v === "false") inline[name] = false;
+      continue;
+    }
+    if (node.type === "array-of-reference") {
+      // AEM tagfield: authored as an array of tag id strings
+      // (`namespace:parent/child` or `parent/child` for default namespace).
+      // Resolve each through the category manifest produced by `aem-tags`.
+      // A missing entry means either the operator hasn't included the tag's
+      // namespace in `aem-tag-roots` or AEM has stale references to a
+      // deleted tag — drop the reference and surface in the audit.
+      const refs = resolveTagReferences(
+        v,
+        ctx.categoryManifest,
+        `${jcrPath}::${name}`,
+        ctx.audit,
+      );
+      if (refs !== null) inline[name] = refs;
       continue;
     }
     if (node.type === "array-of-object" && node.itemFields) {
@@ -671,11 +725,79 @@ function coerceFieldTypes(
             item as Record<string, unknown>,
             node.itemFields,
             `${jcrPath}::${name}[${i}]`,
+            ctx,
           );
         }
       }
     }
   }
+}
+
+/**
+ * Resolve an AEM `cq:tags` value (string array of tag ids) into a Sanity
+ * array of `_type:"reference"` objects pointing at `category` docs. Returns:
+ *
+ *   - The resolved array on success (possibly partial — entries that didn't
+ *     resolve are dropped and audited individually).
+ *   - `[]` when the input was an empty array.
+ *   - `null` when the input wasn't an array of strings at all (keep the
+ *     original value so Studio validation surfaces the shape mismatch).
+ *
+ * Alias chains (`cq:movedTo`) are followed transitively with a cycle guard
+ * — in practice AEM doesn't create alias loops, but a misbehaving manifest
+ * shouldn't be able to hang transform.
+ */
+function resolveTagReferences(
+  value: unknown,
+  manifest: CategoryManifest,
+  refPath: string,
+  audit: Audit,
+): Array<{ _type: "reference"; _key: string; _ref: string }> | null {
+  if (!Array.isArray(value)) {
+    // Single-string variants of `cq:tags` are rare but legal in JCR (a
+    // mv-string property with one value). Coerce to a single-item array
+    // so it round-trips into the array reference shape.
+    if (typeof value === "string") {
+      return resolveTagReferences([value], manifest, refPath, audit);
+    }
+    return null;
+  }
+  const out: Array<{ _type: "reference"; _key: string; _ref: string }> = [];
+  for (const raw of value) {
+    if (typeof raw !== "string" || raw.length === 0) continue;
+    const resolved = followTagAlias(raw, manifest);
+    if (!resolved) {
+      audit.unresolvedTagRef(raw, refPath);
+      continue;
+    }
+    out.push({
+      _type: "reference",
+      _key: createHash("sha1").update(`${refPath}::${raw}`).digest("hex").slice(0, 12),
+      _ref: resolved.sanityCategoryId,
+    });
+  }
+  return out;
+}
+
+/**
+ * Walk `cq:movedTo` aliases until we land on a non-tombstone entry. Returns
+ * `undefined` when the chain ends at an entry the operator didn't migrate
+ * (or breaks because a moved-to target isn't in the manifest either).
+ */
+function followTagAlias(
+  tagId: string,
+  manifest: CategoryManifest,
+): CategoryManifestEntry | undefined {
+  const seen = new Set<string>();
+  let cursor: string | undefined = tagId;
+  while (cursor && !seen.has(cursor)) {
+    seen.add(cursor);
+    const entry: CategoryManifestEntry | undefined = manifest[cursor];
+    if (!entry) return undefined;
+    if (!entry.movedTo) return entry;
+    cursor = entry.movedTo;
+  }
+  return undefined;
 }
 
 function deepCoerceAemMultifieldMapsToArrays(val: unknown): unknown {
@@ -741,6 +863,17 @@ function transformInline(node: AemNode, jcrPath: string, ctx: TransformContext):
         const hintKey = AEM_AUTHORING_HINTS.get(key);
         if (hintKey && out[hintKey] === undefined) {
           out[hintKey] = value;
+        }
+        continue;
+      }
+      // Allowlisted AEM-authored colon-bearing properties (today: `cq:tags`)
+      // get camelCased to match the Sanity field name the schema mapper
+      // produced from the dialog's `name="./cq:tags"`. Without this they'd
+      // fall through to `isValidSanityAttributeKey` and silently drop.
+      if (AEM_AUTHORED_COLON_KEYS.has(key)) {
+        const renamed = toCamelCase(key);
+        if (renamed && out[renamed] === undefined) {
+          out[renamed] = value;
         }
         continue;
       }
@@ -818,7 +951,7 @@ function collectPageBuilder(
 
       const inline = transformInline(nodeForInline, frame.jcrPath, inlineCtx);
       splitAemFileUploadDamPaths(inline, entry.fieldNames);
-      coerceFieldTypes(inline, entry.fieldTypes, frame.jcrPath);
+      coerceFieldTypes(inline, entry.fieldTypes, frame.jcrPath, ctx);
 
       for (const slotKey of slotKeys) {
         const child = frame.node[slotKey] as AemNode;
@@ -910,6 +1043,14 @@ interface Audit {
   unknownType(resourceType: string, path: string): void;
   unknownProps(component: string, path: string, props: Array<{ prop: string; value: unknown }>): void;
   bail(path: string, reason: "maxDepth" | "cycle", depth: number): void;
+  /**
+   * An authored `cq:tags` value referenced an AEM tag id that isn't in the
+   * category manifest. Either the operator hasn't added the relevant
+   * namespace to `aem-tag-roots`, or the AEM tag was deleted after content
+   * was authored. The reference is dropped and surfaced here so the
+   * operator can decide which case applies.
+   */
+  unresolvedTagRef(tagId: string, path: string): void;
   report(): unknown;
 }
 
@@ -919,6 +1060,7 @@ function createAudit(maxExamples = 3): Audit {
   const unknownTypes = new Map<string, { hits: number; examples: string[] }>();
   const unknownProps = new Map<string, Map<string, Array<{ path: string; value: unknown }>>>();
   const bails: Array<{ path: string; reason: string; depth: number }> = [];
+  const unresolvedTags = new Map<string, string[]>();
 
   function bump<T>(list: T[], item: T): void {
     if (list.length < maxExamples) list.push(item);
@@ -956,6 +1098,15 @@ function createAudit(maxExamples = 3): Audit {
       totalFindings++;
       bump(bails, { path, reason, depth });
     },
+    unresolvedTagRef(tagId, path) {
+      totalFindings++;
+      let examples = unresolvedTags.get(tagId);
+      if (!examples) {
+        examples = [];
+        unresolvedTags.set(tagId, examples);
+      }
+      bump(examples, path);
+    },
     report() {
       return {
         summary: {
@@ -964,6 +1115,7 @@ function createAudit(maxExamples = 3): Audit {
           unknownTypes: unknownTypes.size,
           componentsWithUnknownProps: unknownProps.size,
           transformBails: bails.length,
+          unresolvedTagRefs: unresolvedTags.size,
         },
         unknownResourceTypes: [...unknownTypes.entries()].map(([resourceType, { hits, examples }]) => ({
           resourceType,
@@ -976,6 +1128,10 @@ function createAudit(maxExamples = 3): Audit {
             [...props.entries()].map(([prop, examples]) => ({ prop, examples })),
           ]),
         ),
+        unresolvedTagRefs: [...unresolvedTags.entries()].map(([tagId, examples]) => ({
+          tagId,
+          examples,
+        })),
         transformBails: bails,
       };
     },
@@ -1023,6 +1179,32 @@ function derivePageTitle(tree: AemNode, slug: string | undefined, jcrPath: strin
   return jcrPath;
 }
 
+/**
+ * Page-level `cq:tags` live on the `jcr:content` (cq:PageContent) node, not
+ * on any content component. Lift them onto the page doc the same way we
+ * lift the page title — resolved through the categories manifest produced
+ * by `aem-tags`. Returns `undefined` when there are no tags or none
+ * resolved, so the field can be omitted entirely on tag-less pages.
+ */
+function derivePageTags(
+  tree: AemNode,
+  ctx: TransformContext,
+  jcrPath: string,
+): Array<{ _type: "reference"; _key: string; _ref: string }> | undefined {
+  const content = isChildNode(tree["jcr:content"]) ? (tree["jcr:content"] as AemNode) : undefined;
+  if (!content) return undefined;
+  const raw = content["cq:tags"];
+  if (raw === undefined || raw === null) return undefined;
+  const refs = resolveTagReferences(
+    raw,
+    ctx.categoryManifest,
+    `${jcrPath}/jcr:content::cq:tags`,
+    ctx.audit,
+  );
+  if (!refs || refs.length === 0) return undefined;
+  return refs;
+}
+
 function main(): void {
   const timer = startTimer();
   const c = createColors({ stream: process.stderr });
@@ -1049,6 +1231,34 @@ function main(): void {
   const rawDir = join(outputDir, "cache", "raw");
   const cleanDir = join(outputDir, "cache", "clean");
   mkdirSync(cleanDir, { recursive: true });
+
+  // Categories manifest is optional — when missing, tagfield values surface
+  // as unresolved-tag-ref findings in the audit. The full migration order
+  // is: aem-extract → aem-tags → aem-transform, but `transform` should still
+  // run usefully (just without tag resolution) when an operator hasn't yet
+  // added a tag-roots file. Loading the manifest here means transform stays
+  // a single non-AEM-touching pass.
+  const categoriesManifestFile = join(outputDir, "cache", "categories", "manifest.json");
+  let categoryManifest: CategoryManifest = {};
+  if (existsSync(categoriesManifestFile)) {
+    try {
+      categoryManifest = JSON.parse(
+        readFileSync(categoriesManifestFile, "utf8"),
+      ) as CategoryManifest;
+    } catch (err) {
+      console.error(
+        `[transform] categories manifest at ${categoriesManifestFile} is unparseable; tag references will be dropped. ${(err as Error).message}`,
+      );
+    }
+  }
+  const categoryCount = Object.values(categoryManifest).filter(
+    (e) => !e.movedTo,
+  ).length;
+  if (categoryCount > 0) {
+    console.error(
+      `[transform] resolving cq:tags against ${categoryCount} categor${categoryCount === 1 ? "y" : "ies"} from ${categoriesManifestFile}`,
+    );
+  }
 
   const rawFiles = readdirSync(rawDir).filter((f) => f.endsWith(".json")).sort();
   if (rawFiles.length === 0) {
@@ -1095,6 +1305,7 @@ function main(): void {
       registry,
       containers,
       authoringHints,
+      categoryManifest,
       audit,
     };
 
@@ -1113,6 +1324,8 @@ function main(): void {
       slug: { _type: "slug", current: currentSlug },
       pageBuilder,
     };
+    const pageTags = derivePageTags(tree, ctx, jcrPath);
+    if (pageTags) pageDoc.tags = pageTags;
 
     const outFile = join(cleanDir, file);
     writeFileSync(

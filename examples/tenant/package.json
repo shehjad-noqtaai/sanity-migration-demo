@@ -9,12 +9,13 @@
     "typegen": "aem-to-sanity-typegen",
     "pagebuilder:refresh": "aem-to-sanity-pagebuilder",
     "extract": "aem-extract",
+    "tags": "aem-tags",
     "transform": "aem-transform --registry ./output/cache/content-type-registry.json",
     "assets": "aem-assets",
     "import": "aem-import",
-    "migrate:content": "pnpm run extract && pnpm run transform && pnpm run assets && pnpm run import",
+    "migrate:content": "pnpm run extract && pnpm run tags && pnpm run transform && pnpm run assets && pnpm run import",
     "migrate:all": "pnpm run migrate:schema && pnpm run typegen",
-    "migrate": "pnpm run extract && pnpm run migrate:schema && pnpm run transform && pnpm run assets && pnpm run import -- --discard-drafts",
+    "migrate": "pnpm run extract && pnpm run tags && pnpm run migrate:schema && pnpm run transform && pnpm run assets && pnpm run import -- --discard-drafts",
     "wipe:media-library": "tsx ../../scripts/wipe-media-library.ts"
   },
   "devDependencies": {

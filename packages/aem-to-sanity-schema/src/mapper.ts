@@ -35,6 +35,7 @@ export type SanityField =
   | (CommonFieldProps & FileField)
   | (CommonFieldProps & RichTextField)
   | (CommonFieldProps & ArrayOfObjectField)
+  | (CommonFieldProps & ReferenceArrayField)
   | (CommonFieldProps & ContainerChildrenField)
   | (CommonFieldProps & SlotReferenceField)
   | (CommonFieldProps & PlaceholderField);
@@ -89,6 +90,18 @@ interface ArrayOfObjectField {
   itemFields: SanityField[];
   /** AEM multifield `fieldLabel` → Sanity array member `title` (repeating row). */
   itemTitle?: string;
+}
+/**
+ * AEM tagfield → Sanity `array of reference-to-<refType>`. The picker is
+ * always multiselect at the AEM side (`tagfield` doesn't have a single-value
+ * mode the way Granite select does), so we always emit the array shape. The
+ * referenced Sanity type is currently `category` — the hand-authored
+ * parent-child taxonomy doc populated by `aem-tags`.
+ */
+interface ReferenceArrayField {
+  type: "array-of-reference";
+  /** Sanity type name to reference. Always `category` for tagfields today. */
+  refType: string;
 }
 /**
  * Drop-zone array on an AEM container component (e.g. `expander`, `container`,
@@ -546,6 +559,14 @@ async function buildField(
         ...(itemTitle ? { itemTitle } : {}),
       };
     }
+    case "tags":
+      // AEM tagfield is always multiselect (no single-value mode), so we
+      // always emit the array shape. References target the hand-authored
+      // `category` document type populated by `aem-tags`. The dialog's
+      // `rootPath` (e.g. `/content/cq:tags/promotion`) would let us narrow
+      // the picker via a `filter` option in the Studio, but that requires
+      // walking the parent chain at query time — punt to follow-up work.
+      return { ...common, type: "array-of-reference", refType: "category" };
     case "hidden":
     case "container":
     case "include":

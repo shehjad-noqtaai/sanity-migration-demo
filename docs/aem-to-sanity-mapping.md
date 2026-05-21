@@ -19,6 +19,8 @@ Each AEM Granite UI `sling:resourceType` is mapped to a Sanity field kind. Unkno
 | `granite/ui/components/coral/foundation/form/pathbrowser` | `pathbrowser` | Coral pathbrowser → Sanity image when rootPath is under /content/dam or field name matches /image/i, else string (same as pathfield) |
 | `granite/ui/components/foundation/form/pathbrowser` | `pathbrowser` | Legacy (non-Coral) pathbrowser alias → same routing as the Coral variant (image vs string based on rootPath + field name) |
 | `cq/gui/components/authoring/dialog/fileupload` | `file` | Image/video upload: read-only `{fileReferenceParameter}AemPath` (DAM path) + `{fileReference}` image/file asset; required only on asset when AEM required |
+| `cq/gui/components/coral/common/form/tagfield` | `tags` | AEM tag picker → Sanity array of references to `category` documents (parent-child taxonomy). Categories are populated by the `aem-tags` CLI from `/content/cq:tags`. |
+| `granite/ui/components/coral/foundation/form/tagfield` | `tags` | Granite tagfield alias → same `array of reference-to-category` shape as the cq/gui tagfield. |
 | `granite/ui/components/coral/foundation/form/multifield` | `multifield` | Composite multifield → array; persisted key from inner `field.name` (strip ./); JCR rows `item0`/`item1`; titles from `fieldLabel` |
 | `granite/ui/components/coral/foundation/container` | `container` | Container → flattened; children hoist up |
 | `cq/gui/components/authoring/dialog` | `container` | Dialog root → walked for top-level fields |
@@ -127,6 +129,7 @@ AEM stores numberfield values as strings (`"10"`) and checkbox values as literal
 
 - `number` → `Number(v)`; kept as-is on `NaN`.
 - `boolean` → `true` when value is the literal string `"true"`, `false` when `"false"`; kept as-is otherwise. Unrecognized literals surface as Studio validation errors rather than being silently remapped (e.g. `"yes"`, `"1"`, `""` are not assumed).
+- `array-of-reference` → AEM tagfield values arrive as string arrays of canonical tag ids (e.g. `["promotion:payout/recurring-device-credits", "promotion:status/in-market"]`). Resolved through the categories manifest produced by `aem-tags` into `[{_type:"reference", _key:..., _ref:"category-..."}]`. Follows `cq:movedTo` aliases when AEM has redirected the source tag. Page-level `cq:tags` on the `jcr:content` node are lifted onto the page doc's `tags` field via the same resolver. Authored tag ids not present in the manifest get dropped (no opaque string left dangling in a reference array) and surfaced in `transform-report.json → unresolvedTagRefs` so the operator can either include the missing namespace in `aem-tag-roots` or accept that AEM had a stale reference.
 
 ### Legacy registries
 
@@ -175,3 +178,26 @@ The migrator handles this in two layers — a global rename vocabulary and a per
 1. Add the AEM-key → Sanity-field row to `AEM_AUTHORING_HINTS`.
 2. Add the AEM key to the relevant component's array in `aem-component-hints.json`.
 3. Re-run `pnpm migrate:schema` and `pnpm transform`. The field surfaces in the registry and clean docs in the same step; nothing else needs editing.
+
+## AEM tagfield (`cq/gui/components/coral/common/form/tagfield`)
+
+AEM tagfields multiselect from the canonical tag tree at `/content/cq:tags/<namespace>/...`. The migration maps them to **arrays of references to a `category` document type** that implements Sanity's [parent-child taxonomy pattern](https://www.sanity.io/docs/developer-guides/parent-child-taxonomy).
+
+**Schema** — `mapping-table.ts` maps both `cq/gui/components/coral/common/form/tagfield` and the Granite alias `granite/ui/components/coral/foundation/form/tagfield` to the `tags` kind. The mapper emits `array of reference-to-category` (always multiselect — AEM tagfield has no single-value mode). The dialog's `rootPath` (the namespace it narrows to) is not yet enforced on the Sanity side; reference filtering by ancestor would require walking the parent chain at query time and is left to the consumer.
+
+**`category` doc type** — Hand-authored at `apps/studio/schemas/category.ts`. Fields: `title`, `slug`, `parent` (`reference` to `category`, empty on namespace docs), `tagId` (read-only, canonical AEM tag id for traceability), `description`. Hand-authored so it survives schema regeneration.
+
+**Content** — Populated by the `aem-tags` CLI, which walks every namespace listed in `aem-tag-roots` and emits one Sanity `category` doc per AEM `cq:Tag` node. Tag id → Sanity `_id`:
+
+| AEM tag id | Sanity `_id` |
+| --- | --- |
+| `promotion:payout/recurring-device-credits` | `category-promotion-payout-recurring-device-credits` |
+| `color/red` (default namespace, prefix dropped) | `category-color-red` |
+
+`aem-tags` and `aem-transform` compute the same `_id` from the same AEM tag id, without sharing state — both sides hyphenate, lowercase, and hash-truncate long values the same way `pathToDocId` handles page paths.
+
+**Allowlist, not denylist** — only namespaces listed in `aem-tag-roots` are walked. There's no canonical "always skip" set in AEM, so sample-content namespaces like `wknd` are simply absent from the file.
+
+**`cq:movedTo` aliases** — when AEM has merged a tag into another, the tombstone carries `cq:movedTo` pointing at the new tag id. `aem-tags` records the alias in the manifest (no category doc is emitted for the tombstone), and `aem-transform` follows the alias chain when resolving authored references. Cycle guard prevents pathological alias loops.
+
+**Page-level `cq:tags`** — AEM stores page tags as a multi-valued string property on the `jcr:content` (cq:PageContent) node, not on any descendant component. `aem-transform` lifts these onto the page doc's `tags` field via the same resolver — the `page` schema declares the field by default; remove it from `apps/studio/schemas/generated/page.ts` if your migration has no page-level tags.

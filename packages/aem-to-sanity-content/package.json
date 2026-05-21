@@ -17,6 +17,7 @@
   },
   "bin": {
     "aem-extract": "./dist/extract.js",
+    "aem-tags": "./dist/tags.js",
     "aem-transform": "./dist/transform.js",
     "aem-assets": "./dist/assets.js",
     "aem-import": "./dist/import.js"

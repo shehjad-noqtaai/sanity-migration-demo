@@ -1,0 +1,23 @@
+# Tag roots to migrate from AEM → Sanity.
+#
+# `aem-tags` walks every namespace (or subtree) listed here and emits one
+# Sanity `category` document per AEM `cq:Tag` node. Authored content's
+# `cq:tags` references are then rewritten to Sanity reference arrays
+# pointing at those categories during `aem-transform`.
+#
+# Only what's listed below is migrated. There's no canonical "always skip"
+# set in AEM — sample-content namespaces like `wknd` or `we-retail` are
+# simply absent from this file. Add them if you want them.
+#
+# Syntax mirrors aem-content-roots:
+#   @base /content/cq:tags    → optional base for relative entries below
+#   promotion                 → relative to the current @base
+#   /content/cq:tags/wknd     → absolute (overrides @base)
+#
+# Tip: hit `<AEM_AUTHOR_URL>/content/cq:tags.1.json` while logged into AEM
+# author to list every namespace under your tag root.
+
+# @base /content/cq:tags
+
+# promotion
+# page-type
