@@ -58,6 +58,10 @@ export const MAPPING: Record<string, MappingEntry> = {
     kind: "boolean",
     description: "Checkbox → Sanity boolean",
   },
+  "granite/ui/components/coral/foundation/form/switch": {
+    kind: "boolean",
+    description: "Switch → Sanity boolean (rendered as a toggle in Studio v3+)",
+  },
   "granite/ui/components/coral/foundation/form/select": {
     kind: "select",
     description: "Dropdown → Sanity string with options.list",
