@@ -369,15 +369,20 @@ async function main(): Promise<void> {
   const maxBytes = numEnv("AEM_MAX_RESPONSE_MB", (mb) => mb * 1024 * 1024);
   const maxDepthExpansions = numEnv("AEM_MAX_DEPTH_EXPANSIONS");
 
+  // Tags are an opt-in stage. When the tenant hasn't configured a roots
+  // file (or has one with zero entries), exit 0 with a friendly skip
+  // message — never block the chained `pnpm migrate` script. Operators who
+  // want tag migration will see the skip notice and add the file; everyone
+  // else gets a no-op.
   if (!existsSync(rootsFile)) {
     console.error(
-      `No tag roots file at ${rootsFile}. Create one listing the AEM tag namespaces or subtrees you want migrated (one per line). See examples/tenant/aem-tag-roots.example.`,
+      `[tags] No tag roots file at ${rootsFile} — skipping. To migrate AEM tags, create the file (see examples/tenant/aem-tag-roots) or set AEM_TAG_ROOTS_FILE.`,
     );
-    process.exit(2);
+    process.exit(0);
   }
   const roots = parseTagRoots(readFileSync(rootsFile, "utf8"));
   if (roots.length === 0) {
-    console.error(`No tag roots in ${rootsFile}. Nothing to do.`);
+    console.error(`[tags] No tag roots in ${rootsFile} — skipping.`);
     process.exit(0);
   }
 
