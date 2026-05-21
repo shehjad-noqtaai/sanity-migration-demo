@@ -65,6 +65,7 @@ cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | optional | File listing `sling:resourceType` values to skip during transform. Default: `./aem-component-exceptions`. |
 | `AEM_COMPONENT_CONTAINERS_FILE` | optional | JSON file mapping `sling:resourceType` → `{ childrenField }` for AEM container components whose drop-zone children should become a nested `pageBuilder` array. Default: `./aem-component-containers.json`. Missing file → no container behavior. |
 | `AEM_COMPONENT_HINTS_FILE` | optional | JSON file mapping `sling:resourceType` → `["cq:hintKey", …]`, opting individual components into AEM authoring-hint lifting (e.g. `cq:panelTitle` on accordion children). Default: `./aem-component-hints.json`. Missing file → no hint behavior. See § 1c-quinquies. |
+| `AEM_PAGE_COMPONENTS_FILE` | optional | JSON file declaring page-shell components and the `cq:template` paths each is authored under (either listed explicitly via `"templates": [...]` or auto-discovered from extracted content via `"discover": true`). Each (resourceType, template) pair becomes one Sanity document type; the page-shell dialog becomes the doc's `pageProperties` field. Default: `./aem-page-components.json`. Missing file → no per-template docs (every page falls back to the generic `page` type). See § 1c-septies. |
 | `AEM_MAX_RESPONSE_MB` | optional | Cap per-fetch payload size during extract. Pages exceeding this are recorded as `tooLarge` failures. |
 | `MIGRATION_DOC_ID_PREFIX_STRIP` | optional | `aem-transform` only. Path prefix(es) to strip from JCR paths before deriving Sanity document `_id`s. Typical value is the `@base` from `aem-content-roots` (e.g. `/content/uxp/us/en`). Multiple prefixes allowed comma-separated; longest match wins. Without this, `_id`s carry the full path (`content-uxp-us-en-customer-support-plans-...`). With it, you get the page-relative form (`customer-support-plans-...`). Changing this between runs orphans previously imported docs — set once, leave alone. |
 | `OUTPUT_DIR` | optional | Where schemas, reports, and audit live. Default: `./output`. |
@@ -73,6 +74,7 @@ cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
 | `MIGRATION_LINK_ONLY` | optional | `aem-assets` only. `true` ⇔ passing `--link-only`. Skips phases 1 + 2 (download + upload) and relies on phase 0 to find assets already in the Media Library. See § 4c. |
 | `ASSET_CONCURRENCY` | optional | `aem-assets` only. Number of parallel workers used across phases 0 (ML dedup), 1 (AEM download), 2 (ML upload), 3 (dataset link). Default: `4`. Dedup in phase 0 guarantees each DAM path is processed by exactly one worker, so the shared manifest is never contended at the same key. |
 | `MIGRATION_DISCARD_DRAFTS` | optional | `aem-import` only. `true` ⇔ passing `--discard-drafts`. Deletes `drafts.{id}` alongside each published `createOrReplace` so the Studio shows the freshly-imported content instead of a stale draft from a prior run. Opt-in — destroys authored in-progress edits. |
+| `MIGRATION_RECREATE_ON_TYPE_CHANGE` | optional | `aem-import` only. `true` ⇔ passing `--recreate-on-type-change`. When an existing doc's `_type` differs from what the migration wants to write (e.g. a `page` doc becoming `planDetailsPage` after declaring it in `aem-page-components.json`), Sanity rejects the `createOrReplace` because `_type` is immutable. With this flag, `aem-import` pre-fetches the existing types and uses `delete + create` (within one transaction) for the affected ids. Opt-in — destroys the publish history and any draft of the affected docs. |
 | `AEM_VERBOSE` | optional | `true` ⇔ passing `--verbose`. Elevates the CLI logger to `debug` so every AEM GET is logged. |
 | `SANITY_PROJECT_ID` | required for writes | Only read when `MIGRATION_DRY_RUN=false`. |
 | `SANITY_DATASET` | required for writes | |
@@ -230,6 +232,62 @@ For each listed resource type:
 - **Content transform** consults the same map keyed by the current node's `sling:resourceType`. If the node is opted in and the property is in its allowlist, the value is renamed and emitted under the Sanity field name; otherwise colon-bearing keys drop as before. The drift report skips opted-in keys so they don't surface as "unknown props".
 
 Missing file → no hint behavior on any component. Malformed JSON or invalid entries are a hard error.
+
+### 1c-septies. Page-shell components — `examples/<your-tenant>/aem-page-components.json`
+
+In AEM, the `jcr:content` node of every authored page carries its own `sling:resourceType` pointing at a "page" component (e.g. `/apps/uxp/components/structure/page`). That component's `cq:dialog` defines page-level properties (`pwaOrientation`, `disableCache`, `pinPage`, …), and a sibling `cq:template` (e.g. `/conf/uxp/settings/wcm/templates/plan-details`) identifies what kind of page it is.
+
+Declare those pairings here so each (page-component, template) combination becomes its own Sanity document type — pages are then browsable by template in the Studio, and the page-component dialog's authored values are lifted into a `pageProperties` field on the doc instead of being silently dropped.
+
+```json
+{
+  "uxp/components/structure/page": {
+    "templates": [
+      "/conf/uxp/settings/wcm/templates/plan-details",
+      "/conf/uxp/settings/wcm/templates/news-article",
+      "/conf/uxp/settings/wcm/templates/landing-page"
+    ]
+  }
+}
+```
+
+**Auto-discovery.** Listing every template by hand is tedious for tenants with many of them. Set `"discover": true` instead, and `migrate:schema` scans `output/cache/raw/` (extracted content) to enumerate every `cq:template` value found on `jcr:content` nodes matching the declared page-shell resource type:
+
+```json
+{
+  "uxp/components/structure/page": {
+    "discover": true
+  }
+}
+```
+
+Because discovery reads from already-extracted content, the natural order is `extract` → `migrate:schema` (the chained `migrate` script already runs them in this order). On a brand-new tenant the first `migrate:schema` finds no raw content and logs a hint to run `extract` first — re-running schema picks up everything on the second pass.
+
+Both forms can coexist: explicit `templates` pin known names, `discover: true` auto-adds new ones as they appear in content:
+
+```json
+{
+  "uxp/components/structure/page": {
+    "templates": ["/conf/uxp/settings/wcm/templates/plan-details"],
+    "discover": true
+  }
+}
+```
+
+Effect on `migrate:schema`:
+- The page-component (`uxp/components/structure/page` here) must also be listed in `aem-component-paths` so its dialog is fetched and emitted as an object type.
+- One Sanity document type per `cq:template` is emitted (e.g. `planDetailsPage.ts`, `newsArticlePage.ts`). Fields: `title`, `slug`, `tags`, `pageProperties` (typed against the page-component object), `featuredImage` (image), `cqTemplate` (string, hidden/read-only), `pageBuilder`.
+- The page-component object is automatically excluded from `pageBuilder.of[]` (it lives on `jcr:content`, not in the body), so it never appears in the "+ Add" menu inside a page.
+- A `page-templates.json` manifest is written to `output/cache/` so `aem-transform` can route each raw page to the right `_type`.
+
+Effect on `aem-transform`:
+- Each page whose `jcr:content` matches a declared (resourceType, template) pair is emitted as the matching document type with `pageProperties`, `featuredImage`, and `cqTemplate` populated.
+- Bookkeeping properties on `jcr:content` (replication agents, versioning, ContextHub paths) are dropped; the schema's `JCR_CONTENT_BOOKKEEPING_KEYS` denylist is the source of truth.
+- Pages with a declared resourceType but undeclared template fall back to the generic `_type: "page"` doc and surface as `unknownPageTemplates` findings in `transform-report.json`.
+
+Empty file → no per-template docs; every page uses the generic `page` doc as before (this is fully backwards compatible — existing tenants need no changes).
+
+**Re-importing pages that already exist as `_type: "page"`.** First time you add an `aem-page-components.json` entry to a tenant that's already been imported, `aem-import` will fail with `immutable attribute "_type" may not be modified` — Sanity won't let you change a doc's `_type` in place. Re-run with `--recreate-on-type-change` (or `MIGRATION_RECREATE_ON_TYPE_CHANGE=true`) so the import deletes the old `page` doc and creates the new per-template doc atomically. Destroys the doc's publish history and any draft, so opt in deliberately.
 
 ### 1c-sexies. Tag roots — `examples/<your-tenant>/aem-tag-roots`
 

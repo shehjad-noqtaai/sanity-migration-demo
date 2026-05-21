@@ -66,7 +66,13 @@ interface PageBuilderItem {
 }
 interface PageDoc {
   _id: string;
-  _type: "page";
+  /**
+   * Always `"page"` for the generic fallback document type. Per-template
+   * docs (driven by `aem-page-components.json` + the page-templates
+   * manifest) use their own `_type` derived from the `cq:template` slug —
+   * see {@link TemplatePageDoc}.
+   */
+  _type: string;
   title: string;
   slug: { _type: "slug"; current: string };
   pageBuilder: PageBuilderItem[];
@@ -78,6 +84,33 @@ interface PageDoc {
    * field on every page.
    */
   tags?: Array<{ _type: "reference"; _key: string; _ref: string }>;
+  /**
+   * Page-shell dialog values lifted from `jcr:content` (e.g.
+   * `pwaOrientation`, `disableCache`, `pinPage`). Only set when the page
+   * matched a declared page-component / `cq:template` pair.
+   */
+  pageProperties?: Record<string, unknown>;
+  /**
+   * Sanity image lifted from `jcr:content/cq:featuredimage`. The DAM
+   * reference is rewritten to a Sanity asset by `aem-assets`. Only set
+   * when the page matched a declared page-component and a feature image
+   * was present.
+   */
+  featuredImage?: Record<string, unknown>;
+  /**
+   * Raw `cq:template` path retained for traceability — lets scripts /
+   * GROQ queries filter pages by template post-migration. Hidden in the
+   * Studio by default.
+   */
+  cqTemplate?: string;
+}
+
+interface PageTemplateManifestEntry {
+  pageComponentResourceType: string;
+  pageComponentSanityType: string;
+  cqTemplate: string;
+  sanityType: string;
+  sanityTitle: string;
 }
 
 const JCR_METADATA = new Set<string>([
@@ -95,6 +128,36 @@ const JCR_METADATA = new Set<string>([
   "cq:lastReplicationAction",
   "sling:resourceType",
   "sling:resourceSuperType",
+]);
+
+/**
+ * AEM bookkeeping keys that appear specifically on the page's `jcr:content`
+ * (`cq:PageContent`) node but never belong on the Sanity page document.
+ * Versioning, replication-per-agent, ContextHub plumbing, and a handful of
+ * `_publish` / `_scene7` suffix variants AEM writes per replication agent.
+ *
+ * Why an explicit allowlist instead of "anything not in the dialog": the
+ * page-shell dialog declares the *authored* fields (`pwaOrientation`,
+ * `disableCache`, etc.). Everything else on `jcr:content` is either
+ * bookkeeping (this set), child content (the `root` body — handled by
+ * `collectPageBuilder`), or a known carve-out (`cq:tags`, `cq:template`,
+ * `cq:featuredimage`). Listing the bookkeeping keys here lets us still
+ * surface *genuinely* unknown / drifted properties via `diffProps`.
+ */
+const JCR_CONTENT_BOOKKEEPING_KEYS = new Set<string>([
+  "jcr:versionHistory",
+  "jcr:baseVersion",
+  "jcr:predecessors",
+  "jcr:isCheckedOut",
+  "cq:isDelivered",
+  "cq:contextHubSegmentsPath",
+  "cq:contextHubPath",
+  "cq:lastReplicatedBy_publish",
+  "cq:lastReplicationAction_publish",
+  "cq:lastReplicated_publish",
+  "cq:lastReplicatedBy_scene7",
+  "cq:lastReplicationAction_scene7",
+  "cq:lastReplicated_scene7",
 ]);
 
 /**
@@ -500,6 +563,18 @@ interface TransformContext {
    * correct signal.
    */
   categoryManifest: CategoryManifest;
+  /**
+   * AEM resource types declared as page-shell components in
+   * `aem-page-components.json`. When the pageBuilder walker encounters a
+   * node with one of these resource types (the `jcr:content` node of an
+   * authored page), it descends into the children but does NOT emit a
+   * block for the node itself — the shell's dialog values are already
+   * lifted onto the document as `pageProperties` by `derivePageProperties`.
+   * Without this skip the shell would surface as a stray `structurePage`
+   * (or similar) block in `pageBuilder.of[]`, which the Studio rejects
+   * because the schema correctly excludes shells from the allowed types.
+   */
+  pageShellResourceTypes: ReadonlySet<string>;
 }
 
 /**
@@ -911,6 +986,22 @@ function collectPageBuilder(
       // Explicitly ignored resource type: skip this node and its subtree.
       continue;
     }
+    if (resourceType && ctx.pageShellResourceTypes.has(resourceType)) {
+      // Declared page-shell (the `jcr:content` node of an authored page).
+      // The shell's dialog values are already lifted to the document's
+      // `pageProperties` field by `derivePageProperties`, and the schema
+      // excludes the shell type from `pageBuilder.of[]`. Walk through
+      // transparently so `jcr:content/root/...` body components still get
+      // collected as blocks.
+      const entries = Object.entries(frame.node);
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const [key, value] = entries[i]!;
+        if (isChildNode(value)) {
+          stack.push({ node: value, jcrPath: `${frame.jcrPath}/${key}` });
+        }
+      }
+      continue;
+    }
     const entry = resourceType ? ctx.registry.get(resourceType) : undefined;
 
     if (entry?.sanityType && (!filter || filter.has(resourceType!))) {
@@ -1051,6 +1142,18 @@ interface Audit {
    * operator can decide which case applies.
    */
   unresolvedTagRef(tagId: string, path: string): void;
+  /**
+   * A page's `jcr:content` carries a `sling:resourceType` + `cq:template`
+   * pair that doesn't appear in `aem-page-components.json` (or matches a
+   * declared page-component but with an undeclared template). The doc
+   * falls back to the generic `page` type — surface the pair so the
+   * operator can add it to the config and re-run `migrate:schema`.
+   */
+  unknownPageTemplate(
+    resourceType: string | undefined,
+    cqTemplate: string | undefined,
+    path: string,
+  ): void;
   report(): unknown;
 }
 
@@ -1061,6 +1164,10 @@ function createAudit(maxExamples = 3): Audit {
   const unknownProps = new Map<string, Map<string, Array<{ path: string; value: unknown }>>>();
   const bails: Array<{ path: string; reason: string; depth: number }> = [];
   const unresolvedTags = new Map<string, string[]>();
+  const unknownPageTemplates = new Map<
+    string,
+    { resourceType: string | undefined; cqTemplate: string | undefined; hits: number; examples: string[] }
+  >();
 
   function bump<T>(list: T[], item: T): void {
     if (list.length < maxExamples) list.push(item);
@@ -1107,6 +1214,17 @@ function createAudit(maxExamples = 3): Audit {
       }
       bump(examples, path);
     },
+    unknownPageTemplate(resourceType, cqTemplate, path) {
+      totalFindings++;
+      const key = `${resourceType ?? "<none>"}|${cqTemplate ?? "<none>"}`;
+      let entry = unknownPageTemplates.get(key);
+      if (!entry) {
+        entry = { resourceType, cqTemplate, hits: 0, examples: [] };
+        unknownPageTemplates.set(key, entry);
+      }
+      entry.hits++;
+      bump(entry.examples, path);
+    },
     report() {
       return {
         summary: {
@@ -1116,6 +1234,7 @@ function createAudit(maxExamples = 3): Audit {
           componentsWithUnknownProps: unknownProps.size,
           transformBails: bails.length,
           unresolvedTagRefs: unresolvedTags.size,
+          unknownPageTemplates: unknownPageTemplates.size,
         },
         unknownResourceTypes: [...unknownTypes.entries()].map(([resourceType, { hits, examples }]) => ({
           resourceType,
@@ -1131,6 +1250,12 @@ function createAudit(maxExamples = 3): Audit {
         unresolvedTagRefs: [...unresolvedTags.entries()].map(([tagId, examples]) => ({
           tagId,
           examples,
+        })),
+        unknownPageTemplates: [...unknownPageTemplates.values()].map((e) => ({
+          resourceType: e.resourceType,
+          cqTemplate: e.cqTemplate,
+          hits: e.hits,
+          examples: e.examples,
         })),
         transformBails: bails,
       };
@@ -1203,6 +1328,116 @@ function derivePageTags(
   );
   if (!refs || refs.length === 0) return undefined;
   return refs;
+}
+
+/**
+ * Lift the page-shell dialog values from `jcr:content` into a single
+ * `pageProperties` object. Mirrors `transformInline`'s rules in spirit
+ * (drop JCR metadata, drop dialog-runtime bookkeeping, camelCase
+ * colon-bearing keys) but skips child nodes — those are either the
+ * `root` body (walked separately by `collectPageBuilder`), `cq:tags` /
+ * `cq:featuredimage` (lifted explicitly), or genuine drift surfaced via
+ * `diffProps`.
+ *
+ * The resulting object is type-coerced against the page-component's
+ * registry entry so `"true"` / `"false"` strings become booleans, HTML
+ * becomes Portable Text, etc. — same pipeline as every other component.
+ */
+function derivePageProperties(
+  content: AemNode,
+  pageComponentResourceType: string,
+  ctx: TransformContext,
+  jcrPath: string,
+): Record<string, unknown> | undefined {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(content)) {
+    if (JCR_METADATA.has(key) || AEM_DIALOG_RUNTIME_KEYS.has(key)) continue;
+    if (JCR_CONTENT_BOOKKEEPING_KEYS.has(key)) continue;
+    // Carve-outs: `root` is the page body (handled separately), and these
+    // properties have dedicated fields on the doc.
+    if (key === "root" || key === "cq:featuredimage" || key === "cq:tags" || key === "cq:template") continue;
+    if (isChildNode(value)) continue;
+    if (AEM_AUTHORED_COLON_KEYS.has(key)) {
+      const renamed = toCamelCase(key);
+      if (renamed && out[renamed] === undefined) out[renamed] = value;
+      continue;
+    }
+    if (!isValidSanityAttributeKey(key)) continue;
+    if (out[key] !== undefined) continue;
+    out[key] = value;
+  }
+
+  const entry = ctx.registry.get(pageComponentResourceType);
+  if (entry && entry.fieldTypes.size > 0) {
+    coerceFieldTypes(out, entry.fieldTypes, `${jcrPath}/jcr:content`, ctx);
+  }
+
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/**
+ * Lift `jcr:content/cq:featuredimage` into a Sanity `image` field. The DAM
+ * `fileReference` is moved to `fileReferenceAemPath` so `aem-assets` can
+ * rewrite it to a real Sanity asset ref in its phase-4 pass — same shape
+ * the fileupload widget produces via `splitAemFileUploadDamPaths`.
+ *
+ * Returns `undefined` when the node is missing or carries no DAM path
+ * (so the field can be omitted entirely rather than emitting an empty
+ * `{}` that would show up as a stray empty image in the Studio).
+ */
+function derivePageFeaturedImage(content: AemNode): Record<string, unknown> | undefined {
+  const node = content["cq:featuredimage"];
+  if (!isChildNode(node)) return undefined;
+  const fileRef = asString((node as AemNode)["fileReference"]);
+  if (!fileRef || !fileRef.startsWith("/content/dam/")) return undefined;
+  // Hand the DAM path to aem-assets via the same `*AemPath` convention the
+  // fileupload mapping uses. The base `fileReference` is intentionally
+  // omitted — aem-assets fills it in with a Sanity asset ref later.
+  return {
+    [`fileReference${AEM_FILE_UPLOAD_PATH_FIELD_SUFFIX}`]: fileRef,
+  };
+}
+
+/**
+ * Load the page-templates manifest emitted by `migrate:schema`. Returns an
+ * empty index when the file is absent — operators who haven't declared
+ * any page components see today's behavior (one generic `page` doc type).
+ */
+function loadPageTemplatesManifest(
+  file: string,
+): Map<string, Map<string, PageTemplateManifestEntry>> {
+  const out = new Map<string, Map<string, PageTemplateManifestEntry>>();
+  if (!existsSync(file)) return out;
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(file, "utf8"));
+  } catch (err) {
+    console.error(
+      `[transform] page-templates manifest at ${file} is unparseable; per-template doc types will not be applied. ${(err as Error).message}`,
+    );
+    return out;
+  }
+  const entries =
+    raw && typeof raw === "object" && Array.isArray((raw as { entries?: unknown }).entries)
+      ? (raw as { entries: PageTemplateManifestEntry[] }).entries
+      : [];
+  for (const e of entries) {
+    if (!e || typeof e !== "object") continue;
+    if (
+      typeof e.pageComponentResourceType !== "string" ||
+      typeof e.cqTemplate !== "string" ||
+      typeof e.sanityType !== "string"
+    ) {
+      continue;
+    }
+    let inner = out.get(e.pageComponentResourceType);
+    if (!inner) {
+      inner = new Map();
+      out.set(e.pageComponentResourceType, inner);
+    }
+    inner.set(e.cqTemplate, e);
+  }
+  return out;
 }
 
 function main(): void {
@@ -1283,6 +1518,21 @@ function main(): void {
     );
   }
 
+  // Per-template document manifest from migrate:schema. When absent or
+  // empty, every page falls back to the generic `_type: "page"` doc, which
+  // is today's behavior — purely additive for tenants not using page-shell
+  // declarations.
+  const pageTemplatesFile = join(outputDir, "cache", "page-templates.json");
+  const pageTemplates = loadPageTemplatesManifest(pageTemplatesFile);
+  const declaredPageComponentResourceTypes = new Set(pageTemplates.keys());
+  if (pageTemplates.size > 0) {
+    let templateCount = 0;
+    for (const m of pageTemplates.values()) templateCount += m.size;
+    console.error(
+      `[transform] applying ${templateCount} per-template doc type${templateCount === 1 ? "" : "s"} from ${pageTemplatesFile}`,
+    );
+  }
+
   const audit = createAudit();
   let pagesWritten = 0;
   let blocksEmitted = 0;
@@ -1307,6 +1557,7 @@ function main(): void {
       authoringHints,
       categoryManifest,
       audit,
+      pageShellResourceTypes: declaredPageComponentResourceTypes,
     };
 
     let pageBuilder: PageBuilderItem[];
@@ -1317,15 +1568,58 @@ function main(): void {
       continue;
     }
 
+    // Decide the document _type: per-template (when jcr:content's page
+    // component + cq:template pair is declared) or the generic `page`
+    // fallback. The decision is independent of `_id` derivation —
+    // `pathToDocId` is `_type`-agnostic, so introducing per-template types
+    // doesn't orphan previously imported docs.
+    const contentNode = isChildNode(tree["jcr:content"])
+      ? (tree["jcr:content"] as AemNode)
+      : undefined;
+    const pageRt = contentNode ? asString(contentNode["sling:resourceType"]) : undefined;
+    const cqTemplate = contentNode ? asString(contentNode["cq:template"]) : undefined;
+    const templateMatch =
+      pageRt && cqTemplate
+        ? pageTemplates.get(pageRt)?.get(cqTemplate)
+        : undefined;
+
+    // Surface mismatches as audit findings so the operator can extend
+    // `aem-page-components.json` and re-run migrate:schema. We only flag
+    // the case where the page-component IS declared (so we know the
+    // operator considers it a page-shell) but the specific template
+    // isn't listed — undeclared resource types are someone else's
+    // problem (they'd already surface in `unknownResourceTypes` if their
+    // content actually had a body).
+    if (
+      !templateMatch &&
+      pageRt &&
+      declaredPageComponentResourceTypes.has(pageRt)
+    ) {
+      audit.unknownPageTemplate(pageRt, cqTemplate, jcrPath);
+    }
+
     const pageDoc: PageDoc = {
       _id: pathToDocId(jcrPath),
-      _type: "page",
+      _type: templateMatch ? templateMatch.sanityType : "page",
       title: derivePageTitle(tree, slug, jcrPath),
       slug: { _type: "slug", current: currentSlug },
       pageBuilder,
     };
     const pageTags = derivePageTags(tree, ctx, jcrPath);
     if (pageTags) pageDoc.tags = pageTags;
+
+    if (templateMatch && contentNode) {
+      const pageProperties = derivePageProperties(
+        contentNode,
+        templateMatch.pageComponentResourceType,
+        ctx,
+        jcrPath,
+      );
+      if (pageProperties) pageDoc.pageProperties = pageProperties;
+      const featuredImage = derivePageFeaturedImage(contentNode);
+      if (featuredImage) pageDoc.featuredImage = featuredImage;
+      pageDoc.cqTemplate = templateMatch.cqTemplate;
+    }
 
     const outFile = join(cleanDir, file);
     writeFileSync(
@@ -1340,6 +1634,12 @@ function main(): void {
   const report = audit.report() as {
     summary: { totalFindings: number };
     unknownResourceTypes: Array<{ resourceType: string; hits: number; examples: string[] }>;
+    unknownPageTemplates: Array<{
+      resourceType: string | undefined;
+      cqTemplate: string | undefined;
+      hits: number;
+      examples: string[];
+    }>;
   };
   const reportFile = join(outputDir, "cache", "transform-report.json");
   writeFileSync(reportFile, JSON.stringify(report, null, 2) + "\n", "utf8");
@@ -1371,6 +1671,26 @@ function main(): void {
         const count = c.yellow(`${u.hits}×`.padStart(5, " "));
         const pathLine = `/apps/${u.resourceType}`;
         console.error(`  ${n} ${rt}  ${count}  ${c.dim(pathLine)}`);
+        const firstExample = u.examples[0];
+        if (firstExample) console.error(`      ${c.dim(`e.g. ${firstExample}`)}`);
+      });
+  }
+
+  if (report.unknownPageTemplates && report.unknownPageTemplates.length > 0) {
+    console.error("");
+    console.error(
+      c.yellow(
+        `${report.unknownPageTemplates.length} undeclared page template${report.unknownPageTemplates.length === 1 ? "" : "s"} — falling back to generic "page" doc. Add to aem-page-components.json, then re-run migrate:schema + transform + import:`,
+      ),
+    );
+    report.unknownPageTemplates
+      .sort((a, b) => b.hits - a.hits)
+      .forEach((u, i) => {
+        const n = c.dim(String(i + 1).padStart(2, " ") + ".");
+        const count = c.yellow(`${u.hits}×`.padStart(5, " "));
+        console.error(
+          `  ${n} ${u.resourceType ?? "<no sling:resourceType>"}  ${count}  ${c.dim(u.cqTemplate ?? "<no cq:template>")}`,
+        );
         const firstExample = u.examples[0];
         if (firstExample) console.error(`      ${c.dim(`e.g. ${firstExample}`)}`);
       });

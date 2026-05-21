@@ -21,6 +21,7 @@ Existing tenant folders may lag the template as new env vars or scripts get adde
 | `aem-content-roots` | The AEM page paths to walk (`@base` + slug syntax). See `aem-content-roots.example` for the full grammar. |
 | `aem-component-containers.json` | Map `sling:resourceType` → `{childrenField}` for AEM containers whose drop-zone children should become a nested `pageBuilder` array. Empty until you find one. |
 | `aem-component-hints.json` | Map `sling:resourceType` → list of `cq:*` authoring-hint keys to preserve. Empty by default. |
+| `aem-page-components.json` | Map page-shell `sling:resourceType` → `{templates: [cq:template paths]}`. Each (resourceType, template) pair becomes one Sanity document type whose `pageProperties` lift from `jcr:content`. Empty by default — pages then use the generic `page` doc. |
 | `aem-component-exceptions` | resource types / paths to skip during schema + transform. |
 | `package.json` | Pre-wired scripts (`pnpm migrate:schema`, `extract`, `transform`, `assets`, `import`, `migrate`). Rename the `name` field after copying. |
 

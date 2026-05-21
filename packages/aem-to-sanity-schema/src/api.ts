@@ -10,6 +10,7 @@ import {
   type ContainerConfig,
   type DialogNode,
   type Logger,
+  type PageComponentConfig,
 } from "aem-to-sanity-core";
 import {
   describeSchemaFields,
@@ -27,6 +28,7 @@ import {
   writePageBuilderArtifacts,
 } from "./pagebuilder.ts";
 import { writeContentRegistry } from "./content-registry.ts";
+import { writeTemplatePageArtifacts } from "./template-pages.ts";
 
 export interface MigrateSchemasOptions {
   /** AEM component paths (e.g. `/apps/<site>/components/promo`). */
@@ -132,6 +134,22 @@ export interface MigrateSchemasOptions {
    * Empty / omitted → no hint behavior on any component.
    */
   authoringHints?: AuthoringHintConfig;
+  /**
+   * Per-tenant declaration of "page-shell" components — AEM components used as
+   * the `sling:resourceType` of `jcr:content` rather than as page-body
+   * blocks — paired with the `cq:template` paths each one is authored under.
+   *
+   * For every (resourceType, template) pair, the emitter renders one Sanity
+   * **document type** whose fields are: title / slug / tags / pageBuilder
+   * + an inline `pageProperties` object whose type is the Sanity object
+   * already emitted for the page-shell dialog. The page-shell object type
+   * is automatically added to `pageBuilderExclude` so it doesn't appear as
+   * a block in `pageBuilder.of[]`.
+   *
+   * Empty / omitted → no per-template documents; the generic `page` doc is
+   * the only page type, current behavior.
+   */
+  pageComponents?: PageComponentConfig;
 }
 
 export interface MigrateSchemasResult {
@@ -141,6 +159,16 @@ export interface MigrateSchemasResult {
   pageBuilderFile?: string;
   pageFile?: string;
   contentRegistryFile?: string;
+  /** Per-template doc type manifest (`{outputDir}/cache/page-templates.json`). */
+  pageTemplatesFile?: string;
+  /** Per-template document .ts files written under `schemasDir`. */
+  templatePageFiles?: string[];
+  /**
+   * Resource types listed in `aem-page-components.json` but missing from
+   * `aem-component-paths`. Their declared (or discovered) templates are
+   * dropped silently — re-add them to `aem-component-paths` and re-run.
+   */
+  missingPageComponentPaths?: string[];
 }
 
 export async function migrateSchemas(
@@ -160,6 +188,7 @@ export async function migrateSchemas(
     emitContentRegistry = true,
     contentRegistryFile,
     jcrPrefix,
+    pageComponents,
   } = opts;
   const concurrency = opts.concurrency ?? 4;
   const continueOnAuth = opts.continueOnAuth ?? false;
@@ -245,20 +274,68 @@ export async function migrateSchemas(
     title: r.schemaTitle,
   }));
 
+  // Page-shell components and per-template documents. Compute the exclusion
+  // set first so it can feed into `writePageBuilderArtifacts.exclude` —
+  // page-shells live on `jcr:content`, not in the page body, and would
+  // otherwise show up in the "+ Add" menu inside pages.
+  const pageShellExclude: string[] = [];
+  if (pageComponents && pageComponents.size > 0) {
+    for (const resourceType of pageComponents.keys()) {
+      const sanityType = typeNameByResourceType.get(resourceType);
+      if (sanityType) pageShellExclude.push(sanityType);
+    }
+  }
+  const effectivePageBuilderExclude = [
+    ...(pageBuilderExclude ?? []),
+    ...pageShellExclude,
+  ];
+
   let pageBuilderFile: string | undefined;
   let pageFile: string | undefined;
   if (emitPageBuilder) {
     const pb = await writePageBuilderArtifacts({
       schemasDir,
       componentMembers: successMembers,
-      exclude: pageBuilderExclude,
+      exclude: effectivePageBuilderExclude,
       logger,
     });
     pageBuilderFile = pb.pageBuilderFile;
     pageFile = pb.pageFile;
   }
 
-  await pruneGeneratedSchemaFiles(schemasDir, successTypeNames, { emitPageBuilder, logger });
+  let pageTemplatesFile: string | undefined;
+  let templatePageFiles: string[] | undefined;
+  let missingPageComponentPaths: string[] | undefined;
+  if (emitPageBuilder && pageComponents && pageComponents.size > 0) {
+    const tp = await writeTemplatePageArtifacts({
+      schemasDir,
+      manifestOutputDir: outputDir,
+      pageComponentsConfig: pageComponents,
+      typeNameByResourceType,
+      logger,
+    });
+    pageTemplatesFile = tp.manifestFile;
+    templatePageFiles = tp.documentFiles;
+    missingPageComponentPaths = tp.missingComponentPaths.length > 0
+      ? tp.missingComponentPaths
+      : undefined;
+  }
+
+  // Per-template document files count as "expected" — protect them from the
+  // generated-file pruner that runs next, which otherwise nukes any .ts file
+  // not in the component success list.
+  const protectedTypeNames =
+    pageComponents && pageComponents.size > 0
+      ? [
+          ...successTypeNames,
+          ...(templatePageFiles?.map((f) => {
+            const base = f.split("/").pop() ?? "";
+            return base.endsWith(".ts") ? base.slice(0, -3) : base;
+          }) ?? []),
+        ]
+      : successTypeNames;
+
+  await pruneGeneratedSchemaFiles(schemasDir, protectedTypeNames, { emitPageBuilder, logger });
 
   if (emitPageBuilder) {
     // Prefer filenames on disk so `index.ts` never imports a missing `.ts`
@@ -303,6 +380,9 @@ export async function migrateSchemas(
     pageBuilderFile,
     pageFile,
     contentRegistryFile: registryFile,
+    pageTemplatesFile,
+    templatePageFiles,
+    missingPageComponentPaths,
   };
 }
 

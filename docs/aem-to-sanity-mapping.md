@@ -180,6 +180,59 @@ The migrator handles this in two layers — a global rename vocabulary and a per
 2. Add the AEM key to the relevant component's array in `aem-component-hints.json`.
 3. Re-run `pnpm migrate:schema` and `pnpm transform`. The field surfaces in the registry and clean docs in the same step; nothing else needs editing.
 
+## Page-shell components and per-template document types (`aem-page-components.json`)
+
+AEM stores page-level dialog values on the `jcr:content` node of each authored page. The node's own `sling:resourceType` points at a "page" component (e.g. `/apps/uxp/components/structure/page`) whose `cq:dialog` defines properties like `pwaOrientation`, `disableCache`, `pinPage`, and a sibling `cq:template` (e.g. `/conf/uxp/settings/wcm/templates/plan-details`) identifies what kind of page it is.
+
+Declare each (page-shell, template) pairing in `aem-page-components.json` (override via `AEM_PAGE_COMPONENTS_FILE`). Two modes are supported and can coexist:
+
+**Explicit list:**
+
+```json
+{
+  "uxp/components/structure/page": {
+    "templates": [
+      "/conf/uxp/settings/wcm/templates/plan-details",
+      "/conf/uxp/settings/wcm/templates/news-article"
+    ]
+  }
+}
+```
+
+**Auto-discover from extracted content:**
+
+```json
+{
+  "uxp/components/structure/page": {
+    "discover": true
+  }
+}
+```
+
+With `discover: true`, `migrate:schema` scans `output/cache/raw/*.json` (populated by `aem-extract`) for distinct `cq:template` values on `jcr:content` nodes whose `sling:resourceType` matches the declared page-shell, and emits one doc type per discovered template. First-ever schema run with no extracted content yet logs a hint to run `extract` first; the natural pipeline order (`extract` → `migrate:schema`, which the chained `migrate` script already enforces) makes this transparent on subsequent runs. Explicit templates and `discover: true` can be combined — discovered values are appended to the explicit list, deduplicated.
+
+The page-shell `sling:resourceType` must also appear in `aem-component-paths` so its dialog is fetched and emitted as a Sanity object type — that object becomes the inline `pageProperties` field on the document types described below.
+
+**Schema** — For every (resourceType, template) pair, the emitter renders one Sanity *document* type (`planDetailsPage.ts`, `newsArticlePage.ts`, …). Naming follows the same camelCase + reserved-name-prefix rules used for components (`templatePathToTypeName` in `template-pages.ts`, taking the segment after `/templates/` and suffixing `Page`). Each rendered document type carries:
+
+- `title` (required string)
+- `slug` (slug)
+- `tags` (array of category references; same pattern as the generic `page` doc)
+- `pageProperties` — inline object typed against the page-shell's Sanity object, so the Studio shows the dialog fields directly on the document
+- `featuredImage` (image, lifted from `jcr:content/cq:featuredimage`)
+- `cqTemplate` (read-only / hidden string, retained for traceability)
+- `pageBuilder` (the standard page-builder array)
+
+The page-shell object itself is automatically excluded from `pageBuilder.of[]` — it belongs on `jcr:content`, not in the body, so it never appears in the "+ Add" menu.
+
+**Manifest** — `migrate:schema` writes `output/cache/page-templates.json` with one entry per pair (`{pageComponentResourceType, pageComponentSanityType, cqTemplate, sanityType, sanityTitle}`). `aem-transform` reads this manifest to route each raw page to the right `_type`.
+
+**Transform** — `derivePageProperties` in `packages/aem-to-sanity-content/src/transform.ts` lifts every authored value from `jcr:content` into `pageProperties`, applying the same camelCase rule as ordinary fields and the same coercion pipeline (`"true"` → `true`, HTML → Portable Text, etc.). `derivePageFeaturedImage` moves `cq:featuredimage/fileReference` into `fileReferenceAemPath` so `aem-assets` rewrites it to a Sanity asset ref the same way it does for fileupload widgets. The `JCR_CONTENT_BOOKKEEPING_KEYS` denylist drops replication-per-agent, versioning, and ContextHub plumbing that AEM writes onto `jcr:content` but which has no Sanity counterpart.
+
+**Audit** — Pages whose `jcr:content` carries a declared page-shell `sling:resourceType` but a *undeclared* `cq:template` fall back to the generic `_type: "page"` and surface as `unknownPageTemplates` findings in `transform-report.json`. Add the template to `aem-page-components.json` and re-run `migrate:schema` + `transform` + `import` to upgrade them.
+
+Missing / empty file → no per-template documents; every page uses the generic `page` doc (today's behavior). Fully backwards compatible.
+
 ## AEM tagfield (`cq/gui/components/coral/common/form/tagfield`)
 
 AEM tagfields multiselect from the canonical tag tree at `/content/cq:tags/<namespace>/...`. The migration maps them to **arrays of references to a `category` document type** that implements Sanity's [parent-child taxonomy pattern](https://www.sanity.io/docs/developer-guides/parent-child-taxonomy).

@@ -25,7 +25,18 @@ export interface EmitInput {
  * generated file is committable and diffable.
  */
 export async function emitSchemaFile(input: EmitInput): Promise<string> {
-  const { typeName, sourcePath, fields, groups } = input;
+  const { typeName, sourcePath, groups } = input;
+  // AEM authors sometimes give multiple dialog widgets the same `fieldLabel`
+  // (e.g. a page-shell that declares both `./cq:tags` and `./tags` with
+  // `fieldLabel="Tags"`). Sanity renders the title verbatim, so authors end
+  // up with two identically-labeled fields stacked in the Studio. Detect
+  // duplicates within each object and append the field name to all but the
+  // first — `"Tags"` becomes `"Tags (cqTags)"` / `"Tags (tags)"` etc. so
+  // each one is uniquely identifiable. Field NAMES are already unique
+  // (enforced by `dedupeFieldNames` in mapper.ts); this is purely a display
+  // tweak. Recurses into `array-of-object` so nested multifield items get
+  // the same treatment.
+  const fields = disambiguateDuplicateTitles(input.fields);
   const regenerateCommand = input.regenerateCommand ?? "pnpm migrate:schema";
   // Belt-and-suspenders: the preview row in Page Builder / array pickers
   // should always render as the component name, never "Untitled". Guarantee
@@ -55,6 +66,41 @@ ${fields.map((f) => renderField(f, 2)).join(",\n")}
 `;
 
   return prettier.format(src, { parser: "typescript" });
+}
+
+/**
+ * Append the field name to every duplicate `title` within a field list so
+ * the Studio can render distinct labels even when the AEM dialog used the
+ * same `fieldLabel` on multiple widgets. Recurses into `array-of-object`
+ * item fields. Pure — returns a new list without mutating the input.
+ *
+ * Heuristic for what counts as a duplicate: case-insensitive trimmed
+ * comparison of the resolved display title. A missing `title` falls back
+ * to the field's natural Studio rendering (title-cased name) — those are
+ * left alone, since the camelCased name itself already disambiguates them
+ * in the rendered title.
+ */
+export function disambiguateDuplicateTitles(
+  fields: SanityField[],
+): SanityField[] {
+  const counts = new Map<string, number>();
+  for (const f of fields) {
+    if (typeof f.title !== "string" || f.title.trim().length === 0) continue;
+    const key = f.title.trim().toLowerCase();
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return fields.map((f) => {
+    const recursed =
+      f.type === "array-of-object"
+        ? { ...f, itemFields: disambiguateDuplicateTitles(f.itemFields) }
+        : f;
+    if (typeof recursed.title !== "string" || recursed.title.trim().length === 0) {
+      return recursed;
+    }
+    const key = recursed.title.trim().toLowerCase();
+    if ((counts.get(key) ?? 0) <= 1) return recursed;
+    return { ...recursed, title: `${recursed.title.trim()} (${recursed.name})` };
+  });
 }
 
 export function resolveSchemaTitle(

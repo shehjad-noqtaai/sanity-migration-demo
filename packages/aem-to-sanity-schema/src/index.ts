@@ -56,3 +56,20 @@ export type {
   WritePageBuilderArtifactsOptions,
   WritePageBuilderArtifactsResult,
 } from "./pagebuilder.ts";
+export {
+  writeTemplatePageArtifacts,
+  templatePathToTypeName,
+  templatePathToTitle,
+} from "./template-pages.ts";
+export type {
+  TemplatePageManifest,
+  TemplatePageManifestEntry,
+  WriteTemplatePageArtifactsOptions,
+  WriteTemplatePageArtifactsResult,
+} from "./template-pages.ts";
+export {
+  discoverTemplates,
+  scanTemplatesFromRawDir,
+  mergeDiscoveredTemplates,
+} from "./template-discovery.ts";
+export type { DiscoveredTemplates } from "./template-discovery.ts";

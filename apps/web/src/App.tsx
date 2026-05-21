@@ -8,13 +8,24 @@ import type { PageDoc } from "./types.ts";
  * becomes the slug; `/` falls back to `home`. Trailing segments and
  * query strings are ignored. Listens to `popstate` so back/forward
  * updates the page without a hard reload.
+ *
+ * Page document types: the generic `page` is the fallback for tenants
+ * that don't declare page-shells; tenants with `aem-page-components.json`
+ * get per-template document types (e.g. `spaPageTemplatePage`,
+ * `planDetailsPage`). Filtering on `defined(pageBuilder)` matches both
+ * shapes without hard-coding a type list — anything that authors a
+ * page body is in scope, anything else (categories, assets, future
+ * non-page docs) is not.
  */
-const PAGE_QUERY = `*[_type == "page" && slug.current == $slug][0]{
+const PAGE_QUERY = `*[slug.current == $slug && defined(pageBuilder)][0]{
   _id,
   _type,
   title,
   slug,
-  pageBuilder
+  pageBuilder,
+  pageProperties,
+  featuredImage,
+  cqTemplate
 }`;
 
 function slugFromPath(pathname: string): string {

@@ -414,8 +414,27 @@ export type PageBlock =
 
 export interface PageDoc {
   _id: string;
-  _type: "page";
+  /**
+   * `"page"` for tenants using the generic fallback document, or one of
+   * the per-template names (e.g. `"spaPageTemplatePage"`,
+   * `"planDetailsPage"`) when the tenant declared page-shells in
+   * `aem-page-components.json`. The preview renders the same way
+   * regardless — the discriminant matters for Studio structure, not for
+   * frontend rendering.
+   */
+  _type: string;
   title?: string;
   slug?: { current: string };
   pageBuilder?: Array<PageBlock | UnknownBlock>;
+  /**
+   * Page-shell dialog values lifted from AEM `jcr:content` (e.g.
+   * `pageTitle`, `navTitle`, `pwaOrientation`, `disableCache`). Present
+   * only on per-template documents. Not rendered by the preview today,
+   * but available for `<title>` / nav / metadata wiring as the demo grows.
+   */
+  pageProperties?: Record<string, unknown>;
+  /** Lifted from AEM `jcr:content/cq:featuredimage`. Per-template docs only. */
+  featuredImage?: SanityImageRef;
+  /** Original AEM `cq:template` path; useful for debugging. */
+  cqTemplate?: string;
 }

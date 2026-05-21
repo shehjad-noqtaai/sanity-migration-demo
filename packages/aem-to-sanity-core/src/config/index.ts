@@ -12,3 +12,9 @@ export type {
   AuthoringHintConfig,
   LoadAuthoringHintConfigOptions,
 } from "./authoring-hints.ts";
+export { loadPageComponentConfig } from "./page-components.ts";
+export type {
+  PageComponentConfig,
+  PageComponentConfigEntry,
+  LoadPageComponentConfigOptions,
+} from "./page-components.ts";

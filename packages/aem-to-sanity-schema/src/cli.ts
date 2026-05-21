@@ -9,6 +9,7 @@ import {
   fetchInfinityJson,
   loadAuthoringHintConfig,
   loadContainerConfig,
+  loadPageComponentConfig,
   logStartupBanner,
   resolveConfig,
   startTimer,
@@ -17,6 +18,10 @@ import {
 } from "aem-to-sanity-core";
 import { migrateSchemas } from "./api.ts";
 import { scanSlotsFromRawDir } from "./slots.ts";
+import {
+  mergeDiscoveredTemplates,
+  scanTemplatesFromRawDir,
+} from "./template-discovery.ts";
 
 async function main(): Promise<void> {
   const timer = startTimer();
@@ -88,12 +93,58 @@ async function main(): Promise<void> {
     );
   }
 
+  // AEM page-shell components (the components used as `sling:resourceType`
+  // on `jcr:content`) paired with the `cq:template` paths each is authored
+  // under. For every (resourceType, template) pair the schema emitter
+  // writes one Sanity document type and the page-shell type is excluded
+  // from `pageBuilder.of[]`.
+  const pageComponentsFile = resolve(
+    process.env.AEM_PAGE_COMPONENTS_FILE ?? "./aem-page-components.json",
+  );
+  const declaredPageComponents = loadPageComponentConfig({ file: pageComponentsFile });
+  if (declaredPageComponents.size > 0) {
+    let templateCount = 0;
+    let discoverCount = 0;
+    for (const v of declaredPageComponents.values()) {
+      templateCount += v.templates.length;
+      if (v.discover) discoverCount++;
+    }
+    logger.info(
+      `Applied ${declaredPageComponents.size} page-component(s) (${templateCount} explicit template${templateCount === 1 ? "" : "s"}${discoverCount > 0 ? `, ${discoverCount} with auto-discover` : ""}) from ${pageComponentsFile}`,
+    );
+  }
+
+  const rawDir = join(config.outputDir, "cache", "raw");
+
+  // Template discovery — scan extracted raw content for `cq:template` values
+  // on declared page-shells that opted into `discover: true`. First-ever
+  // run has no raw/ yet and this returns empty; a second run after
+  // `aem-extract` picks up every template referenced in authored content.
+  // Discovered values merge with the explicit list (deduplicated, explicit
+  // first) and feed the same per-template doc emission path.
+  const pageComponents = (() => {
+    const anyDiscover = [...declaredPageComponents.values()].some((v) => v.discover);
+    if (!anyDiscover) return declaredPageComponents;
+    const discovered = scanTemplatesFromRawDir(rawDir, declaredPageComponents);
+    let discoveredCount = 0;
+    for (const set of discovered.values()) discoveredCount += set.size;
+    if (discoveredCount > 0) {
+      logger.info(
+        `Discovered ${discoveredCount} cq:template value(s) from ${rawDir} — emitting per-template doc types for each.`,
+      );
+    } else {
+      logger.info(
+        `Template discovery is enabled but no cq:template values found in ${rawDir}. Run \`pnpm extract\` first, then re-run migrate:schema.`,
+      );
+    }
+    return mergeDiscoveredTemplates(declaredPageComponents, discovered);
+  })();
+
   // Slot discovery — scan already-extracted AEM content for named-slot
   // child components (dialog-less nested components under a fixed JCR key,
   // e.g. media-paragraph.content). First-ever run has no raw/ yet and
   // this returns empty; a second run after `aem-extract` picks up every
   // slot referenced in authored content.
-  const rawDir = join(config.outputDir, "cache", "raw");
   const discoveredSlots = scanSlotsFromRawDir(rawDir);
   if (discoveredSlots.size > 0) {
     let slotCount = 0;
@@ -135,7 +186,7 @@ async function main(): Promise<void> {
       return parsed.data;
     });
 
-  const { report, reportFile } = await migrateSchemas({
+  const { report, reportFile, missingPageComponentPaths } = await migrateSchemas({
     componentPaths: filtered,
     fetcher,
     outputDir: config.outputDir,
@@ -147,6 +198,7 @@ async function main(): Promise<void> {
     containers,
     discoveredSlots,
     authoringHints,
+    pageComponents,
   });
 
   const s = report.summary();
@@ -166,6 +218,20 @@ async function main(): Promise<void> {
   logger.info(`Report:              ${c.dim(reportFile)}`);
   logger.info(`Elapsed:             ${c.dim(timer.elapsed())}`);
   logger.info(sep);
+
+  // Page-shells declared in `aem-page-components.json` but missing from
+  // `aem-component-paths` get dropped silently inside the template-pages
+  // emitter — its `logger.error` line is easy to miss in a long schema run.
+  // Surface them again at the end with the exact paths to add.
+  if (missingPageComponentPaths && missingPageComponentPaths.length > 0) {
+    logger.error(
+      `${missingPageComponentPaths.length} page-shell(s) skipped — declared in aem-page-components.json but missing from aem-component-paths. Add these lines and re-run migrate:schema:`,
+    );
+    for (const rt of missingPageComponentPaths) {
+      logger.error(`    /apps/${rt}`);
+    }
+    logger.info(sep);
+  }
 
   if (s.failures > 0) {
     const failures = report.results.filter(

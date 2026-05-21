@@ -220,7 +220,7 @@ SANITY_STUDIO_DATASET=production
 ## What's not automated yet
 
 - **`pathfield` → Sanity `reference`** — AEM path fields pass through as strings; document-reference resolution is deferred.
-- **Custom page document types** — one generic `page` doc is emitted. Hand-author `landingPage` / `productPage` types alongside (the generator won't overwrite files missing the `GENERATED` marker) and merge them into `allSchemaTypes`.
+- **Custom page document types** — the generic `page` doc is the fallback. For per-template document types (one Sanity type per `cq:template` with the page-shell dialog lifted as `pageProperties`), declare your page-shell components in `aem-page-components.json` — see `docs/running-the-migration.md` § 1c-septies. Hand-authored doc types still work alongside: the generator won't overwrite files missing the `GENERATED` marker, so you can drop in a custom `landingPage` / `productPage` schema and it survives `migrate:schema` re-runs.
 - **CI publishing** — `changeset publish` is wired but not automated from GitHub Actions yet.
 
 See [`running-the-migration.md`](./running-the-migration.md#7-troubleshooting) for the troubleshooting table.
