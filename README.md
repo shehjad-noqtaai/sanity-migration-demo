@@ -235,3 +235,9 @@ pnpm -r test
 ```
 
 are the gates every change goes through.
+
+---
+
+## License
+
+[MIT](LICENSE) © 2026 Sanity.io
