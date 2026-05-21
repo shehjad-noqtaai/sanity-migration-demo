@@ -112,11 +112,9 @@ Phases 0–3 of `aem-assets` run with a work-stealing pool sized by `ASSET_CONCU
 
 The Studio edits `drafts.{id}` whenever one exists. `aem-import` by default only writes the published `{id}`, so a stale draft keeps shadowing fresh migration output — the operator sees old content after a "successful" re-import and gets confused. For migration re-runs, pass `--discard-drafts` (or set `MIGRATION_DISCARD_DRAFTS=true`). When diagnosing "I re-ran the import and nothing changed in the Studio", check for a shadowing draft first.
 
-## Storefront preview (apps/web)
+## Frontend lives in a separate repo
 
-A Vite + React 19 app lives at `apps/web/` that reads the migrated home doc from Sanity and renders its pageBuilder through a set of block primitives styled per `docs/DESIGN.md` (the "Ethereal Atelier" system). Use it to eyeball the output of a migration run end-to-end — `pnpm -F web dev` → http://localhost:4321. Env plumbing falls back to the first non-template tenant folder under `examples/` that has a `.env` (so the demo tracks whichever migration destination you have configured locally).
-
-Design tokens live in `apps/web/src/styles.css` under a Tailwind v4 `@theme` block. Block renderers are one-per-`_type` under `apps/web/src/blocks/`, wired through a switch-based dispatcher in `blocks/index.tsx`; unknown `_type`s fall through to a visible `UnknownBlock` placeholder so missing primitives surface immediately instead of rendering as blank space. When adding a new block type to the schema side, drop a primitive into this dispatcher in the same change so the preview stays usable.
+The Vite preview (`apps/web`) and Hydrogen storefront (`apps/storefront`) that render migrated content moved to [`aem-to-sanity-demo-web`](https://github.com/demo-repositories/aem-to-sanity-demo-web). When a schema change here adds a new block `_type`, the matching block primitive needs to land in that repo's `apps/web/src/blocks/` dispatcher — flag it in the PR description so the two repos stay in sync.
 
 ## Running verification
 

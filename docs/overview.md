@@ -30,21 +30,24 @@ Everything in this repo is a bridge between those two shapes.
 ## The pipeline — three stages plus a studio
 
 ```
- AEM author/publish            aem-to-sanity pipeline              Sanity
-┌──────────────────┐          ┌───────────────────────┐          ┌──────────┐
-│ _cq_dialog       │──(1)──▶  │ migrate:schema        │──emits──▶│ Studio   │
-│ .infinity.json   │          │   → output/schemas/*.ts          │ (validates
-│                  │          │   → pageBuilder.ts / page.ts     │  schemas) │
-│                  │          │   → content-type-registry.json   │           │
-├──────────────────┤          ├───────────────────────┤          ├──────────┤
-│ (same schemas)   │──(2)──▶  │ typegen               │──emits──▶│ typed    │
-│                  │          │   → output/sanity.types.ts       │ GROQ     │
-├──────────────────┤          ├───────────────────────┤          ├──────────┤
-│ /content/...     │──(3)──▶  │ extract → transform   │──writes─▶│ docs via │
-│ .infinity.json   │          │   → assets → import   │          │ client   │
-│ (depth-truncated)│          │   (dry-run by default)           │           │
-└──────────────────┘          └───────────────────────┘          └──────────┘
+ AEM author/publish            aem-to-sanity pipeline              Sanity                Frontend (separate repo)
+┌──────────────────┐          ┌───────────────────────┐          ┌──────────┐         ┌────────────────────────┐
+│ _cq_dialog       │──(1)──▶  │ migrate:schema        │──emits──▶│ Studio   │         │ aem-to-sanity-demo-web │
+│ .infinity.json   │          │   → output/schemas/*.ts          │ (validates          │                        │
+│                  │          │   → pageBuilder.ts / page.ts     │  schemas) │         │ Vite preview + Hydrogen│
+│                  │          │   → content-type-registry.json   │           │         │ storefront — consumes  │
+├──────────────────┤          ├───────────────────────┤          ├──────────┤         │ migrated docs via GROQ │
+│ (same schemas)   │──(2)──▶  │ typegen               │──emits──▶│ typed    │         │                        │
+│                  │          │   → output/sanity.types.ts       │ GROQ     │ ──────▶ │ (out of scope here,    │
+├──────────────────┤          ├───────────────────────┤          ├──────────┤  GROQ   │  but part of the       │
+│ /content/...     │──(3)──▶  │ extract → tags        │──writes─▶│ docs via │         │  migration story)      │
+│ .infinity.json   │          │   → transform         │          │ client   │         │                        │
+│ /content/dam/... │          │   → assets → import   │          │ + ML     │         │                        │
+│ (depth-truncated)│          │   (dry-run by default)           │          │         │                        │
+└──────────────────┘          └───────────────────────┘          └──────────┘         └────────────────────────┘
 ```
+
+The frontend that renders migrated content lives in a separate repo: [`aem-to-sanity-demo-web`](https://github.com/demo-repositories/aem-to-sanity-demo-web). This repo (`aem-to-sanity`) is the **migration toolkit** end of the boundary; the demo repo is the **downstream consumer**.
 
 **Stage 1 — Schema generation** (`packages/aem-to-sanity-schema`)
 Reads the component paths in `aem-component-paths`, fetches each dialog's `.infinity.json`, walks the Granite UI tree, and emits one Sanity object type per component using a deterministic resource-type → Sanity-type mapping table. Also emits a `pageBuilder` array type (every emitted block registered in `of: [...]`), a minimal `page` document type, a barrel `index.ts`, and a `content-type-registry.json` that stage 3 consumes.
@@ -65,8 +68,7 @@ Drift findings (unknown resource types, unknown props per mapped component, tran
 **Studio app** (`apps/studio`)
 A real Sanity Studio. `apps/studio/schemas/index.ts` re-exports `allSchemaTypes` from `examples/<your-tenant>/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import. It's a consumer test — if emitted schemas break `sanity schema validate`, this is where it surfaces.
 
-**Storefront preview** (`apps/web`)
-A Vite + React 19 app that reads the migrated home doc and renders its pageBuilder through a set of block primitives styled per `docs/DESIGN.md`. Mirrors the `hydrogen-sanity` data pattern — when this graduates into a full Shopify + Hydrogen storefront, the renderers + Portable Text setup carry over unchanged. Run with `pnpm -F web dev`.
+**Frontend (separate repo).** Demo storefronts that render migrated content live in [`aem-to-sanity-demo-web`](https://github.com/demo-repositories/aem-to-sanity-demo-web) — a Vite + React 19 preview and a Hydrogen (Shopify + Remix) skeleton. Out of scope for this repo, but part of the broader migration story; new block primitives there track new schemas emitted here.
 
 ---
 
@@ -90,6 +92,7 @@ aem-migration/
 │   └── aem-to-sanity-content/    extract / transform / assets / import CLIs
 ├── apps/
 │   └── studio/                   example Sanity Studio consuming emitted schemas
+│                                 (Frontend apps moved to aem-to-sanity-demo-web — separate repo)
 ├── examples/
 │   ├── tenant/                   committed template — copy to start a new migration
 │   └── <your-tenant>/            operator working copy (gitignored): env, path lists, pnpm scripts, output/
