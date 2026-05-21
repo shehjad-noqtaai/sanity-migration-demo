@@ -11,6 +11,7 @@
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
+    "prepare": "tsx scripts/ensure-studio-stub.ts",
     "migrate:schema": "turbo run migrate:schema",
     "migrate:content": "turbo run migrate:content",
     "migrate:init": "tsx scripts/migrate-init.ts",
