@@ -242,7 +242,7 @@ importers:
         specifier: ^6.0.0
         version: 6.4.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
 
-  examples/dummy-from-tenant:
+  examples/davids-bridal:
     devDependencies:
       aem-to-sanity-content:
         specifier: workspace:*
