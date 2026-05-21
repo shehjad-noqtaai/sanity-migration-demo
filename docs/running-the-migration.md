@@ -65,7 +65,7 @@ cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | optional | File listing `sling:resourceType` values to skip during transform. Default: `./aem-component-exceptions`. |
 | `AEM_COMPONENT_CONTAINERS_FILE` | optional | JSON file mapping `sling:resourceType` → `{ childrenField }` for AEM container components whose drop-zone children should become a nested `pageBuilder` array. Default: `./aem-component-containers.json`. Missing file → no container behavior. |
 | `AEM_COMPONENT_HINTS_FILE` | optional | JSON file mapping `sling:resourceType` → `["cq:hintKey", …]`, opting individual components into AEM authoring-hint lifting (e.g. `cq:panelTitle` on accordion children). Default: `./aem-component-hints.json`. Missing file → no hint behavior. See § 1c-quinquies. |
-| `AEM_PAGE_COMPONENTS_FILE` | optional | JSON file declaring page-shell components and the `cq:template` paths each is authored under. Each (resourceType, template) pair becomes one Sanity document type; the page-shell dialog becomes the doc's `pageProperties` field. Default: `./aem-page-components.json`. Missing file → no per-template docs (every page falls back to the generic `page` type). See § 1c-septies. |
+| `AEM_PAGE_COMPONENTS_FILE` | optional | JSON file declaring page-shell components and the `cq:template` paths each is authored under (either listed explicitly via `"templates": [...]` or auto-discovered from extracted content via `"discover": true`). Each (resourceType, template) pair becomes one Sanity document type; the page-shell dialog becomes the doc's `pageProperties` field. Default: `./aem-page-components.json`. Missing file → no per-template docs (every page falls back to the generic `page` type). See § 1c-septies. |
 | `AEM_MAX_RESPONSE_MB` | optional | Cap per-fetch payload size during extract. Pages exceeding this are recorded as `tooLarge` failures. |
 | `MIGRATION_DOC_ID_PREFIX_STRIP` | optional | `aem-transform` only. Path prefix(es) to strip from JCR paths before deriving Sanity document `_id`s. Typical value is the `@base` from `aem-content-roots` (e.g. `/content/uxp/us/en`). Multiple prefixes allowed comma-separated; longest match wins. Without this, `_id`s carry the full path (`content-uxp-us-en-customer-support-plans-...`). With it, you get the page-relative form (`customer-support-plans-...`). Changing this between runs orphans previously imported docs — set once, leave alone. |
 | `OUTPUT_DIR` | optional | Where schemas, reports, and audit live. Default: `./output`. |
@@ -247,6 +247,29 @@ Declare those pairings here so each (page-component, template) combination becom
       "/conf/uxp/settings/wcm/templates/news-article",
       "/conf/uxp/settings/wcm/templates/landing-page"
     ]
+  }
+}
+```
+
+**Auto-discovery.** Listing every template by hand is tedious for tenants with many of them. Set `"discover": true` instead, and `migrate:schema` scans `output/cache/raw/` (extracted content) to enumerate every `cq:template` value found on `jcr:content` nodes matching the declared page-shell resource type:
+
+```json
+{
+  "uxp/components/structure/page": {
+    "discover": true
+  }
+}
+```
+
+Because discovery reads from already-extracted content, the natural order is `extract` → `migrate:schema` (the chained `migrate` script already runs them in this order). On a brand-new tenant the first `migrate:schema` finds no raw content and logs a hint to run `extract` first — re-running schema picks up everything on the second pass.
+
+Both forms can coexist: explicit `templates` pin known names, `discover: true` auto-adds new ones as they appear in content:
+
+```json
+{
+  "uxp/components/structure/page": {
+    "templates": ["/conf/uxp/settings/wcm/templates/plan-details"],
+    "discover": true
   }
 }
 ```

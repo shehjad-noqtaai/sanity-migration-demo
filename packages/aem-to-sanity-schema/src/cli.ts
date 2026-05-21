@@ -18,6 +18,10 @@ import {
 } from "aem-to-sanity-core";
 import { migrateSchemas } from "./api.ts";
 import { scanSlotsFromRawDir } from "./slots.ts";
+import {
+  mergeDiscoveredTemplates,
+  scanTemplatesFromRawDir,
+} from "./template-discovery.ts";
 
 async function main(): Promise<void> {
   const timer = startTimer();
@@ -97,21 +101,50 @@ async function main(): Promise<void> {
   const pageComponentsFile = resolve(
     process.env.AEM_PAGE_COMPONENTS_FILE ?? "./aem-page-components.json",
   );
-  const pageComponents = loadPageComponentConfig({ file: pageComponentsFile });
-  if (pageComponents.size > 0) {
+  const declaredPageComponents = loadPageComponentConfig({ file: pageComponentsFile });
+  if (declaredPageComponents.size > 0) {
     let templateCount = 0;
-    for (const v of pageComponents.values()) templateCount += v.templates.length;
+    let discoverCount = 0;
+    for (const v of declaredPageComponents.values()) {
+      templateCount += v.templates.length;
+      if (v.discover) discoverCount++;
+    }
     logger.info(
-      `Applied ${pageComponents.size} page-component(s) (${templateCount} template${templateCount === 1 ? "" : "s"}) from ${pageComponentsFile}`,
+      `Applied ${declaredPageComponents.size} page-component(s) (${templateCount} explicit template${templateCount === 1 ? "" : "s"}${discoverCount > 0 ? `, ${discoverCount} with auto-discover` : ""}) from ${pageComponentsFile}`,
     );
   }
+
+  const rawDir = join(config.outputDir, "cache", "raw");
+
+  // Template discovery — scan extracted raw content for `cq:template` values
+  // on declared page-shells that opted into `discover: true`. First-ever
+  // run has no raw/ yet and this returns empty; a second run after
+  // `aem-extract` picks up every template referenced in authored content.
+  // Discovered values merge with the explicit list (deduplicated, explicit
+  // first) and feed the same per-template doc emission path.
+  const pageComponents = (() => {
+    const anyDiscover = [...declaredPageComponents.values()].some((v) => v.discover);
+    if (!anyDiscover) return declaredPageComponents;
+    const discovered = scanTemplatesFromRawDir(rawDir, declaredPageComponents);
+    let discoveredCount = 0;
+    for (const set of discovered.values()) discoveredCount += set.size;
+    if (discoveredCount > 0) {
+      logger.info(
+        `Discovered ${discoveredCount} cq:template value(s) from ${rawDir} — emitting per-template doc types for each.`,
+      );
+    } else {
+      logger.info(
+        `Template discovery is enabled but no cq:template values found in ${rawDir}. Run \`pnpm extract\` first, then re-run migrate:schema.`,
+      );
+    }
+    return mergeDiscoveredTemplates(declaredPageComponents, discovered);
+  })();
 
   // Slot discovery — scan already-extracted AEM content for named-slot
   // child components (dialog-less nested components under a fixed JCR key,
   // e.g. media-paragraph.content). First-ever run has no raw/ yet and
   // this returns empty; a second run after `aem-extract` picks up every
   // slot referenced in authored content.
-  const rawDir = join(config.outputDir, "cache", "raw");
   const discoveredSlots = scanSlotsFromRawDir(rawDir);
   if (discoveredSlots.size > 0) {
     let slotCount = 0;

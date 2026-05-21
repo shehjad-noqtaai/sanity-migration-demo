@@ -67,3 +67,9 @@ export type {
   WriteTemplatePageArtifactsOptions,
   WriteTemplatePageArtifactsResult,
 } from "./template-pages.ts";
+export {
+  discoverTemplates,
+  scanTemplatesFromRawDir,
+  mergeDiscoveredTemplates,
+} from "./template-discovery.ts";
+export type { DiscoveredTemplates } from "./template-discovery.ts";

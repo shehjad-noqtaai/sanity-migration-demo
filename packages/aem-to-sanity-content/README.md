@@ -163,6 +163,18 @@ AEM stores page-level dialog values on the page's `jcr:content` node, and a sibl
 }
 ```
 
+Or, instead of listing every template by hand, let the schema pass discover them from extracted content:
+
+```json
+{
+  "uxp/components/structure/page": {
+    "discover": true
+  }
+}
+```
+
+With `discover: true`, `migrate:schema` walks `output/cache/raw/*.json` to enumerate every `cq:template` value on matching `jcr:content` nodes — so the doc-type list grows automatically as new templates appear in your AEM content. Explicit `templates` and `discover: true` can coexist (discovered values append to the explicit list, deduplicated).
+
 `migrate:schema` emits one Sanity document type per (resourceType, template) pair (`planDetailsPage`, `newsArticlePage`, …) and writes an `output/cache/page-templates.json` manifest. `aem-transform` reads that manifest and, for each raw page whose `jcr:content` matches a declared pair, emits a document with:
 
 - `_type` set to the per-template doc type (e.g. `"planDetailsPage"`).

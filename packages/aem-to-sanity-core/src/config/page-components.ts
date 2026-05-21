@@ -33,8 +33,28 @@ import { readFileSync } from "node:fs";
  * Override the file path via the `AEM_PAGE_COMPONENTS_FILE` env var.
  */
 export interface PageComponentConfigEntry {
-  /** One or more `cq:template` paths this page-shell is used with. */
+  /**
+   * Explicit `cq:template` paths this page-shell is used with. Each entry
+   * here becomes one Sanity document type at `migrate:schema` time.
+   *
+   * Optional when {@link discover} is `true` — the schema pass scans
+   * `output/cache/raw/` (extracted content) and auto-adds any templates it
+   * finds on `jcr:content` nodes whose `sling:resourceType` matches this
+   * entry. Listing some explicitly + setting `discover: true` is allowed
+   * (and useful for nailing down known templates while still picking up
+   * new ones automatically).
+   */
   templates: ReadonlyArray<string>;
+  /**
+   * Auto-discover templates by scanning extracted raw content for distinct
+   * `cq:template` values on `jcr:content` nodes that carry this entry's
+   * resource type. Requires `aem-extract` to have populated
+   * `output/cache/raw/` first — first-run schema with `discover: true` and
+   * no explicit `templates` emits nothing and logs a hint to run extract.
+   *
+   * Default: false.
+   */
+  discover?: boolean;
 }
 
 export type PageComponentConfig = Map<string, PageComponentConfigEntry>;
@@ -84,15 +104,16 @@ export function loadPageComponentConfig(
       );
     }
     const v = value as Record<string, unknown>;
-    const templates = v.templates;
-    if (!Array.isArray(templates) || templates.length === 0) {
+    const rawTemplates = v.templates;
+    const discover = v.discover === true;
+    if (rawTemplates !== undefined && !Array.isArray(rawTemplates)) {
       throw new Error(
-        `page-components config: entry for "${resourceType}" needs a non-empty templates array`,
+        `page-components config: entry for "${resourceType}" — "templates" must be an array when set`,
       );
     }
     const list: string[] = [];
     const seen = new Set<string>();
-    for (const t of templates) {
+    for (const t of (rawTemplates ?? []) as unknown[]) {
       if (typeof t !== "string" || t.trim().length === 0) {
         throw new Error(
           `page-components config: entry for "${resourceType}" has a non-string / empty template path`,
@@ -103,7 +124,12 @@ export function loadPageComponentConfig(
       seen.add(trimmed);
       list.push(trimmed);
     }
-    out.set(resourceType, { templates: list });
+    if (list.length === 0 && !discover) {
+      throw new Error(
+        `page-components config: entry for "${resourceType}" needs either a non-empty "templates" array or "discover": true (or both)`,
+      );
+    }
+    out.set(resourceType, discover ? { templates: list, discover: true } : { templates: list });
   }
   return out;
 }

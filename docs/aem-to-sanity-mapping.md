@@ -184,7 +184,9 @@ The migrator handles this in two layers — a global rename vocabulary and a per
 
 AEM stores page-level dialog values on the `jcr:content` node of each authored page. The node's own `sling:resourceType` points at a "page" component (e.g. `/apps/uxp/components/structure/page`) whose `cq:dialog` defines properties like `pwaOrientation`, `disableCache`, `pinPage`, and a sibling `cq:template` (e.g. `/conf/uxp/settings/wcm/templates/plan-details`) identifies what kind of page it is.
 
-Declare each (page-shell, template) pairing in `aem-page-components.json` (override via `AEM_PAGE_COMPONENTS_FILE`):
+Declare each (page-shell, template) pairing in `aem-page-components.json` (override via `AEM_PAGE_COMPONENTS_FILE`). Two modes are supported and can coexist:
+
+**Explicit list:**
 
 ```json
 {
@@ -196,6 +198,18 @@ Declare each (page-shell, template) pairing in `aem-page-components.json` (overr
   }
 }
 ```
+
+**Auto-discover from extracted content:**
+
+```json
+{
+  "uxp/components/structure/page": {
+    "discover": true
+  }
+}
+```
+
+With `discover: true`, `migrate:schema` scans `output/cache/raw/*.json` (populated by `aem-extract`) for distinct `cq:template` values on `jcr:content` nodes whose `sling:resourceType` matches the declared page-shell, and emits one doc type per discovered template. First-ever schema run with no extracted content yet logs a hint to run `extract` first; the natural pipeline order (`extract` → `migrate:schema`, which the chained `migrate` script already enforces) makes this transparent on subsequent runs. Explicit templates and `discover: true` can be combined — discovered values are appended to the explicit list, deduplicated.
 
 The page-shell `sling:resourceType` must also appear in `aem-component-paths` so its dialog is fetched and emitted as a Sanity object type — that object becomes the inline `pageProperties` field on the document types described below.
 
