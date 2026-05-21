@@ -9,17 +9,16 @@ Every user-facing change must update its documentation in the same commit. Drift
 **Doc surface to scan on every user-facing change:**
 - `README.md` (root) — high-level overview.
 - `packages/*/README.md` — per-package surface (flags, env vars, phases, outputs).
-- `docs/run.md` — short operator's runbook.
-- `docs/running-the-migration.md` — exhaustive operator's guide (env vars table, per-stage flag tables, troubleshooting).
+- `docs/running-the-migration.md` — canonical operator's guide (env vars table, per-stage flag tables, troubleshooting).
 - `docs/overview.md` — architecture + layout.
 - `docs/aem-to-sanity-mapping.md` — **auto-generated** by `packages/aem-to-sanity-schema/src/docs.ts`. Do not edit by hand; regenerate.
 - `examples/tenant/.env.example` — must list every env var a CLI reads. `examples/tenant/` is the **committed template**; operator working copies live at `examples/<their-tenant>/` and are gitignored.
 
 **Triggers:**
-- **New CLI flag** → update the package README + the stage section in `docs/running-the-migration.md` + the short summary in `docs/run.md` + `.env.example` if there's a matching env var.
+- **New CLI flag** → update the package README + the stage section in `docs/running-the-migration.md` + `.env.example` if there's a matching env var.
 - **New env var** → update the env-vars table in `docs/running-the-migration.md` § 1a + `.env.example`.
 - **Emitter / mapper behavior change** → update `packages/aem-to-sanity-schema/src/docs.ts` (prose that lands in the generated mapping doc) + regenerate `docs/aem-to-sanity-mapping.md`.
-- **Pipeline phase / output shape change** → update the "Outputs" subsections in `docs/running-the-migration.md` § 2 and § 4, and `docs/run.md`.
+- **Pipeline phase / output shape change** → update the "Outputs" subsections in `docs/running-the-migration.md` § 2 and § 4.
 - **Mapping table change** (`packages/aem-to-sanity-schema/src/mapping-table.ts`) → rerun `pnpm migrate:schema` so `docs/aem-to-sanity-mapping.md` regenerates from the source of truth. `writeMappingDocs` can also be called standalone from the schema package's `dist/index.js` (no AEM round-trip needed).
 - **Container config shape change** (`packages/aem-to-sanity-core/src/config/containers.ts` or `aem-component-containers.json` fields) → update the "Container components" section in `packages/aem-to-sanity-schema/src/docs.ts`, regenerate `docs/aem-to-sanity-mapping.md`, and mirror in `docs/running-the-migration.md` § 1c-quater + content package README.
 - **Slot discovery shape change** (`packages/aem-to-sanity-schema/src/slots.ts` behavior, `slot-reference` field emission rules) → update the "Named slots (auto-discovered)" section in `packages/aem-to-sanity-schema/src/docs.ts`, regenerate the mapping doc, and mirror in `docs/running-the-migration.md` § 2 + content package README.
@@ -95,7 +94,7 @@ AEM's JCR is schemaless on dialog inputs — `.infinity.json` serializes every a
 1. Extend `coerceScalarFields` (or `coerceRichTextFields` if shape-heavy) in `packages/aem-to-sanity-content/src/transform.ts`.
 2. Keep the **keep-original-on-failure** contract. Unrecognized values should surface as Studio validation errors, not silent data loss.
 3. Document it in the generated mapping doc — add prose under the "Type-aware coercion at transform" section in `packages/aem-to-sanity-schema/src/docs.ts`, then regenerate `docs/aem-to-sanity-mapping.md`.
-4. Update the mirror blurbs in `packages/aem-to-sanity-content/README.md`, `docs/running-the-migration.md` § 4b, and `docs/run.md` § 4b.
+4. Update the mirror blurbs in `packages/aem-to-sanity-content/README.md` and `docs/running-the-migration.md` § 4b.
 
 If the issue is actually a wrong Sanity type (not a coercion gap), fix it at the schema emitter layer — check that the dialog's `sling:resourceType` is mapped correctly in `packages/aem-to-sanity-schema/src/mapping-table.ts`. Don't paper over schema-layer bugs with per-field coercion in the transform.
 
