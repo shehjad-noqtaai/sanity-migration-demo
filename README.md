@@ -18,16 +18,21 @@ Sanity expects TypeScript `defineType` / `defineField` schemas and JSON document
 **This repo is the bridge.** Two stages plus a content pipeline:
 
 ```
- AEM author/publish               aem-to-sanity                       Sanity
-┌──────────────────┐          ┌────────────────────┐          ┌────────────────┐
-│ _cq_dialog       │── (1) ──▶│ migrate:schema     │── emits ▶│ Studio schemas │
-│ .infinity.json   │          │  + typegen         │          │ + sanity.types │
-├──────────────────┤          ├────────────────────┤          ├────────────────┤
-│ /content/...     │── (2) ──▶│ extract → tags     │── writes▶│ documents      │
-│ .infinity.json   │          │  → transform       │          │ in dataset     │
-│ /content/dam/... │          │  → assets → import │── uploads▶ Media Library  │
-└──────────────────┘          └────────────────────┘          └────────────────┘
+ AEM author/publish               aem-to-sanity                       Sanity                Frontend (separate repo)
+┌──────────────────┐          ┌────────────────────┐          ┌────────────────┐         ┌────────────────────────┐
+│ _cq_dialog       │── (1) ──▶│ migrate:schema     │── emits ▶│ Studio schemas │         │ aem-to-sanity-demo-web │
+│ .infinity.json   │          │  + typegen         │          │ + sanity.types │         │                        │
+├──────────────────┤          ├────────────────────┤          ├────────────────┤───────▶ │ apps/web (Vite)        │
+│ /content/...     │── (2) ──▶│ extract → tags     │── writes▶│ documents      │  GROQ   │ apps/storefront        │
+│ .infinity.json   │          │  → transform       │          │ in dataset     │         │  (Hydrogen)            │
+│ /content/dam/... │          │  → assets → import │── uploads▶ Media Library  │         │                        │
+└──────────────────┘          └────────────────────┘          └────────────────┘         └────────────────────────┘
+                                                                                          (downstream consumer —
+                                                                                           out of scope here, but
+                                                                                           part of the migration story)
 ```
+
+The frontend that renders migrated content lives in a separate repo, [`aem-to-sanity-demo-web`](https://github.com/demo-repositories/aem-to-sanity-demo-web). This repo is the **migration toolkit**; that one is the **demo storefront** that consumes its output.
 
 Every artifact has a content-derived identity (JCR path → `_id`, JCR UUID → `_key`, DAM path → manifest key), so **re-runs converge instead of duplicating**.
 
@@ -93,9 +98,8 @@ aem-to-sanity/
 │   └── aem-to-sanity-content/         extract → tags → transform → assets → import CLIs
 │
 ├── apps/                              Local apps consuming the pipeline output
-│   ├── studio/                        Sanity Studio — loads emitted schemas; visual verification
-│   ├── web/                           Vite + React 19 preview — renders migrated pageBuilder
-│   └── storefront/                    Hydrogen (Shopify + Remix) — future commerce frontend
+│   └── studio/                        Sanity Studio — loads emitted schemas; visual verification
+│                                      (Frontend apps moved to aem-to-sanity-demo-web — separate repo)
 │
 ├── examples/                          Per-tenant working folders
 │   ├── tenant/                        Committed template (copy this to start a new migration)
@@ -117,7 +121,6 @@ aem-to-sanity/
 │   ├── overview.md                    Architecture + repo layout (single page)
 │   ├── running-the-migration.md       Canonical operator's runbook
 │   ├── aem-to-sanity-mapping.md       (auto-generated) AEM ↔ Sanity field-level mapping
-│   ├── DESIGN.md                      Design system for apps/web
 │   └── …                              (refactor plans, mapping reviews — historical context)
 │
 ├── CLAUDE.md                          Project-level guidance for AI assistants
@@ -164,8 +167,7 @@ Five CLIs (`aem-extract`, `aem-tags`, `aem-transform`, `aem-assets`, `aem-import
 | App | Purpose |
 |---|---|
 | [`apps/studio`](apps/studio/) | Sanity Studio that loads the migrated schemas from `apps/studio/schemas/generated/`. Used for visual verification and content editing post-migration. |
-| [`apps/web`](apps/web/README.md) | Vite + React 19 preview that reads the migrated home doc and renders its `pageBuilder` through block primitives — see [`docs/DESIGN.md`](docs/DESIGN.md). |
-| [`apps/storefront`](apps/storefront/README.md) | Hydrogen (Shopify + Remix) skeleton — future commerce frontend that will replace `apps/web`. |
+| **Frontend (separate repo)** | Demo storefronts that consume migrated content live in [`aem-to-sanity-demo-web`](https://github.com/demo-repositories/aem-to-sanity-demo-web) — a Vite + React 19 preview and a Hydrogen (Shopify + Remix) skeleton. Out of scope here, but part of the broader migration story. |
 
 ---
 
@@ -177,7 +179,6 @@ Five CLIs (`aem-extract`, `aem-tags`, `aem-transform`, `aem-assets`, `aem-import
 | [`docs/overview.md`](docs/overview.md) | Architecture, design principles, minimum commands — one page. |
 | [`docs/running-the-migration.md`](docs/running-the-migration.md) | Operator's runbook — every env var, every flag, per-stage outputs, troubleshooting. |
 | [`docs/aem-to-sanity-mapping.md`](docs/aem-to-sanity-mapping.md) | Auto-generated field-level mapping (AEM Granite UI ↔ Sanity types). |
-| [`docs/DESIGN.md`](docs/DESIGN.md) | Design system for the `apps/web` preview. |
 | Per-package READMEs | API contracts, flag tables, output shapes for each runtime package. |
 | [`CLAUDE.md`](CLAUDE.md) | Project conventions for AI assistants (and a useful map for new contributors). |
 

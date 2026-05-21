@@ -239,7 +239,13 @@ Three columns. Each column is a zone box with a label at the top and 2–6 small
 - Card: `Media Library` · annotation: `org-scoped, asset binaries`
 - Card: `Dataset` · annotation: `project-scoped, drafts + published, categories + per-template docs`
 - Card: `Studio` · annotation: `apps/studio reads generated schemas`
-- Card: `Web preview` · annotation: `apps/web queries dataset`
+
+#### Zone 4 — Frontend (far right, out-of-scope band)
+
+- Zone label: `Frontend` · sublabel: `out of scope — separate repo`
+- Card: `aem-to-sanity-demo-web` · annotation: `Vite preview + Hydrogen storefront`
+
+Style this zone visually as **out-of-scope** (dashed border, muted color, or a separator gap between Zone 3 and Zone 4) to make the boundary obvious. The point is that the frontend is part of the broader migration story but lives in a different repo and is not covered by this toolkit.
 
 ### Arrows (six flows)
 
@@ -272,7 +278,7 @@ Render each as a small arrow with the **stage name** above and a one-phrase capt
 ### Two extra connectors (smaller, dashed style if the design system supports it)
 
 - **`apps/studio/schemas/generated/*` → Studio** — caption: `loaded by Sanity build`
-- **Dataset → Web preview** — caption: `GROQ queries`
+- **Dataset → `aem-to-sanity-demo-web` (out of scope)** — caption: `GROQ queries · separate repo`
 
 ### Footer
 
@@ -318,7 +324,7 @@ After applying the edits:
 8. Slide 4's "One step at a time" row includes `pnpm --filter <tenant> tags` between `extract` and `transform`.
 9. Slide 5 has a tags-specific card with `output/cache/tags-report.json` + `categories/manifest.json`.
 10. Slide 6 Card 04 (Determinism) mentions per-template doc types and `--recreate-on-type-change`.
-11. A new slide labelled `08 Architecture` (no body bullet lists) shows three zones (AEM · Local cache · Sanity) connected by six labelled arrows, with two dashed connectors (Studio loads schemas; Web preview reads dataset).
+11. A new slide labelled `08 Architecture` (no body bullet lists) shows three in-scope zones (AEM · Local cache · Sanity) connected by six labelled arrows, plus a visually-out-of-scope Zone 4 (Frontend) reached via a dashed connector that names `aem-to-sanity-demo-web` as the separate repo. The Studio loads schemas via the other dashed connector.
 12. `data-label`s in the deck-stage are sequential and updated: `01 Migration overview · 02 Asset migration · 03 Run modes · 04 Commands · 05 Logs & audit · 06 Implementation · 08 Architecture`. (The 07 slot is intentionally skipped — operator-facing labels track the seven pipeline steps; the architecture slide is bonus content.)
 13. The deck's literal `<title>`, every `data-label`, and every visible slide eyebrow / title / subtitle pair are consistent — no leftover references to "pipeline" as the deck's framing.
 
@@ -326,5 +332,6 @@ After applying the edits:
 
 ## Open items NOT covered by this update (track separately)
 
-- The Hydrogen storefront (`apps/storefront`) and Sanity Functions (`functions/auto-colorize`) are mentioned in `README.md` but not in the deck. Slide 6 Card 01 (Layout) could add them as a fourth bullet — out of scope for this update, but worth tracking.
+- The frontend apps (Vite preview and Hydrogen storefront) moved to a separate repo: [`aem-to-sanity-demo-web`](https://github.com/demo-repositories/aem-to-sanity-demo-web). The architecture slide flags them as out-of-scope (Zone 4, dashed connector). Don't re-introduce them as in-scope cards anywhere else in the deck.
+- Sanity Functions (`functions/auto-colorize`) are mentioned in `README.md` but not in the deck. Slide 6 Card 01 (Layout) could add them as a fourth bullet — out of scope for this update, but worth tracking.
 - The deck doesn't yet show **AEMaaCS Service Credentials** as the recommended auth flow. If you want auth coverage in the deck, add it to Slide 3 as a Mode card or to Slide 4 as a setup row.
