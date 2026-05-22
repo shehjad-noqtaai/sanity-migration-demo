@@ -21,8 +21,8 @@
  *     it (or `output/cache/`) before the next `aem-assets` run.
  *
  * Run:
- *   pnpm --filter example-<your-tenant> exec tsx ../../scripts/wipe-media-library.ts
- *   pnpm --filter example-<your-tenant> exec tsx ../../scripts/wipe-media-library.ts --confirm-delete
+ *   pnpm --filter tenant-<your-tenant> exec tsx ../../scripts/wipe-media-library.ts
+ *   pnpm --filter tenant-<your-tenant> exec tsx ../../scripts/wipe-media-library.ts --confirm-delete
  */
 import "dotenv/config";
 

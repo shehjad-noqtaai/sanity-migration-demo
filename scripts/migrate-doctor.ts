@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Detect drift between an operator tenant folder and examples/tenant/, plus
+ * Detect drift between an operator tenant folder and tenants/template/, plus
  * sanity-check the operator's .env against .env.example.
  *
  *   pnpm migrate:doctor <slug>          report only
@@ -13,10 +13,10 @@ import { join, relative } from "node:path";
 
 import {
   AEM_AUTH_FLOWS,
-  EXAMPLES_DIR,
   OPERATOR_FILES,
   TEMPLATE_DIR,
   TEMPLATE_FILES,
+  TENANTS_DIR,
   isMeaningfulValue,
   parseEnv,
   parseEnvExample,
@@ -180,7 +180,7 @@ function render(slug: string): number {
   const groups: Record<Severity, Finding[]> = { error: [], warn: [], info: [] };
   for (const f of findings) groups[f.severity].push(f);
 
-  const banner = `[migrate:doctor] examples/${slug}/`;
+  const banner = `[migrate:doctor] tenants/${slug}/`;
   if (groups.error.length === 0 && groups.warn.length === 0) {
     console.log(`${banner} — clean`);
     if (groups.info.length > 0) {
@@ -204,10 +204,10 @@ function render(slug: string): number {
 }
 
 function listTenants(): string[] {
-  if (!existsSync(EXAMPLES_DIR)) return [];
-  return readdirSync(EXAMPLES_DIR).filter((name) => {
-    if (name === "tenant") return false;
-    const path = join(EXAMPLES_DIR, name);
+  if (!existsSync(TENANTS_DIR)) return [];
+  return readdirSync(TENANTS_DIR).filter((name) => {
+    if (name === "template") return false;
+    const path = join(TENANTS_DIR, name);
     if (!statSync(path).isDirectory()) return false;
     return existsSync(join(path, "package.json"));
   });
@@ -233,7 +233,7 @@ function main(): void {
     findings.length = 0;
     const dir = tenantDir(slug);
     if (!existsSync(dir)) {
-      console.error(`[migrate:doctor] examples/${slug}/ does not exist`);
+      console.error(`[migrate:doctor] tenants/${slug}/ does not exist`);
       exitCode = Math.max(exitCode, 2);
       continue;
     }

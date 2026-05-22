@@ -64,21 +64,21 @@ pnpm install
 pnpm build
 
 # 1. Scaffold a tenant folder from the committed template
-pnpm migrate:init my-tenant
+pnpm migrate:init acme
 pnpm install
 
 # 2. Fill in credentials
-$EDITOR examples/my-tenant/.env       # AEM source + Sanity destination
+$EDITOR tenants/acme/.env       # AEM source + Sanity destination
 $EDITOR apps/studio/.env              # Sanity Studio project id
 
 # 3. Verify the tenant is wired up correctly
-pnpm migrate:doctor my-tenant
+pnpm migrate:doctor acme
 
 # 4. Dry-run the whole pipeline
-pnpm --filter example-my-tenant migrate
+pnpm --filter tenant-acme migrate
 
 # 5. Real write to Sanity
-MIGRATION_DRY_RUN=false pnpm --filter example-my-tenant migrate
+MIGRATION_DRY_RUN=false pnpm --filter tenant-acme migrate
 
 # 6. Open the Studio to verify
 pnpm --filter studio dev              # http://localhost:3333
@@ -101,7 +101,7 @@ aem-to-sanity/
 │   └── studio/                        Sanity Studio — loads emitted schemas; visual verification
 │                                      (Frontend apps moved to aem-to-sanity-demo-web — separate repo)
 │
-├── examples/                          Per-tenant working folders
+├── tenants/                          Per-tenant working folders
 │   ├── tenant/                        Committed template (copy this to start a new migration)
 │   ├── davids-bridal/                 (gitignored) operator working copy
 │   └── t-mobile/                      (gitignored) operator working copy
@@ -110,7 +110,7 @@ aem-to-sanity/
 │   └── auto-colorize/
 │
 ├── scripts/                           Repo-wide tooling
-│   ├── migrate-init.ts                Scaffold a new tenant from examples/tenant/
+│   ├── migrate-init.ts                Scaffold a new tenant from tenants/template/
 │   ├── migrate-doctor.ts              Detect tenant drift + auto-repair package.json scripts
 │   ├── aem-probe.ts                   Resolve a single AEM dialog (supertype chain) without running the full migrator
 │   ├── wipe-media-library.ts          Delete every Sanity ML asset (test environments only)
@@ -131,7 +131,7 @@ aem-to-sanity/
 
 ### Tenant folders
 
-Every migration runs from `examples/<your-tenant>/`. Only `examples/tenant/` (the template) is committed; operator copies are gitignored so credentials, customer-specific component lists, and run output stay local. Inside a tenant folder:
+Every migration runs from `tenants/<your-tenant>/`. Only `tenants/template/` (the template) is committed; operator copies are gitignored so credentials, customer-specific component lists, and run output stay local. Inside a tenant folder:
 
 | File | Role |
 |---|---|
@@ -188,14 +188,14 @@ Five CLIs (`aem-extract`, `aem-tags`, `aem-transform`, `aem-assets`, `aem-import
 
 ```bash
 # Re-run a single stage without redoing the others
-pnpm --filter example-<tenant> extract
-pnpm --filter example-<tenant> transform
+pnpm --filter tenant-<tenant> extract
+pnpm --filter tenant-<tenant> transform
 
 # Re-link assets without re-uploading (e.g. ML already has the binaries)
-pnpm --filter example-<tenant> assets -- --link-only
+pnpm --filter tenant-<tenant> assets -- --link-only
 
 # Discard shadowing drafts in the Studio after re-import
-pnpm --filter example-<tenant> import -- --discard-drafts
+pnpm --filter tenant-<tenant> import -- --discard-drafts
 
 # Probe a single AEM dialog (resolve the supertype chain without running the migrator)
 pnpm exec tsx scripts/aem-probe.ts /apps/<site>/components/proxy/foo
@@ -203,7 +203,7 @@ pnpm exec tsx scripts/aem-probe.ts /apps/<site>/components/proxy/foo
 # Validate emitted schemas
 pnpm --filter studio exec sanity schema validate
 
-# Audit every tenant under examples/ for template drift
+# Audit every tenant under tenants/ for template drift
 pnpm migrate:doctor --all
 ```
 
@@ -228,7 +228,7 @@ pnpm migrate:doctor --all
 
 ## Status & contributing
 
-The three runtime packages and the Studio app are production-shaped — `examples/davids-bridal/` and `examples/t-mobile/` are the integration suites. CI publish via Changesets is wired but not yet automated. See [`CLAUDE.md`](CLAUDE.md) for contribution conventions (doc-refresh rules, commit discipline, regeneration recipes).
+The three runtime packages and the Studio app are production-shaped — `tenants/davids-bridal/` and `tenants/t-mobile/` are the integration suites. CI publish via Changesets is wired but not yet automated. See [`CLAUDE.md`](CLAUDE.md) for contribution conventions (doc-refresh rules, commit discipline, regeneration recipes).
 
 ```bash
 pnpm -r typecheck

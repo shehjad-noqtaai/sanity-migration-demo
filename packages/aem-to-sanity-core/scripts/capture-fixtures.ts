@@ -6,7 +6,7 @@
  *
  * Usage (run from a tenant example folder so `dotenv/config` picks up its `.env`):
  *
- *   pnpm --filter example-<your-tenant> tsx ../../packages/aem-to-sanity-core/scripts/capture-fixtures.ts
+ *   pnpm --filter tenant-<your-tenant> tsx ../../packages/aem-to-sanity-core/scripts/capture-fixtures.ts
  *
  * Or directly from the core package:
  *
@@ -369,7 +369,7 @@ function writeReadme(
     `Captured by \`packages/aem-to-sanity-core/scripts/capture-fixtures.ts\`.`,
   );
   lines.push(
-    `Replay these offline with \`AEM_FIXTURES_DIR=${outDir.replace(/.*\/examples/, "examples")} aem-extract\`.`,
+    `Replay these offline with \`AEM_FIXTURES_DIR=${outDir.replace(/.*\/tenants/, "tenants")} aem-extract\`.`,
   );
   lines.push("");
   lines.push(`## URL → filename mapping`);

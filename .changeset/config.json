@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["studio", "example-davids-bridal"]
+  "ignore": ["studio", "tenant-davids-bridal", "tenant-t-mobile", "tenant-template"]
 }

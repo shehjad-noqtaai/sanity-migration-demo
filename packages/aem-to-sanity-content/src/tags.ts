@@ -376,7 +376,7 @@ async function main(): Promise<void> {
   // else gets a no-op.
   if (!existsSync(rootsFile)) {
     console.error(
-      `[tags] No tag roots file at ${rootsFile} — skipping. To migrate AEM tags, create the file (see examples/tenant/aem-tag-roots) or set AEM_TAG_ROOTS_FILE.`,
+      `[tags] No tag roots file at ${rootsFile} — skipping. To migrate AEM tags, create the file (see tenants/template/aem-tag-roots) or set AEM_TAG_ROOTS_FILE.`,
     );
     process.exit(0);
   }

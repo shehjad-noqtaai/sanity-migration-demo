@@ -66,7 +66,7 @@ Runs `@sanity/schema` in-process to produce `output/sanity.types.ts` — no netw
 Drift findings (unknown resource types, unknown props per mapped component, transform bails) are captured in `output/transform-report.json` with first-N example paths per finding — feed these back into `mapping-table.ts` when extending the mapping.
 
 **Studio app** (`apps/studio`)
-A real Sanity Studio. `apps/studio/schemas/index.ts` re-exports `allSchemaTypes` from `examples/<your-tenant>/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import. It's a consumer test — if emitted schemas break `sanity schema validate`, this is where it surfaces.
+A real Sanity Studio. `apps/studio/schemas/index.ts` re-exports `allSchemaTypes` from `tenants/<your-tenant>/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import. It's a consumer test — if emitted schemas break `sanity schema validate`, this is where it surfaces.
 
 **Frontend (separate repo).** Demo storefronts that render migrated content live in [`aem-to-sanity-demo-web`](https://github.com/demo-repositories/aem-to-sanity-demo-web) — a Vite + React 19 preview and a Hydrogen (Shopify + Remix) skeleton. Out of scope for this repo, but part of the broader migration story; new block primitives there track new schemas emitted here.
 
@@ -93,8 +93,8 @@ aem-migration/
 ├── apps/
 │   └── studio/                   example Sanity Studio consuming emitted schemas
 │                                 (Frontend apps moved to aem-to-sanity-demo-web — separate repo)
-├── examples/
-│   ├── tenant/                   committed template — copy to start a new migration
+├── tenants/
+│   ├── template/                 committed template — copy to start a new migration
 │   └── <your-tenant>/            operator working copy (gitignored): env, path lists, pnpm scripts, output/
 ├── docs/
 └── turbo.json / pnpm-workspace.yaml / tsconfig.base.json
@@ -114,23 +114,23 @@ pnpm install
 pnpm build
 
 # 1. Fill in env (see Configuration section below)
-cp examples/<your-tenant>/.env.example examples/<your-tenant>/.env
+cp tenants/<your-tenant>/.env.example tenants/<your-tenant>/.env
 cp apps/studio/.env.example            apps/studio/.env
-$EDITOR examples/<your-tenant>/.env
+$EDITOR tenants/<your-tenant>/.env
 $EDITOR apps/studio/.env
 
 # 2. Stage 1 — emit Sanity schemas from AEM dialogs
-pnpm --filter example-<your-tenant> migrate:schema
+pnpm --filter tenant-<your-tenant> migrate:schema
 
 # 3. Stage 2 — generate TypeScript types from those schemas
-pnpm --filter example-<your-tenant> typegen
+pnpm --filter tenant-<your-tenant> typegen
 
 # 4. Stage 3 — content migration (dry-run by default)
-pnpm --filter example-<your-tenant> migrate:content
+pnpm --filter tenant-<your-tenant> migrate:content
 #    (chains extract → transform → assets → import)
 
 # 5. Real write to Sanity — opt in explicitly via env var
-MIGRATION_DRY_RUN=false pnpm --filter example-<your-tenant> migrate:content
+MIGRATION_DRY_RUN=false pnpm --filter tenant-<your-tenant> migrate:content
 #    (or export MIGRATION_DRY_RUN=false once, for the whole shell)
 
 # 6. Visually verify in a Sanity Studio that loads the emitted schemas
@@ -138,20 +138,20 @@ pnpm --filter studio dev                     # http://localhost:3333
 pnpm --filter studio exec sanity schema validate
 
 # — Or orchestrate the whole pipeline with Turbo —
-pnpm turbo run migrate:schema typegen migrate:content --filter=example-<your-tenant>
+pnpm turbo run migrate:schema typegen migrate:content --filter=tenant-<your-tenant>
 ```
 
 ### Incremental tasks
 
 ```bash
 # Re-register hand-authored block types without re-running migrate:schema
-pnpm --filter example-<your-tenant> pagebuilder:refresh
+pnpm --filter tenant-<your-tenant> pagebuilder:refresh
 
 # Run a single content stage on its own
-pnpm --filter example-<your-tenant> extract
-pnpm --filter example-<your-tenant> transform
-pnpm --filter example-<your-tenant> assets
-pnpm --filter example-<your-tenant> import
+pnpm --filter tenant-<your-tenant> extract
+pnpm --filter tenant-<your-tenant> transform
+pnpm --filter tenant-<your-tenant> assets
+pnpm --filter tenant-<your-tenant> import
 ```
 
 ---
@@ -160,7 +160,7 @@ pnpm --filter example-<your-tenant> import
 
 Two `.env` files. They can share values; each tool loads `.env` from its own cwd.
 
-### Pipeline — `examples/<your-tenant>/.env`
+### Pipeline — `tenants/<your-tenant>/.env`
 
 ```bash
 # AEM source
@@ -199,7 +199,7 @@ SANITY_STUDIO_PROJECT_ID=your-project-id
 SANITY_STUDIO_DATASET=production
 ```
 
-### Input files (under `examples/<your-tenant>/`)
+### Input files (under `tenants/<your-tenant>/`)
 
 | File | Purpose |
 | --- | --- |

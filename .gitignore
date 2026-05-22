@@ -13,24 +13,24 @@ dist/
 .env.local
 .env.*.local
 
-# Per-tenant example folders are operator working copies that hold real
+# Per-tenant working folders are operator working copies that hold real
 # customer credentials, component lists, and pipeline output. Only the
-# `examples/tenant/` template is tracked — operators copy it to
-# `examples/<their-tenant>/` and run the migration from there. The unignore
+# `tenants/template/` folder is tracked — operators copy it to
+# `tenants/<their-tenant>/` and run the migration from there. The unignore
 # list below uses literal paths so `git check-ignore` is predictable; if you
 # add a new file to the template, also add it here.
-examples/*
-!examples/tenant
-!examples/tenant/.env.example
-!examples/tenant/aem-component-containers.json
-!examples/tenant/aem-component-exceptions
-!examples/tenant/aem-component-hints.json
-!examples/tenant/aem-component-paths
-!examples/tenant/aem-content-roots
-!examples/tenant/aem-content-roots.example
-!examples/tenant/aem-tag-roots
-!examples/tenant/package.json
-!examples/tenant/README.md
+tenants/*
+!tenants/template
+!tenants/template/.env.example
+!tenants/template/aem-component-containers.json
+!tenants/template/aem-component-exceptions
+!tenants/template/aem-component-hints.json
+!tenants/template/aem-component-paths
+!tenants/template/aem-content-roots
+!tenants/template/aem-content-roots.example
+!tenants/template/aem-tag-roots
+!tenants/template/package.json
+!tenants/template/README.md
 
 # Tenant-emitted Sanity schemas are gitignored. Each operator regenerates
 # them from their own AEM via `pnpm migrate:schema`, so checking them in

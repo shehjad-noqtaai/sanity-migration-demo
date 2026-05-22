@@ -17,7 +17,7 @@ import { readFileSync } from "node:fs";
  * content that aren't declared here surface as `unknownPageTemplates`
  * findings in the transform audit.
  *
- * Example (`examples/<your-tenant>/aem-page-components.json`):
+ * Example (`tenants/<your-tenant>/aem-page-components.json`):
  *
  * ```json
  * {

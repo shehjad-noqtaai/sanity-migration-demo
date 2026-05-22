@@ -28,7 +28,7 @@
  * Env: same as `aem-extract` — `dotenv/config` from the cwd. Use a tenant
  * folder so its `.env` is loaded:
  *
- *   cd examples/<your-tenant>
+ *   cd tenants/<your-tenant>
  *   pnpm exec tsx ../../scripts/aem-probe.ts                                  # auth only
  *   pnpm exec tsx ../../scripts/aem-probe.ts /content/<site>/<locale>/home    # auth + fetch
  *   pnpm exec tsx ../../scripts/aem-probe.ts /content/... --save ./out.json   # also save the body
