@@ -67,3 +67,4 @@ yarn-error.log*
 *.swp
 *.code-workspace
 
+tenants/demo/.env
