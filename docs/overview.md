@@ -2,7 +2,7 @@
 
 A single-page map of what this repo does, how the pieces fit together, and the minimum commands and configuration to run it end to end.
 
-For deeper reading: the architectural reasoning lives in [`monorepo-refactor-plan.md`](./monorepo-refactor-plan.md); the full operator's runbook lives in [`running-the-migration.md`](./running-the-migration.md); the AEM↔Sanity field-level mapping lives in [`aem-to-sanity-mapping.md`](./aem-to-sanity-mapping.md).
+For deeper reading: the full operator's runbook lives in [`running-the-migration.md`](./running-the-migration.md); the AEM↔Sanity field-level mapping lives in [`aem-to-sanity-mapping.md`](./aem-to-sanity-mapping.md).
 
 ---
 

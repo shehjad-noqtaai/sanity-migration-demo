@@ -537,8 +537,7 @@ async function buildField(
       } as SanityField;
     case "pathfield":
     case "pathbrowser": {
-      // Route by rootPath + field name heuristic (see
-      // docs/unmapped-types-review.md § 1):
+      // Route by rootPath + field name heuristic:
       //   - rootPath starts with /content/dam → image (DAM asset picker)
       //   - last word of the field name is `image`/`img` → image
       //   - otherwise → `string` (internal content path; future `reference`)
