@@ -44,7 +44,7 @@ Every artifact has a content-derived identity (JCR path → `_id`, JCR UUID → 
 |---|---|---|
 | **Schemas** | `migrate:schema` | Fetches each `_cq_dialog.infinity.json`, walks the Granite UI tree (supertype chain included), auto-discovers named-slot children and container drop-zones, emits one Sanity object type per AEM component plus a `pageBuilder` array and per-template page document types. |
 | **Types** | `typegen` | Generates `sanity.types.ts` from the emitted schemas via `@sanity/schema` (in-process — no network call, no Studio required). |
-| **Extract** | `aem-extract` | Walks `{root}.infinity.json` for each content root, transparently following depth-5 truncation markers. Writes `output/cache/raw/*.json`. |
+| **Extract** | `aem-extract` | Walks `{root}.infinity.json` for each content root, transparently following depth-5 truncation markers. Writes `output/cache/aem/content/.../*.json`. |
 | **Tags** | `aem-tags` | Walks `/content/cq:tags/...` and emits one Sanity `category` doc per `cq:Tag` (parent-child taxonomy). Optional; skip for migrations without AEM tags. |
 | **Transform** | `aem-transform` | Maps `sling:resourceType` → Sanity types via the generated registry. Coerces AEM's JSON strings into proper types: HTML → Portable Text, `"true"` → `boolean`, `"10"` → `number`, tag refs → resolved Sanity references, recursively through nested multifields. Writes `output/cache/clean/*.json`. |
 | **Assets** | `aem-assets` | Five phases — ML dedup, AEM download, Media Library upload, dataset link, in-place rewrite of clean docs. Resumable via `output/cache/assets/manifest.json`. Work-stealing pool sized by `ASSET_CONCURRENCY`. |

@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { loadExtractedContentTrees } from "aem-to-sanity-core";
 
 /**
  * Nested-component slot discovery. Some AEM components embed a **single named
@@ -117,10 +118,21 @@ export function discoverSlots(
 }
 
 /**
- * Disk-backed wrapper: reads every `*.json` under `rawDir` (shaped like an
- * `aem-extract` output file with `{ jcrPath, tree }`), feeds the trees
- * into {@link discoverSlots}, and returns the combined map. Missing dir
- * returns an empty map — the feature stays opt-in-by-presence.
+ * Disk-backed wrapper: reads extract/tag cache under `output/cache/aem/content/`
+ * (falling back to legacy `cache/raw/`), feeds the trees into
+ * {@link discoverSlots}, and returns the combined map.
+ */
+export function scanSlotsFromExtractCache(
+  outputDir: string,
+  opts: ScanOptions = {},
+): DiscoveredSlots {
+  const roots = loadExtractedContentTrees(outputDir) as AemNode[];
+  return discoverSlots(roots, opts);
+}
+
+/**
+ * @deprecated Pass `outputDir` to {@link scanSlotsFromExtractCache} instead.
+ * Still accepts a legacy flat `cache/raw/` directory path for compatibility.
  */
 export function scanSlotsFromRawDir(
   rawDir: string,

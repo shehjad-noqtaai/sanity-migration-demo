@@ -280,7 +280,7 @@ Declare those pairings here so each (page-component, template) combination becom
 }
 ```
 
-**Auto-discovery.** Listing every template by hand is tedious for tenants with many of them. Set `"discover": true` instead, and `migrate:schema` scans `output/cache/raw/` (extracted content) to enumerate every `cq:template` value found on `jcr:content` nodes matching the declared page-shell resource type:
+**Auto-discovery.** Listing every template by hand is tedious for tenants with many of them. Set `"discover": true` instead, and `migrate:schema` scans `output/cache/aem/content/` (extracted content) to enumerate every `cq:template` value found on `jcr:content` nodes matching the declared page-shell resource type:
 
 ```json
 {
@@ -392,7 +392,7 @@ Schema files are written to `apps/studio/schemas/generated/` (relative to the re
 | `apps/studio/schemas/generated/page.ts` | Minimal document type (`title`, `slug`, `tags`, `pageBuilder`). Preserved if you hand-author it. |
 | `apps/studio/schemas/generated/index.ts` | Barrel exporting `allSchemaTypes` — re-exported by `apps/studio/schemas/index.ts` (which also adds the hand-authored `category` type) and plugged into `defineConfig`. |
 | `output/content-type-registry.json` (under the tenant folder) | AEM `sling:resourceType` → Sanity type + field names, consumed by stage 3. Preserved if you hand-edit. |
-| `output/aem/components/**/*.json` | Raw dialog snapshots — audit trail. |
+| `output/cache/aem/apps/**/*.json` | Raw dialog snapshots — audit trail (path mirrors `/apps/...`). Legacy `output/cache/aem/components/apps/...` is still read. |
 | `output/migration-report.json` | Pass/fail per component (including the resolved `sanityTypeName` and friendly `schemaTitle`) + unmapped props inventory. |
 | `output/audit/unmapped-examples.json` | Real-world examples per unmapped AEM type. Feed these back into `mapping-table.ts` when adding new mappings. |
 
@@ -400,7 +400,7 @@ Schema files are written to `apps/studio/schemas/generated/` (relative to the re
 
 Re-run any time — output is deterministic, so `git diff` shows only real changes. Each CLI appends an `Elapsed:` line to its summary (and `aem-assets` prints a `Per phase:` breakdown) so you can see where time is going across runs.
 
-**Slot discovery runs automatically on every schema pass.** `migrate:schema` scans `output/cache/raw/*.json` — the output of `aem-extract` — for AEM components that nest other AEM components under a fixed JCR key (e.g. `media-paragraph`'s `content` child is itself an `aem-integration/components/content` block). Each discovered slot gets a synthetic `defineField({ name: slotKey, type: childTypeName })` on the parent schema so the Studio shows it as a typed inline field rather than flagging it as "Unknown field found". First-ever run has no `raw/` to scan yet (scan returns empty, no slot fields emitted); run `aem-extract` once and the next `migrate:schema` picks every slot up. The content transform always emits nested components under their JCR key regardless, so data never gets dropped on the first pass — the schema upgrade only clears Studio warnings. Skipped cases: dialog-field name collisions (dialog wins), container parents (their drop-zone logic claims all resourceType-carrying children already), multi-type slots (logged, hand-author if you need the field), and slots whose child type isn't yet in `aem-component-paths` (add it, re-run).
+**Slot discovery runs automatically on every schema pass.** `migrate:schema` scans `output/cache/aem/content/` — the output of `aem-extract` and tag roots from `aem-tags` — for AEM components that nest other AEM components under a fixed JCR key (e.g. `media-paragraph`'s `content` child is itself an `aem-integration/components/content` block). Each discovered slot gets a synthetic `defineField({ name: slotKey, type: childTypeName })` on the parent schema so the Studio shows it as a typed inline field rather than flagging it as "Unknown field found". First-ever run has no content cache to scan yet (scan returns empty, no slot fields emitted); run `aem-extract` once and the next `migrate:schema` picks every slot up. The content transform always emits nested components under their JCR key regardless, so data never gets dropped on the first pass — the schema upgrade only clears Studio warnings. Skipped cases: dialog-field name collisions (dialog wins), container parents (their drop-zone logic claims all resourceType-carrying children already), multi-type slots (logged, hand-author if you need the field), and slots whose child type isn't yet in `aem-component-paths` (add it, re-run).
 
 ### Type-name resolution (reserved-name handling)
 
@@ -488,23 +488,23 @@ pnpm --filter tenant-<your-tenant> import
 
 **All writes to Sanity are dry-run unless `MIGRATION_DRY_RUN=false` is set.** The `extract`, `tags`, and `transform` stages are read/local-only regardless; only `assets` and `import` touch Sanity.
 
-### 4a. `aem-extract` — AEM `.infinity.json` → `output/raw/`
+### 4a. `aem-extract` — AEM `.infinity.json` → `output/cache/aem/content/`
 
-Reads every entry in `aem-content-roots`, fetches `{root}.infinity.json` from AEM, and writes one JSON file per page to `output/raw/`. Transparently follows depth-5 truncation markers (AEM returns a string marker like `"...section_0": "...section_0"` at the depth boundary; the fetcher detects these plus suspiciously-empty nodes, issues follow-up fetches in parallel, and splices resolved subtrees back in).
+Reads every entry in `aem-content-roots`, fetches `{root}.infinity.json` from AEM, and writes one JSON file per page under `output/cache/aem/content/` (path mirrors the JCR path, e.g. `/content/demo/us/en/home` → `cache/aem/content/content/demo/us/en/home.json`). Transparently follows depth-5 truncation markers (AEM returns a string marker like `"...section_0": "...section_0"` at the depth boundary; the fetcher detects these plus suspiciously-empty nodes, issues follow-up fetches in parallel, and splices resolved subtrees back in).
 
 | Flag / env | Effect |
 | --- | --- |
-| `--overwrite` | Re-fetch pages that already have a cached raw file. Default: skip. |
+| `--overwrite` | Re-fetch pages that already have a cached extract file. Default: skip. |
 | `AEM_CONTENT_ROOTS_FILE` | Path to roots file. Default: `./aem-content-roots`. |
 | `AEM_MAX_RESPONSE_MB` | Per-fetch payload cap. Oversized responses are recorded as `tooLarge` failures. |
 | `AEM_MAX_DEPTH_EXPANSIONS` | How many rounds of depth-5 follow-up fetches to run per root. Default: 3. Raise only if a page is pathologically deep; leftover markers after the budget are replaced with `{__truncated: "maxDepth", jcrPath}` sentinels and the transform stage treats them as opaque. |
 | `AEM_FIXTURES_DIR` | If set, reads captured AEM responses from this directory instead of issuing HTTP calls. Capture fixtures with `packages/aem-to-sanity-core/scripts/capture-fixtures.ts` — default output is `<cwd>/output/cache/fixtures/aem/`. Used by unit tests and CI; leave unset for live migrations. |
 
-**Outputs:** `output/raw/*.json`, `output/extract-report.json` (counts, categorized failures, ambiguous-path resolutions, and a `depthExpansions` array with per-root `markersFound`/`markersResolved`/`markersTruncated`/`markersFailed`/`expansionsUsed` stats), and `output/extract-404.log` if any roots weren't found.
+**Outputs:** `output/cache/aem/content/**/*.json`, `output/cache/extract-report.json` (counts, categorized failures, ambiguous-path resolutions, and a `depthExpansions` array with per-root `markersFound`/`markersResolved`/`markersTruncated`/`markersFailed`/`expansionsUsed` stats), and `output/cache/extract-404.log` if any roots weren't found. Legacy flat `output/cache/raw/*.json` is still read by downstream stages when present.
 
 ### 4a-bis. `aem-tags` — AEM `/content/cq:tags` → `output/cache/categories/`
 
-Walks every namespace (or subtree) listed in `aem-tag-roots`, fetching each via `fetchInfinityTree` (same depth-5 follow-up splicing the page extractor uses), and emits one Sanity `category` document per `cq:Tag` node — implementing Sanity's [parent-child taxonomy pattern](https://www.sanity.io/docs/developer-guides/parent-child-taxonomy). The hand-authored `category` document type lives at `apps/studio/schemas/category.ts`.
+Walks every namespace (or subtree) listed in `aem-tag-roots`, fetching each via `fetchInfinityTree` (same depth-5 follow-up splicing the page extractor uses). Each fetch is cached under `output/cache/aem/content/cq:tags/...` (same path-mirror layout as pages). The walker then emits one Sanity `category` document per `cq:Tag` node — implementing Sanity's [parent-child taxonomy pattern](https://www.sanity.io/docs/developer-guides/parent-child-taxonomy). The hand-authored `category` document type lives at `apps/studio/schemas/category.ts`.
 
 ID derivation is deterministic on both sides — `aem-tags` and `aem-transform` compute the same Sanity `_id` from the same AEM tag id, without sharing state:
 
@@ -532,13 +532,14 @@ Long ids (>80 chars) fall back to `{first-60-chars}-{sha1-10}` so they stay unde
 | `AEM_MAX_RESPONSE_MB` / `AEM_MAX_DEPTH_EXPANSIONS` | Shared with `aem-extract` — same response cap and depth-splice budget. |
 
 **Outputs:**
+- `output/cache/aem/content/cq:tags/**/*.json` — cached AEM tag trees (path-mirror).
 - `output/cache/categories/<sanityCategoryId>.json` — one Sanity category doc per `cq:Tag` node. Shape `{ jcrPath, docs: [categoryDoc] }` so `aem-import` ingests them via the same loader as pages.
 - `output/cache/categories/manifest.json` — keyed by AEM tag id (`namespace:parent/child` or `parent/child` for default-namespace tags). Value: `{ sanityCategoryId, title, slug, parentTagId, isNamespace, movedTo? }`. Consumed by `aem-transform` to resolve `cq:tags` strings on pages and components.
 - `output/cache/tags-report.json` — counts, failures, depth-splice stats, `aliases`, and `danglingParents` (tags whose parent namespace wasn't included in the listed roots).
 
-### 4b. `aem-transform` — `output/raw/` → `output/clean/`
+### 4b. `aem-transform` — `output/cache/aem/content/` → `output/cache/clean/`
 
-Walks each raw JCR tree, maps `sling:resourceType` values via `content-type-registry.json`, and emits one `page` doc per input file with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key` (from `jcr:uuid` or path SHA1). Unknown resource types and nodes listed in `aem-component-exceptions` are skipped but noted in the audit.
+Walks each cached page tree under `cache/aem/content/` (skipping `/content/cq:tags` entries), maps `sling:resourceType` values via `content-type-registry.json`, and emits one `page` doc per input file with a `pageBuilder` array of typed blocks. Clean output mirrors the same relative paths under `cache/clean/`. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key` (from `jcr:uuid` or path SHA1). Unknown resource types and nodes listed in `aem-component-exceptions` are skipped but noted in the audit.
 
 **Type-aware coercion.** AEM's JCR is schemaless on dialog inputs — every authored value lands in `.infinity.json` as a JSON string regardless of what the dialog widget was. The emitted Sanity schemas declare proper types (`number`, `boolean`, `array-of-blocks`), so without coercion the Studio rejects ingested values with "Expected type X, got String". Transform reads the registry's tree-shaped `fields` (`Array<{name, type, itemFields?}>`) and coerces at every depth — top-level fields *and* members inside nested `array-of-object` multifields (e.g. `variableColumn.columnContents[].columnText`):
 
@@ -762,7 +763,7 @@ The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `tenants/<your-
 | `aem-assets` phase 2 → `409 asset already exists` | Informational, not an error. The binary was already uploaded to the Media Library. The code recovers both IDs via a GROQ lookup and continues. |
 | `aem-assets` → `Missing env var: SANITY_MEDIA_LIBRARY_ID` | Set it to the org-level ML id that the project belongs to. `sanity media library list` on the org shows available ids. |
 | `aem-extract` fails with `HTTP 300` on a root | AEM returned an ambiguous-path response (the path may point at a folder). Check `output/extract-report.json` → `ambiguous[]` for the resolution suggestion. |
-| `aem-transform` → `No raw files in output/raw` | Run `aem-extract` first. The transform stage only reads from disk — it never hits AEM. |
+| `aem-transform` → `No extracted content in output/cache/aem/content` | Run `aem-extract` first. The transform stage only reads from disk — it never hits AEM. |
 | Studio boots but shows no schemas (only `category`) | `apps/studio/schemas/generated/index.ts` is the bare-clone stub (exports `[]`). Run `pnpm --filter tenant-<your-tenant> migrate:schema` to regenerate the real barrel locally. |
 | `sanity schema validate` → `Type has property "fields", but is not an object/document type` | The sanitizer is injecting placeholder fields into a non-object type. Confirm you're on the latest schema package (this is fixed). |
 | `ERR_PACKAGE_PATH_NOT_EXPORTED` when running sanity CLI | Rebuild: `pnpm build`. The bundled CJS loader the Sanity CLI uses needs the `default` export condition that `dist/` ships. |

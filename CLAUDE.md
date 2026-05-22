@@ -49,7 +49,8 @@ The pipeline emits many artifacts into `output/cache/` and `apps/studio/schemas/
 
 - `output/cache/content-type-registry.json` — written by `migrate:schema`. Shape: `entries: Array<{resourceType, sanityType, fields: Array<{name, type}>}>`. Legacy `fields: string[]` still loads but disables type-aware coercion (notably HTML → Portable Text).
 - `apps/studio/schemas/generated/*.ts` — written by `migrate:schema`. Each file carries a `// Generated from AEM component: …` banner. **Gitignored** (see `.gitignore`); each operator regenerates locally. The Studio's `schemas/index.ts` imports `./generated/index.ts` statically, so the root `prepare` script (`scripts/ensure-studio-stub.ts`) writes a minimal empty barrel on `pnpm install` when the file is missing — bare clones still typecheck/boot, and a real generated barrel from `migrate:schema` is never overwritten by the stub script. Single-tenant projects that want the schemas source-controlled should comment out the `apps/studio/schemas/generated/` line in `.gitignore` and `git add` the regenerated files after `migrate:schema`.
-- `output/cache/raw/*.json` — written by `aem-extract`.
+- `output/cache/aem/content/**/*.json` — written by `aem-extract` and `aem-tags` (path-mirror under `/content/...`). Legacy flat `output/cache/raw/*.json` is still read.
+- `output/cache/aem/apps/**/*.json` — schema dialog cache from `migrate:schema`. Legacy `output/cache/aem/components/apps/...` is still read.
 - `output/cache/clean/*.json` — written by `aem-transform`, mutated in place by `aem-assets` phase 4 (DAM-path → asset ref rewrite).
 - `output/cache/categories/*.json` + `manifest.json` — written by `aem-tags`. One Sanity `category` doc per AEM `cq:Tag` node (parent-child taxonomy), plus a manifest keyed by AEM tag id that `aem-transform` consults when resolving authored `cq:tags` references.
 - `output/cache/assets/manifest.json` — per-DAM-path state; drives `aem-assets` resumability.

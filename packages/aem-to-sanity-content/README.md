@@ -3,7 +3,7 @@
 AEM → Sanity content migration as five flat scripts. Each step is inspectable on disk, so you can stop between phases and re-run just one.
 
 ```
-aem-extract    AEM  → output/raw/*.json                       + output/extract-report.json
+aem-extract    AEM  → output/cache/aem/content/**/*.json          + output/extract-report.json
 aem-tags       AEM  → output/cache/categories/*.json + manifest.json + output/cache/tags-report.json   (optional)
 aem-transform  raw + categories manifest → output/clean/*.json + output/transform-report.json
 aem-assets     DAM  → output/assets/* + Sanity                + output/assets/manifest.json           (resumable)
@@ -175,7 +175,7 @@ Or, instead of listing every template by hand, let the schema pass discover them
 }
 ```
 
-With `discover: true`, `migrate:schema` walks `output/cache/raw/*.json` to enumerate every `cq:template` value on matching `jcr:content` nodes — so the doc-type list grows automatically as new templates appear in your AEM content. Explicit `templates` and `discover: true` can coexist (discovered values append to the explicit list, deduplicated).
+With `discover: true`, `migrate:schema` walks `output/cache/aem/content/` (populated by `aem-extract`) to enumerate every `cq:template` value on matching `jcr:content` nodes — so the doc-type list grows automatically as new templates appear in your AEM content. Explicit `templates` and `discover: true` can coexist (discovered values append to the explicit list, deduplicated).
 
 `migrate:schema` emits one Sanity document type per (resourceType, template) pair (`planDetailsPage`, `newsArticlePage`, …) and writes an `output/cache/page-templates.json` manifest. `aem-transform` reads that manifest and, for each raw page whose `jcr:content` matches a declared pair, emits a document with:
 
@@ -195,7 +195,7 @@ Missing / empty file → every page uses the generic `page` doc (today's behavio
 A different AEM pattern shows up on components like `media-paragraph`: a single nested child under a **fixed** JCR key (e.g. `content`) whose value is itself a full component with its own `sling:resourceType`. Not a dialog field, not a drop-zone container — just a named slot.
 
 - **Transform** always emits these as single nested blocks under the slot key (`mediaParagraph.content = {_type: 'content', text: [{_type:'block', ...}], ...}`). Detection is structural: any direct child with `sling:resourceType` that isn't already claimed by container logic is a slot. Works on the first run with no config.
-- **Schema** catches up on the next `migrate:schema`: that pass scans `output/cache/raw/` (extracted content) and appends a typed `defineField({ name: slotKey, type: childTypeName })` to the parent schema. Until then the Studio shows a yellow "Unknown fields found" warning on the nested data but the data itself is preserved.
+- **Schema** catches up on the next `migrate:schema`: that pass scans `output/cache/aem/content/` (extracted content) and appends a typed `defineField({ name: slotKey, type: childTypeName })` to the parent schema. Until then the Studio shows a yellow "Unknown fields found" warning on the nested data but the data itself is preserved.
 
 There's no config for named slots — the shape is inferred from content. Container parents (listed in `aem-component-containers.json`) skip slot synthesis so their drop-zone children stay on the container-items path.
 

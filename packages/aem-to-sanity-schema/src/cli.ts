@@ -18,10 +18,10 @@ import {
   type SanityRuntimeSummary,
 } from "aem-to-sanity-core";
 import { migrateSchemas } from "./api.ts";
-import { scanSlotsFromRawDir } from "./slots.ts";
+import { scanSlotsFromExtractCache } from "./slots.ts";
 import {
   mergeDiscoveredTemplates,
-  scanTemplatesFromRawDir,
+  scanTemplatesFromExtractCache,
 } from "./template-discovery.ts";
 
 async function main(): Promise<void> {
@@ -115,43 +115,37 @@ async function main(): Promise<void> {
     );
   }
 
-  const rawDir = join(config.outputDir, "cache", "raw");
+  const extractCacheDir = join(config.outputDir, "cache", "aem", "content");
 
-  // Template discovery — scan extracted raw content for `cq:template` values
+  // Template discovery — scan extract/tag cache for `cq:template` values
   // on declared page-shells that opted into `discover: true`. First-ever
-  // run has no raw/ yet and this returns empty; a second run after
+  // run has no content cache yet and this returns empty; a second run after
   // `aem-extract` picks up every template referenced in authored content.
-  // Discovered values merge with the explicit list (deduplicated, explicit
-  // first) and feed the same per-template doc emission path.
   const pageComponents = (() => {
     const anyDiscover = [...declaredPageComponents.values()].some((v) => v.discover);
     if (!anyDiscover) return declaredPageComponents;
-    const discovered = scanTemplatesFromRawDir(rawDir, declaredPageComponents);
+    const discovered = scanTemplatesFromExtractCache(config.outputDir, declaredPageComponents);
     let discoveredCount = 0;
     for (const set of discovered.values()) discoveredCount += set.size;
     if (discoveredCount > 0) {
       logger.info(
-        `Discovered ${discoveredCount} cq:template value(s) from ${rawDir} — emitting per-template doc types for each.`,
+        `Discovered ${discoveredCount} cq:template value(s) from ${extractCacheDir} — emitting per-template doc types for each.`,
       );
     } else {
       logger.info(
-        `Template discovery is enabled but no cq:template values found in ${rawDir}. Run \`pnpm extract\` first, then re-run migrate:schema.`,
+        `Template discovery is enabled but no cq:template values found in ${extractCacheDir}. Run \`pnpm extract\` first, then re-run migrate:schema.`,
       );
     }
     return mergeDiscoveredTemplates(declaredPageComponents, discovered);
   })();
 
-  // Slot discovery — scan already-extracted AEM content for named-slot
-  // child components (dialog-less nested components under a fixed JCR key,
-  // e.g. media-paragraph.content). First-ever run has no raw/ yet and
-  // this returns empty; a second run after `aem-extract` picks up every
-  // slot referenced in authored content.
-  const discoveredSlots = scanSlotsFromRawDir(rawDir);
+  // Slot discovery — scan extract/tag cache for named-slot child components.
+  const discoveredSlots = scanSlotsFromExtractCache(config.outputDir);
   if (discoveredSlots.size > 0) {
     let slotCount = 0;
     for (const m of discoveredSlots.values()) slotCount += m.size;
     logger.info(
-      `Slot discovery: scanned ${rawDir} — found ${slotCount} slot(s) across ${discoveredSlots.size} parent type(s).`,
+      `Slot discovery: scanned ${extractCacheDir} — found ${slotCount} slot(s) across ${discoveredSlots.size} parent type(s).`,
     );
   }
 

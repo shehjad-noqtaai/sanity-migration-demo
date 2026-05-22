@@ -45,7 +45,7 @@ pnpm -w migrate:doctor <your-tenant>
 
 # 5. Run the pipeline
 pnpm -F tenant-<your-tenant> migrate:schema   # AEM dialogs → Sanity schemas
-pnpm -F tenant-<your-tenant> extract          # AEM pages → output/cache/raw/
+pnpm -F tenant-<your-tenant> extract          # AEM pages → output/cache/aem/content/
 pnpm -F tenant-<your-tenant> tags             # cq:Tag nodes → output/cache/categories/
 pnpm -F tenant-<your-tenant> transform        # raw → output/cache/clean/
 pnpm -F tenant-<your-tenant> assets           # DAM → Media Library + link

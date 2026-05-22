@@ -30,7 +30,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, dirname, extname, join, resolve } from "node:path";
-import { createColors, formatDuration, resolveConfig, startTimer, type AuthMode } from "aem-to-sanity-core";
+import { createColors, formatDuration, listCleanFiles, resolveConfig, startTimer, type AuthMode } from "aem-to-sanity-core";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -739,7 +739,7 @@ async function main(): Promise<void> {
 
   mkdirSync(assetsDir, { recursive: true });
 
-  const cleanFiles = readdirSync(cleanDir).filter((f) => f.endsWith(".json")).sort();
+  const cleanFiles = listCleanFiles(outputDir);
   if (cleanFiles.length === 0) {
     console.error(`No clean files in ${cleanDir}. Run \`aem-transform\` first.`);
     process.exit(2);
@@ -747,8 +747,8 @@ async function main(): Promise<void> {
 
   // Collect unique DAM paths across all clean docs.
   const damPaths = new Set<string>();
-  for (const file of cleanFiles) {
-    const doc = JSON.parse(readFileSync(join(cleanDir, file), "utf8")) as unknown;
+  for (const { absPath } of cleanFiles) {
+    const doc = JSON.parse(readFileSync(absPath, "utf8")) as unknown;
     collectDamPaths(doc, damPaths);
   }
   const sortedPaths = [...damPaths].sort();
@@ -1053,11 +1053,10 @@ async function main(): Promise<void> {
   if (!skipRewrite && !dryRun) {
     console.error(c.bold("\n── 4. Rewrite clean docs ──"));
     const phase4 = startTimer();
-    for (const file of cleanFiles) {
-      const filePath = join(cleanDir, file);
-      const doc = JSON.parse(readFileSync(filePath, "utf8")) as unknown;
+    for (const { absPath } of cleanFiles) {
+      const doc = JSON.parse(readFileSync(absPath, "utf8")) as unknown;
       rewriteDamRefs(doc, manifest, rewriteStats);
-      writeFileSync(filePath, JSON.stringify(doc, null, 2) + "\n");
+      writeFileSync(absPath, JSON.stringify(doc, null, 2) + "\n");
       patched++;
     }
     phaseTimings.phase4 = phase4.elapsedMs();

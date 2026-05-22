@@ -353,18 +353,26 @@ async function writeFixture(
 
 async function emitContentFixtures(fixturesDir: string, ctx: ScrubCtx): Promise<void> {
   for (const src of SOURCES) {
-    const rawDir = join(REPO_ROOT, src.tenantDir, "output/cache/raw");
-    let files: string[];
-    try {
-      files = (await readdir(rawDir)).filter((f) => f.endsWith(".json"));
-    } catch {
-      throw new Error(`Missing raw cache at ${rawDir} — run extract on ${src.tenantDir} first.`);
+    const contentDir = join(REPO_ROOT, src.tenantDir, "output/cache/aem/content");
+    let files = await walkJsonFiles(contentDir);
+    if (files.length === 0) {
+      const legacyRaw = join(REPO_ROOT, src.tenantDir, "output/cache/raw");
+      try {
+        files = (await readdir(legacyRaw))
+          .filter((f) => f.endsWith(".json"))
+          .map((f) => join(legacyRaw, f));
+      } catch {
+        throw new Error(
+          `Missing extract cache at ${contentDir} — run extract on ${src.tenantDir} first.`,
+        );
+      }
     }
     for (const file of files) {
-      const wrapper = JSON.parse(await readFile(join(rawDir, file), "utf8")) as {
+      const wrapper = JSON.parse(await readFile(file, "utf8")) as {
         jcrPath: string;
         tree: unknown;
       };
+      if (wrapper.jcrPath.startsWith("/content/cq:tags")) continue;
       const demoPath = scrubScalarString(rewritePaths(wrapper.jcrPath), {
         ...ctx,
         sourceKey: src.key,
@@ -391,10 +399,16 @@ async function walkJsonFiles(dir: string): Promise<string[]> {
 async function emitDialogFixtures(fixturesDir: string, ctx: ScrubCtx): Promise<void> {
   const seen = new Set<string>();
   for (const src of SOURCES) {
-    const componentsDir = join(REPO_ROOT, src.tenantDir, "output/cache/aem/components");
-    const files = await walkJsonFiles(componentsDir);
+    const aemRoot = join(REPO_ROOT, src.tenantDir, "output/cache/aem");
+    const files = [
+      ...(await walkJsonFiles(join(aemRoot, "apps"))),
+      ...(await walkJsonFiles(join(aemRoot, "components"))),
+    ];
     for (const file of files) {
-      const rel = relative(componentsDir, file).replace(/\\/g, "/");
+      const normalized = file.replace(/\\/g, "/");
+      const appsIdx = normalized.indexOf("/apps/");
+      if (appsIdx < 0) continue;
+      const rel = normalized.slice(appsIdx + 1);
       if (!rel.startsWith("apps/")) continue;
       const jcrPath = "/" + rel.replace(/\.json$/, "").replace(/\//g, "/");
       const dialogPath = jcrPath.endsWith("/_cq_dialog")
@@ -686,7 +700,7 @@ function generateReadme(): string {
 
 Offline demo of the AEM → Sanity migration pipeline. All AEM REST responses are
 committed as scrubbed fixtures under \`fixtures/aem/\`; running the pipeline
-regenerates \`output/cache/raw/\`, \`clean/\`, schemas, and imports locally.
+regenerates \`output/cache/aem/content/\`, \`clean/\`, schemas, and imports locally.
 \`output/\` is gitignored — only fixtures and tenant config are committed.
 
 ## Fixture layout

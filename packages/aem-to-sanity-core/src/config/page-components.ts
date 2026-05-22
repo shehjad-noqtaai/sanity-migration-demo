@@ -38,7 +38,7 @@ export interface PageComponentConfigEntry {
    * here becomes one Sanity document type at `migrate:schema` time.
    *
    * Optional when {@link discover} is `true` — the schema pass scans
-   * `output/cache/raw/` (extracted content) and auto-adds any templates it
+   * `output/cache/aem/content/` (extracted content) and auto-adds any templates it
    * finds on `jcr:content` nodes whose `sling:resourceType` matches this
    * entry. Listing some explicitly + setting `discover: true` is allowed
    * (and useful for nailing down known templates while still picking up
@@ -49,7 +49,7 @@ export interface PageComponentConfigEntry {
    * Auto-discover templates by scanning extracted raw content for distinct
    * `cq:template` values on `jcr:content` nodes that carry this entry's
    * resource type. Requires `aem-extract` to have populated
-   * `output/cache/raw/` first — first-run schema with `discover: true` and
+   * `output/cache/aem/content/` first — first-run schema with `discover: true` and
    * no explicit `templates` emits nothing and logs a hint to run extract.
    *
    * Default: false.

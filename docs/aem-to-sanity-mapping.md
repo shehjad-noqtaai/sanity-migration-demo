@@ -71,7 +71,7 @@ When a dialog node has `sling:resourceType`: `granite/ui/components/coral/founda
 
 Some AEM components embed a **single named child component** under a fixed JCR key — e.g. `aem-integration/components/media-paragraph` has a `content` child whose own `sling:resourceType` is `aem-integration/components/content`. That's not a dialog field, and it's not a `cq:isContainer` drop-zone either; it's a named slot. The dialog itself doesn't describe it, so the shape only shows up in authored content.
 
-`migrate:schema` runs a post-extract scan of `output/cache/raw/*.json` (the output of `aem-extract`) and records every `parentResourceType → slotKey → childResourceType` combo it sees. For each one it appends a `defineField({ name: slotKey, type: childTypeName })` to the parent schema so the Studio shows the slot as a first-class typed field rather than flagging it as an "Unknown field found".
+`migrate:schema` runs a post-extract scan of `output/cache/aem/content/` (the output of `aem-extract` and tag roots from `aem-tags`) and records every `parentResourceType → slotKey → childResourceType` combo it sees. For each one it appends a `defineField({ name: slotKey, type: childTypeName })` to the parent schema so the Studio shows the slot as a first-class typed field rather than flagging it as an "Unknown field found".
 
 - **First run has no raw content** → scan returns empty, no slot fields emitted. Run `aem-extract` then re-run `migrate:schema`; the second pass picks up every slot.
 - **Dialog field with the same name** → dialog field wins; slot synthesis skipped.
@@ -209,7 +209,7 @@ Declare each (page-shell, template) pairing in `aem-page-components.json` (overr
 }
 ```
 
-With `discover: true`, `migrate:schema` scans `output/cache/raw/*.json` (populated by `aem-extract`) for distinct `cq:template` values on `jcr:content` nodes whose `sling:resourceType` matches the declared page-shell, and emits one doc type per discovered template. First-ever schema run with no extracted content yet logs a hint to run `extract` first; the natural pipeline order (`extract` → `migrate:schema`, which the chained `migrate` script already enforces) makes this transparent on subsequent runs. Explicit templates and `discover: true` can be combined — discovered values are appended to the explicit list, deduplicated.
+With `discover: true`, `migrate:schema` scans `output/cache/aem/content/` (populated by `aem-extract`) for distinct `cq:template` values on `jcr:content` nodes whose `sling:resourceType` matches the declared page-shell, and emits one doc type per discovered template. First-ever schema run with no extracted content yet logs a hint to run `extract` first; the natural pipeline order (`extract` → `migrate:schema`, which the chained `migrate` script already enforces) makes this transparent on subsequent runs. Explicit templates and `discover: true` can be combined — discovered values are appended to the explicit list, deduplicated.
 
 The page-shell `sling:resourceType` must also appear in `aem-component-paths` so its dialog is fetched and emitted as a Sanity object type — that object becomes the inline `pageProperties` field on the document types described below.
 

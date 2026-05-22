@@ -56,7 +56,7 @@ Reads the component paths in `aem-component-paths`, fetches each dialog's `.infi
 Runs `@sanity/schema` in-process to produce `output/sanity.types.ts` — no network call, no Studio required. Downstream consumers can import types like `HeroBanner` for typed GROQ results.
 
 **Stage 3 — Content migration** (`packages/aem-to-sanity-content`, four flat scripts run in order)
-- `aem-extract` — walks `.infinity.json` for each root in `aem-content-roots`, transparently following depth-5 truncation markers. Writes to `output/raw/` plus `output/extract-report.json`.
+- `aem-extract` — walks `.infinity.json` for each root in `aem-content-roots`, transparently following depth-5 truncation markers. Writes to `output/cache/aem/content/` (path-mirror) plus `output/cache/extract-report.json`.
 - `aem-transform` — maps extracted AEM nodes to Sanity `page` docs using `content-type-registry.json`. Adds `_type`, deterministic `_id` (from JCR path), stable `_key`s (from `jcr:uuid` or path SHA1). Unknown resource types and exceptions are skipped but noted. Writes to `output/clean/` plus `output/transform-report.json`.
 - `aem-assets` — scans clean docs for `/content/dam/...` references, downloads from AEM, uploads to Sanity's asset pipeline, and rewrites the clean docs in place so fileupload fields hold Sanity asset refs. Maintains `output/assets/manifest.json` so re-runs skip uploaded assets.
 - `aem-import` — commits docs from `output/clean/` via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Deterministic `_id`s mean re-runs upsert instead of duplicating.

@@ -2,7 +2,7 @@
 import "dotenv/config";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { createColors, startTimer } from "aem-to-sanity-core";
+import { createColors, listCleanFiles, startTimer } from "aem-to-sanity-core";
 
 interface SanityDoc {
   _id: string;
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
     process.argv.includes("--recreate-on-type-change") ||
     process.env.MIGRATION_RECREATE_ON_TYPE_CHANGE === "true";
 
-  const files = readdirSync(cleanDir).filter((f) => f.endsWith(".json")).sort();
+  const files = listCleanFiles(outputDir);
   // Category docs come from `aem-tags`. They live in their own cache dir so
   // they don't get swept up by `clean/` operations that target pages, and
   // so we can guarantee a "categories first" import ordering — without that
@@ -112,9 +112,9 @@ async function main(): Promise<void> {
   // existing `_type`s before we start committing. Otherwise the
   // recreate-on-type-change branch would need N round-trips, one per page.
   const cleanFiles: Array<{ file: string; clean: CleanFile }> = [];
-  for (const file of files) {
-    const clean = JSON.parse(readFileSync(join(cleanDir, file), "utf8")) as CleanFile;
-    if (clean.docs.length > 0) cleanFiles.push({ file, clean });
+  for (const { absPath, relPath } of files) {
+    const clean = JSON.parse(readFileSync(absPath, "utf8")) as CleanFile;
+    if (clean.docs.length > 0) cleanFiles.push({ file: relPath, clean });
   }
 
   // Map<docId, newType>. Used to decide which docs need a delete-then-create.
