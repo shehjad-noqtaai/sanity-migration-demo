@@ -1,0 +1,835 @@
+{
+  "jcr:primaryType": "cq:Page",
+  "jcr:createdBy": "pushpavathi.2.kammela@Site B.com",
+  "jcr:created": "Wed May 20 2026 17:02:47 GMT+0000",
+  "jcr:content": {
+    "jcr:primaryType": "cq:PageContent",
+    "jcr:mixinTypes": [
+      "cq:ReplicationStatus2",
+      "mix:versionable"
+    ],
+    "jcr:createdBy": "pushpavathi.2.kammela@Site B.com",
+    "jcr:title": "Samsung: $900 off with New Voice Line",
+    "cq:lastReplicatedBy_publish": "pushpavathi.2.kammela@Site B.com",
+    "cq:isDelivered": false,
+    "cq:lastReplicationAction_scene7": "Activate",
+    "cq:lastReplicationAction": "Activate",
+    "jcr:versionHistory": "7289a44b-c962-4293-8864-52381314f927",
+    "pwaOrientation": "any",
+    "cq:template": "/conf/demo-site-b/settings/wcm/templates/promotion-details",
+    "cq:lastReplicatedBy": "pushpavathi.2.kammela@Site B.com",
+    "iconId": "no-icon",
+    "disableCache": "false",
+    "pageId": "2064113546",
+    "cq:lastReplicationAction_publish": "Activate",
+    "pinPage": "false",
+    "jcr:predecessors": [
+      "11d3fc37-f2bf-4f2e-a213-f0c9155d3747"
+    ],
+    "cq:lastReplicatedBy_scene7": "pushpavathi.2.kammela@Site B.com",
+    "cq:contextHubSegmentsPath": "/etc/segmentation/contexthub",
+    "jcr:created": "Wed May 20 2026 17:49:28 GMT+0000",
+    "pwaDisplay": "standalone",
+    "cq:lastReplicated": "Wed May 20 2026 19:01:42 GMT+0000",
+    "cq:lastModified": "Wed May 20 2026 19:01:10 GMT+0000",
+    "componentPermission": "False",
+    "cq:lastReplicated_scene7": "Wed May 20 2026 19:01:42 GMT+0000",
+    "pwaCachestrategy": "staleWhileRevalidate",
+    "jcr:baseVersion": "11d3fc37-f2bf-4f2e-a213-f0c9155d3747",
+    "jcr:isCheckedOut": true,
+    "pageType": [
+      "page-type:overview",
+      "page-type:how-to"
+    ],
+    "triggerNotification": "false",
+    "cq:tags": [
+      "promotion:payout/recurring-device-credits",
+      "promotion:status/in-market"
+    ],
+    "jcr:uuid": "13b0e00e-f2ac-45d6-a9a1-3f6aa16457ea",
+    "sling:resourceType": "demo/components/structure/page",
+    "cq:contextHubPath": "/etc/cloudsettings/default/contexthub",
+    "textIsRich": "true",
+    "cq:lastReplicated_publish": "Wed May 20 2026 19:01:42 GMT+0000",
+    "pagePermission": "False",
+    "cq:lastModifiedBy": "pushpavathi.2.kammela@Site B.com",
+    "root": {
+      "jcr:primaryType": "nt:unstructured",
+      "layout": "responsiveGrid",
+      "sling:resourceType": "demo/components/proxy/content/container",
+      "container_11": {
+        "jcr:primaryType": "nt:unstructured",
+        "container": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+          "layout": "responsiveGrid",
+          "isAccessRestricted": "false",
+          "roleAttribute": "main",
+          "jcr:lastModified": "Thu Nov 07 2024 11:19:27 GMT+0000",
+          "sling:resourceType": "demo/components/proxy/content/container",
+          "container": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "admin",
+            "jcr:lastModifiedBy": "admin",
+            "layout": "responsiveGrid",
+            "isAccessRestricted": "false",
+            "jcr:created": "Fri Jul 26 2024 19:15:38 GMT+0530",
+            "jcr:lastModified": "Wed Aug 21 2024 00:07:55 GMT+0530",
+            "sling:resourceType": "demo/components/proxy/content/container",
+            "container_816032874": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "admin",
+              "jcr:lastModifiedBy": "admin",
+              "jcr:created": "Wed Aug 21 2024 00:09:39 GMT+0530",
+              "jcr:lastModified": "Wed Aug 21 2024 00:09:39 GMT+0530",
+              "sling:resourceType": "demo/components/proxy/content/container",
+              "cq:responsive": {
+                "jcr:primaryType": "nt:unstructured",
+                "default": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "offset": "7",
+                  "width": "3"
+                }
+              },
+              "actionbar": {
+                "jcr:primaryType": "nt:unstructured",
+                "jcr:createdBy": "admin",
+                "jcr:lastModifiedBy": "admin",
+                "jcr:created": "Wed Aug 21 2024 00:10:01 GMT+0530",
+                "jcr:lastModified": "Wed Aug 21 2024 00:10:01 GMT+0530",
+                "sling:resourceType": "demo/components/proxy/content/actionbar"
+              }
+            },
+            "container": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "admin",
+              "jcr:lastModifiedBy": "admin",
+              "jcr:created": "Wed Aug 21 2024 00:09:14 GMT+0530",
+              "jcr:lastModified": "Wed Aug 21 2024 00:09:14 GMT+0530",
+              "sling:resourceType": "demo/components/proxy/content/container",
+              "cq:responsive": {
+                "jcr:primaryType": "nt:unstructured",
+                "default": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "offset": "0",
+                  "width": "10"
+                }
+              },
+              "pageinfo": {
+                "jcr:primaryType": "nt:unstructured",
+                "jcr:createdBy": "Epcy.Zacharias1@Site B.com",
+                "disableAuthorToggle": "false",
+                "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+                "disablePageId": "true",
+                "disablePageDescriptionToggle": "true",
+                "jcr:created": "Sat Aug 24 2024 13:13:51 GMT+0000",
+                "disablePageTitleToggle": "false",
+                "jcr:lastModified": "Fri Mar 07 2025 05:16:07 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/pageinfo",
+                "disablePublishDateToggle": "false"
+              },
+              "text": {
+                "jcr:primaryType": "nt:unstructured",
+                "jcr:createdBy": "Epcy.Zacharias1@Site B.com",
+                "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+                "textStyle": "tdds:text-inherit",
+                "marginTop": "tdds:mt-0",
+                "isAccessRestricted": "false",
+                "colorTextSource": "default",
+                "jcr:created": "Sat Aug 24 2024 13:14:42 GMT+0000",
+                "contentToggle": "false",
+                "marginBottom": "tdds:mb-0",
+                "text": "<p>Samsung Galaxy Promo with New Line (ID260528)&nbsp;/&nbsp;R708</p>\r\n",
+                "jcr:lastModified": "Mon May 18 2026 20:15:36 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/text",
+                "colorTextPalette": "tdds:color-primary-100",
+                "textIsRich": [
+                  "true",
+                  "true"
+                ],
+                "colorText": "color-initial",
+                "textAlignment": "tdds:ta-inherit"
+              },
+              "latestupdates": {
+                "jcr:primaryType": "nt:unstructured",
+                "jcr:createdBy": "admin",
+                "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+                "jcr:created": "Wed Aug 21 2024 00:10:25 GMT+0530",
+                "latestDate": "Apr 14, 2025",
+                "jcr:lastModified": "Mon May 18 2026 20:15:42 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/latestupdates",
+                "textIsRich": [
+                  "true"
+                ],
+                "revision": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "item0": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "revisionDate": "May 19, 2026",
+                    "revisionNotes": "<p>Page created.</p>\r\n"
+                  }
+                }
+              }
+            },
+            "cq:responsive": {
+              "jcr:primaryType": "nt:unstructured",
+              "default": {
+                "jcr:primaryType": "nt:unstructured",
+                "offset": "0",
+                "width": "10"
+              }
+            }
+          },
+          "shortcuts": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "admin",
+            "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+            "tabisSticky": "false",
+            "navisSticky": true,
+            "isAccessRestricted": "false",
+            "jcr:created": "Wed Aug 21 2024 01:05:06 GMT+0530",
+            "type": "navigation",
+            "gridMobile": "2",
+            "gridTablet": "4",
+            "jcr:lastModified": "Tue Oct 22 2024 15:33:50 GMT+0000",
+            "resisSticky": "false",
+            "sling:resourceType": "demo/components/proxy/content/shortcuts",
+            "isInverse": "false",
+            "links": {
+              "jcr:primaryType": "nt:unstructured",
+              "item0": {
+                "jcr:primaryType": "nt:unstructured",
+                "anchor": "whats-the-deal",
+                "icon": "no-icon",
+                "text": "What's the deal?",
+                "linkTarget": "_self"
+              },
+              "item1": {
+                "jcr:primaryType": "nt:unstructured",
+                "anchor": "review-take-action",
+                "icon": "no-icon",
+                "text": "Review & take action",
+                "linkTarget": "_self"
+              },
+              "item2": {
+                "jcr:primaryType": "nt:unstructured",
+                "anchor": "having-trouble",
+                "icon": "no-icon",
+                "text": "Having trouble?",
+                "linkTarget": "_self"
+              },
+              "item3": {
+                "jcr:primaryType": "nt:unstructured",
+                "anchor": "reminders",
+                "icon": "no-icon",
+                "text": "Reminders",
+                "linkTarget": "_self"
+              },
+              "item4": {
+                "jcr:primaryType": "nt:unstructured",
+                "anchor": "faqs",
+                "icon": "no-icon",
+                "text": "FAQs",
+                "linkTarget": "_self"
+              }
+            }
+          },
+          "container_940068960": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "admin",
+            "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+            "layout": "responsiveGrid",
+            "isAccessRestricted": "false",
+            "jcr:created": "Fri Jul 26 2024 19:16:10 GMT+0530",
+            "id": "overview",
+            "jcr:lastModified": "Fri Oct 18 2024 05:22:35 GMT+0000",
+            "sling:resourceType": "demo/components/proxy/content/container",
+            "cq:styleIds": [
+              "1720169131534"
+            ],
+            "container_1538270115": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "angela.foster112@Site B.com",
+              "jcr:lastModifiedBy": "angela.foster112@Site B.com",
+              "layout": "responsiveGrid",
+              "isAccessRestricted": "false",
+              "jcr:created": "Fri Oct 11 2024 01:42:54 GMT+0000",
+              "jcr:lastModified": "Fri Oct 11 2024 01:43:04 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/container",
+              "cq:responsive": {
+                "jcr:primaryType": "nt:unstructured",
+                "default": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "offset": "0",
+                  "width": "5"
+                }
+              },
+              "promocard": {
+                "jcr:primaryType": "nt:unstructured",
+                "jcr:createdBy": "admin",
+                "imageFromPageImage": "false",
+                "desktopHeightUnit": "px",
+                "tabletHeightUnit": "px",
+                "isFlipped": "true",
+                "verticalAlignment": "stretch",
+                "eyebrow": "with new line",
+                "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+                "containerAlignment": "center",
+                "enableSecondaryButton": "false",
+                "isAccessRestricted": "false",
+                "colorTextSource": "default",
+                "tabletbackgroundPosition": "inherit",
+                "desktopbackgroundSize": "inherit",
+                "desktopbackgroundPosition": "inherit",
+                "enableCustomMedia": "false",
+                "jcr:created": "Tue Sep 24 2024 13:48:19 GMT+0530",
+                "cardStyle": "flood",
+                "imageMaxHeightUnit": "px",
+                "hasRoundedCorners": "true",
+                "addShadow": "false",
+                "copy": "<p>Get up to&nbsp;<b>$900 off an eligible Samsung Galaxy phone</b>&nbsp;when you <b>purchase on EIP</b> and&nbsp;<b>activate a new voice line</b> on an&nbsp;eligible rate plan.</p>\r\n",
+                "size": "title-1",
+                "imageAspectRatio": "dre-cardPromo--aspect-1:1",
+                "enableAppStoreButtons": "false",
+                "title": "<p>Galaxy S26 On Us</p>\r\n",
+                "mobilebackgroundSize": "cover",
+                "colorBackground": "bg-color-initial",
+                "reduceExtraPadding": "true",
+                "htmlElement": "h2",
+                "mobilebackgroundPosition": "center",
+                "inheritTablet": "false",
+                "textAlignmentDesktop": "tdds:ta-inherit",
+                "enableEyebrowGraphic": "false",
+                "masking": "disabled",
+                "staticAngle": "0",
+                "pushContent": "none",
+                "staticStyle": "disabled",
+                "blendMode": "initial",
+                "tabletbackgroundSize": "inherit",
+                "jcr:lastModified": "Mon May 11 2026 19:18:24 GMT+0000",
+                "imageAlignment": "default",
+                "sling:resourceType": "demo/components/proxy/content/promocard",
+                "horizontalAlignment": "flex-start",
+                "isDecorative": "true",
+                "colorBackgroundCustom": "#000000",
+                "enableForegroundImage": "true",
+                "colorTextPalette": "tdds:color-primary-100",
+                "textIsRich": [
+                  "true",
+                  "true",
+                  "true",
+                  "true"
+                ],
+                "backgroundRepeat": "no-repeat",
+                "inheritDesktop": "false",
+                "colorBackgroundPalette": "tdds:background-color-primary-100",
+                "defaultHeightUnit": "px",
+                "colorBackgroundSource": "custom",
+                "colorText": "tdds:color-grayscale-100",
+                "altValueFromDAM": "true",
+                "textAlignment": "tdds:ta-inherit",
+                "isSplit": "false",
+                "enablePrimaryButton": "false",
+                "eyebrowImageDisplay": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "imageFromPageImage": "false",
+                  "fileReference": "/content/dam/demo/_generated/icon.gif",
+                  "jcr:lastModifiedBy": "priya.shrivastava14@Site B.com",
+                  "marginTop": "tdds:mt-0",
+                  "isAccessRestricted": "false",
+                  "marginBottom": "tdds:mb-0",
+                  "alt": "error",
+                  "displayPopupTitle": "true",
+                  "linkTarget": "_self",
+                  "dmPresetType": "imagePreset",
+                  "jcr:lastModified": "Thu Oct 10 2024 10:41:26 GMT+0000",
+                  "titleValueFromDAM": "true",
+                  "sling:resourceType": "demo/components/proxy/content/image",
+                  "isDecorative": "false",
+                  "altValueFromDAM": "false"
+                },
+                "image": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "imageFromPageImage": "false",
+                  "fileReference": "/content/dam/demo/_generated/content.gif",
+                  "jcr:lastModifiedBy": "pushpavathi.2.kammela@Site B.com",
+                  "marginTop": "tdds:mt-0",
+                  "isAccessRestricted": "false",
+                  "marginBottom": "tdds:mb-0",
+                  "alt": "error",
+                  "displayPopupTitle": "true",
+                  "linkTarget": "_self",
+                  "dmPresetType": "imagePreset",
+                  "jcr:lastModified": "Wed May 20 2026 19:01:10 GMT+0000",
+                  "titleValueFromDAM": "true",
+                  "sling:resourceType": "demo/components/proxy/content/image",
+                  "isDecorative": "false",
+                  "altValueFromDAM": "false"
+                }
+              }
+            },
+            "container": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "admin",
+              "jcr:lastModifiedBy": "admin",
+              "layout": "responsiveGrid",
+              "isAccessRestricted": "false",
+              "jcr:created": "Mon Aug 05 2024 13:19:22 GMT+0530",
+              "jcr:lastModified": "Mon Aug 05 2024 13:19:22 GMT+0530",
+              "sling:resourceType": "demo/components/proxy/content/container",
+              "cq:styleIds": [
+                "1719226981402"
+              ],
+              "cq:responsive": {
+                "jcr:primaryType": "nt:unstructured",
+                "default": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "offset": "0",
+                  "width": "5"
+                }
+              },
+              "table": {
+                "jcr:primaryType": "nt:unstructured",
+                "jcr:createdBy": "admin",
+                "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+                "isAccessRestricted": "false",
+                "jcr:created": "Wed Aug 21 2024 01:02:37 GMT+0530",
+                "text": "<table cellpadding=\"1\" cellspacing=\"0\" border=\"1\">\r\n<tbody><tr><th width=\"50%\">Promo period</th>\r\n<td width=\"50%\">May 21, 2026 – TBA</td>\r\n</tr><tr><th>Requirements</th>\r\n<td width=\"50%\">Device Purchase, New Line Activation, Specific Rate Plan</td>\r\n</tr><tr><th>Eligible customers</th>\r\n<td width=\"50%\"><ul>\r\n<li>Postpaid</li>\r\n<li>Site B for Business 1-12 voice lines only (including Business w/ SSN)</li>\r\n<li>Employee (Site B, Non-Site B)</li>\r\n</ul>\r\n</td>\r\n</tr><tr><th>Limits</th>\r\n<td width=\"50%\">4 redemptions per account</td>\r\n</tr><tr><th>Payout</th>\r\n<td width=\"50%\">Recurring Device Credit (RDC)</td>\r\n</tr></tbody></table>\r\n",
+                "hideCaption": "false",
+                "jcr:lastModified": "Mon May 18 2026 20:15:55 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/table",
+                "textIsRich": "true",
+                "cq:responsive": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "default": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "offset": "0",
+                    "width": "5"
+                  }
+                }
+              },
+              "text": {
+                "jcr:primaryType": "nt:unstructured",
+                "jcr:createdBy": "admin",
+                "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+                "textStyle": "tdds:text-inherit",
+                "marginTop": "tdds:mt-0",
+                "isAccessRestricted": "false",
+                "colorTextSource": "default",
+                "jcr:created": "Mon Aug 05 2024 13:23:52 GMT+0530",
+                "contentToggle": "false",
+                "marginBottom": "tdds:mb-0",
+                "jcr:lastModified": "Mon Apr 27 2026 21:05:24 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/text",
+                "colorTextPalette": "tdds:color-primary-100",
+                "textIsRich": [
+                  "true",
+                  "true"
+                ],
+                "colorText": "color-initial",
+                "textAlignment": "tdds:ta-inherit"
+              },
+              "promosoclookup": {
+                "jcr:primaryType": "nt:unstructured",
+                "jcr:createdBy": "admin",
+                "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+                "jcr:created": "Wed Aug 21 2024 01:03:52 GMT+0530",
+                "promoID": "esiz1mp2usldv",
+                "showAllEligibleSOCs": "true",
+                "jcr:lastModified": "Mon May 18 2026 20:20:39 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/km/promosoclookup"
+              }
+            }
+          },
+          "container_1693305467": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "Ashwini.PreethiP1@Site B.com",
+            "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+            "isAccessRestricted": "false",
+            "jcr:created": "Wed Aug 28 2024 19:11:16 GMT+0000",
+            "id": "whats-the-deal",
+            "jcr:lastModified": "Wed Aug 28 2024 19:57:36 GMT+0000",
+            "sling:resourceType": "demo/components/proxy/content/container",
+            "cq:styleIds": [
+              "1720169131534"
+            ],
+            "title": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "Ashwini.PreethiP1@Site B.com",
+              "jcr:title": "What's the deal?",
+              "jcr:lastModifiedBy": "Ashwini.PreethiP1@Site B.com",
+              "textStyle": "tdds:text-title-2",
+              "isAccessRestricted": "false",
+              "colorTextSource": "default",
+              "jcr:created": "Wed Aug 28 2024 19:09:22 GMT+0000",
+              "type": "h2",
+              "linkTarget": "_self",
+              "jcr:lastModified": "Wed Aug 28 2024 19:09:22 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/title",
+              "colorTextPalette": "tdds:color-primary-100",
+              "colorText": "color-initial",
+              "textAlignment": "tdds:ta-inherit"
+            },
+            "table": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "admin",
+              "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+              "isAccessRestricted": "false",
+              "jcr:created": "Mon Aug 05 2024 13:28:56 GMT+0530",
+              "text": "<table cellpadding=\"1\" cellspacing=\"0\" border=\"1\">\r\n<tbody><tr><th width=\"20%\">Eligible channels</th>\r\n<td width=\"80%\"><ul>\r\n<li>Consumer Care</li>\r\n<li>Retail (Company-owned,&nbsp;<a href=\"/content/demo/us/en/customer-support/operations/in-store/store-in-store/costco-sams-club-program.html\">Store-in-Store</a>, and Authorized Retailer)</li>\r\n<li>Samsung.com<ul>\r\n<li>Only I/R account types are supported for orders on Samsung.com&nbsp;</li>\r\n<li>Samsung.com orders cannot be shipped to Puerto Rico or USVI</li>\r\n</ul>\r\n</li>\r\n<li>Micro (Care, Direct, VBS Outbound, Micro VR, Chat)</li>\r\n<li>Virtual Retail</li>\r\n<li>Digital (T-Life app &amp; Site B.com)</li>\r\n</ul>\r\n</td>\r\n</tr><tr><th width=\"20%\">Device purchase</th>\r\n<td width=\"80%\"><p><b>Samsung:</b></p>\r\n<ul>\r\n<li><b><a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-s26.html\">Galaxy S26</a>,&nbsp;<a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-s26-plus.html\">Galaxy S26+</a>,&nbsp;<a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-s26-ultra.html\">Galaxy S26 Ultra</a></b></li>\r\n<li><b><a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-s25.html\">Galaxy S25</a>,&nbsp;<a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-s25-plus.html\">Galaxy S25+</a>,&nbsp;<a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-s25-ultra.html\">Galaxy S25 Ultra</a>,&nbsp;<a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-s25-edge.html\">Galaxy S25 Edge</a>, <a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-s25-fe.html\">Galaxy S25 FE</a></b></li>\r\n<li><b><a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-z-flip7.html\">Galaxy Z Flip7,</a>&nbsp;<a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-z-fold7.html\">Galaxy Z Fold7</a></b></li>\r\n<li><a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-a37-5g.html\"><b>Galaxy A37</b></a></li>\r\n<li><a href=\"/content/demo/us/en/customer-support/devices/phone/samsung-galaxy-xcover7-pro.html\"><b>Galaxy XCover7 Pro</b></a></li>\r\n</ul>\r\n<p>Must purchase on&nbsp;EIP</p>\r\n</td>\r\n</tr><tr><th>New line activation</th>\r\n<td><p><b>New voice line required</b></p>\r\n<ul>\r\n<li>Lines added to the account via Change of Responsibility (COR) or BAN-to-BAN moves, converted from NCC/SCNC to normal Postpaid, and lines resumed from cancel do not qualify for this requirement.</li>\r\n<li>If a customer canceled a voice line within the past 90 days (excluding CORs and No Installs), the line must be resumed before they can add a brand-new voice line to qualify.</li>\r\n<li>TFB accounts cannot exceed 12 voice lines before taking advantage of this promotion. After qualifying lines have been enrolled, the customer may add additional lines to the account and exceed the 12 voice line limit.</li>\r\n</ul>\r\n</td>\r\n</tr><tr><th width=\"20%\">Rate plan</th>\r\n<td width=\"80%\"><p><b>Plan / Feature from&nbsp;</b><a href=\"/content/demo/us/en/customer-support/promotions/soc-groups/soc-group-69.html\"><b>SOC Group #69</b></a><b>&nbsp;required.</b></p>\r\n<p>Check the eligibility of specific plan SOCs at the top of the page.&nbsp;</p>\r\n</td>\r\n</tr><tr><th width=\"20%\">Trade-in</th>\r\n<td width=\"80%\">Not required</td>\r\n</tr><tr><th width=\"20%\">Port-in</th>\r\n<td width=\"80%\">Not required</td>\r\n</tr><tr><th width=\"20%\">Combinability</th>\r\n<td width=\"80%\"><ul>\r\n<li>Family Freedom:&nbsp;<b>YES</b>&nbsp;</li>\r\n<li>BreakFree or Keep and Switch: <b>NO</b></li>\r\n<li>RDC promos on the same EIP: <b>NO</b></li>\r\n</ul>\r\n</td>\r\n</tr><tr><th width=\"20%\">Not available for</th>\r\n<td width=\"80%\"><ul>\r\n<li>Contractor / Dealer accounts</li>\r\n<li>Site B for Business 13+ voice line accounts&nbsp;</li>\r\n<li>Certified Pre-Owned (CPO) device purchases</li>\r\n<li>Full Retail Price (FRP) purchases<br>\r\n</li>\r\n<li>JUMP!&nbsp; upgrades</li>\r\n<li>Standard upgrades on existing lines</li>\r\n</ul>\r\n</td>\r\n</tr><tr><th width=\"20%\">Payout</th>\r\n<td width=\"80%\"><p>Receive the promo value of $900 (approximately $37.50 per month) in 24 monthly&nbsp;<a href=\"/content/demo/us/en/customer-support/promotions/promotion-handling/recurring-device-credits-rdc.html\">Recurring Device Credits (RDC)</a></p>\r\n<ul>\r\n<li>Promo value will not exceed the price of the purchased device.</li>\r\n<li>Credits begin within two bill cycles of qualification and last the length of the EIP term.</li>\r\n<li>Customers&nbsp;who enroll in a device promotion must maintain line of service and EIP tied to the promotion to receive the full value of the promo. If either is closed or canceled, the monthly credits will stop.</li>\r\n</ul>\r\n</td>\r\n</tr></tbody></table>\r\n",
+              "hideCaption": "false",
+              "jcr:lastModified": "Tue May 19 2026 01:59:58 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/table",
+              "textIsRich": "true"
+            }
+          },
+          "container_1693305467_1121746770": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "Ashwini.PreethiP1@Site B.com",
+            "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+            "isAccessRestricted": "false",
+            "jcr:created": "Wed Aug 28 2024 19:11:16 GMT+0000",
+            "id": "review-take-action",
+            "jcr:lastModified": "Wed Aug 28 2024 19:58:25 GMT+0000",
+            "sling:resourceType": "demo/components/proxy/content/container",
+            "cq:styleIds": [
+              "1720169131534"
+            ],
+            "title": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "Ashwini.PreethiP1@Site B.com",
+              "jcr:title": "Review & take action",
+              "jcr:lastModifiedBy": "Ashwini.PreethiP1@Site B.com",
+              "textStyle": "tdds:text-title-2",
+              "isAccessRestricted": "false",
+              "colorTextSource": "default",
+              "jcr:created": "Wed Aug 28 2024 19:09:22 GMT+0000",
+              "type": "h2",
+              "linkTarget": "_self",
+              "jcr:lastModified": "Wed Aug 28 2024 19:09:22 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/title",
+              "colorTextPalette": "tdds:color-primary-100",
+              "colorText": "color-initial",
+              "textAlignment": "tdds:ta-inherit"
+            },
+            "text": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "Epcy.Zacharias1@Site B.com",
+              "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+              "textStyle": "tdds:text-inherit",
+              "marginTop": "tdds:mt-0",
+              "isAccessRestricted": "false",
+              "colorTextSource": "default",
+              "jcr:created": "Wed Aug 28 2024 19:18:44 GMT+0000",
+              "contentToggle": "false",
+              "marginBottom": "tdds:mb-0",
+              "text": "<ol>\r\n<li>Go over the promo&nbsp;details and these advisements with your customer so they understand what to do to get and keep this promo:<p>&nbsp;<span class=\"checkbox\">You'll receive the promo value as 24 monthly credits. These credits may begin within your 1-2 bill cycles after purchase. If you don't see a credit on your first bill, don't worry. You'll see a double credit on your second bill.&nbsp;</span></p>\r\n<p><span class=\"checkbox\">Your promotional credits will be paid out for the full term of the EIP with no means to speed up their payout. Additionally, you must maintain the line of service and the EIP tied to the promotion to receive the full value of the promo. If either is closed or canceled, the monthly credits will stop.&nbsp;If you have a larger down payment, you may see a second bill credit with the same description on your bill. We apply this second bill credit to make up the difference for your higher out of pocket expense when your required down payment is greater than the promo value.&nbsp;</span></p>\r\n</li>\r\n<li>Confirm customer is on or changing to a&nbsp;qualifying rate plan.&nbsp;</li>\r\n<li>Help customers place their order.&nbsp;<ul>\r\n<li><b>Important:</b>&nbsp;The new phone EIP must be associated with the new&nbsp;activation.</li>\r\n<li>For ship-to orders, verify the correct email address is entered and remind customers they&nbsp;<i>MUST</i>&nbsp;sign their EIP agreement within 48 hours, or their order will be canceled.&nbsp;</li>\r\n</ul>\r\n</li>\r\n</ol>\r\n<p><b>Retail:</b>&nbsp;Do&nbsp;<i>NOT</i>&nbsp;call the RSL to request Temp Double of the customer’s available ECL to make the customer eligible for the promo&nbsp;. These requests will be denied. Review <a href=\"/content/demo/us/en/customer-support/operations/in-store/operational/store-issue-resolution-and-support.html\">Store issue resolution and support&nbsp;</a>before engaging RSL for additional support.</p>\r\n<p><b>Micro</b>:&nbsp;Digital Checkout must be created and accepted within the promo period to qualify.</p>\r\n",
+              "jcr:lastModified": "Mon May 18 2026 21:45:29 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/text",
+              "colorTextPalette": "tdds:color-primary-100",
+              "textIsRich": [
+                "true",
+                "true"
+              ],
+              "colorText": "color-initial",
+              "textAlignment": "tdds:ta-inherit"
+            }
+          },
+          "container_1693305467_1818209082": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "Ashwini.PreethiP1@Site B.com",
+            "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+            "isAccessRestricted": "false",
+            "jcr:created": "Wed Aug 28 2024 19:11:16 GMT+0000",
+            "id": "having-trouble",
+            "jcr:lastModified": "Wed Aug 28 2024 20:02:43 GMT+0000",
+            "sling:resourceType": "demo/components/proxy/content/container",
+            "cq:styleIds": [
+              "1720169131534"
+            ],
+            "title": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "Ashwini.PreethiP1@Site B.com",
+              "jcr:title": "Having trouble?",
+              "jcr:lastModifiedBy": "Ashwini.PreethiP1@Site B.com",
+              "textStyle": "tdds:text-title-2",
+              "isAccessRestricted": "false",
+              "colorTextSource": "default",
+              "jcr:created": "Wed Aug 28 2024 19:09:22 GMT+0000",
+              "type": "h2",
+              "linkTarget": "_self",
+              "jcr:lastModified": "Wed Aug 28 2024 19:09:22 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/title",
+              "colorTextPalette": "tdds:color-primary-100",
+              "colorText": "color-initial",
+              "textAlignment": "tdds:ta-inherit"
+            },
+            "text": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "Epcy.Zacharias1@Site B.com",
+              "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+              "textStyle": "tdds:text-inherit",
+              "marginTop": "tdds:mt-0",
+              "isAccessRestricted": "false",
+              "colorTextSource": "default",
+              "jcr:created": "Wed Aug 28 2024 19:18:44 GMT+0000",
+              "contentToggle": "false",
+              "marginBottom": "tdds:mb-0",
+              "text": "<p>This promo&nbsp;follows Site B's standard&nbsp;<a href=\"/content/demo/us/en/customer-support/promotions/promotion-handling/recurring-device-credits-rdc.html\">Recurring Device Credits (RDC) guidelines</a>. For RDC issues, see&nbsp;<a href=\"/content/demo/us/en/customer-support/promotions/promotion-handling/eaa11.html\">Recurring Device Credits (RDC) Promotional Credit Issue Handling</a>.</p>\r\n",
+              "jcr:lastModified": "Tue May 19 2026 02:00:16 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/text",
+              "colorTextPalette": "tdds:color-primary-100",
+              "textIsRich": [
+                "true",
+                "true"
+              ],
+              "colorText": "color-initial",
+              "textAlignment": "tdds:ta-inherit"
+            }
+          },
+          "container_1548570392": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "Ashwini.PreethiP1@Site B.com",
+            "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+            "isAccessRestricted": "false",
+            "jcr:created": "Fri Aug 23 2024 13:10:12 GMT+0000",
+            "id": "reminders",
+            "jcr:lastModified": "Wed Aug 28 2024 20:02:32 GMT+0000",
+            "sling:resourceType": "demo/components/proxy/content/container",
+            "cq:styleIds": [
+              "1720169131534"
+            ],
+            "title_1033842615": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "admin",
+              "jcr:title": "Reminders",
+              "jcr:lastModifiedBy": "admin",
+              "textStyle": "tdds:text-title-2",
+              "isAccessRestricted": "false",
+              "colorTextSource": "default",
+              "jcr:created": "Wed Aug 21 2024 01:05:52 GMT+0530",
+              "type": "h2",
+              "linkTarget": "_self",
+              "jcr:lastModified": "Wed Aug 21 2024 01:05:52 GMT+0530",
+              "sling:resourceType": "demo/components/proxy/content/title",
+              "colorTextPalette": "tdds:color-primary-100",
+              "colorText": "color-initial",
+              "textAlignment": "tdds:ta-inherit"
+            },
+            "text": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "Epcy.Zacharias1@Site B.com",
+              "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+              "textStyle": "tdds:text-inherit",
+              "marginTop": "tdds:mt-0",
+              "isAccessRestricted": "false",
+              "colorTextSource": "default",
+              "jcr:created": "Wed Aug 28 2024 19:23:10 GMT+0000",
+              "contentToggle": "false",
+              "marginBottom": "tdds:mb-0",
+              "text": "<ul>\r\n<li>Customers can find the<b>&nbsp;Promo code</b>&nbsp;and&nbsp;<b>Bill name</b> on their bill statement.</li>\r\n<li>This promo is for a limited time only and subject to change and should be communicated to customers in this way.</li>\r\n<li><b>All qualification details must be clearly and accurately communicated with customers to ensure they understand the promotional eligibility requirements.</b></li>\r\n<li>Never add additional lines or features without the customer's consent.</li>\r\n<li>Promo available in NBA.</li>\r\n</ul>\r\n",
+              "jcr:lastModified": "Fri Feb 06 2026 18:40:50 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/text",
+              "colorTextPalette": "tdds:color-primary-100",
+              "textIsRich": [
+                "true",
+                "true"
+              ],
+              "colorText": "color-initial",
+              "textAlignment": "tdds:ta-inherit"
+            }
+          },
+          "container_1076269718": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "Epcy.Zacharias1@Site B.com",
+            "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+            "isAccessRestricted": "false",
+            "jcr:created": "Wed Aug 28 2024 20:00:57 GMT+0000",
+            "id": "faqs",
+            "jcr:lastModified": "Wed Aug 28 2024 20:02:17 GMT+0000",
+            "sling:resourceType": "demo/components/proxy/content/container",
+            "cq:styleIds": [
+              "1720169131534"
+            ],
+            "title": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "Epcy.Zacharias1@Site B.com",
+              "jcr:title": "FAQs",
+              "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+              "textStyle": "tdds:text-title-2",
+              "isAccessRestricted": "false",
+              "colorTextSource": "default",
+              "jcr:created": "Wed Aug 28 2024 20:01:44 GMT+0000",
+              "type": "h2",
+              "linkTarget": "_self",
+              "jcr:lastModified": "Wed Aug 28 2024 20:01:44 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/title",
+              "colorTextPalette": "tdds:color-primary-100",
+              "colorText": "color-initial",
+              "textAlignment": "tdds:ta-inherit"
+            },
+            "accordion_copy_copy": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "nicole.hogan@Site B.com",
+              "headingElement": "h3",
+              "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+              "isAccessRestricted": "false",
+              "hasDivider": "false",
+              "jcr:created": "Fri Apr 18 2025 16:55:14 GMT+0000",
+              "jcr:lastModified": "Mon May 18 2026 20:17:04 GMT+0000",
+              "singleExpansion": "false",
+              "sling:resourceType": "demo/components/proxy/content/accordion",
+              "isInverse": "false",
+              "isSplit": "false",
+              "item_1744996206822": {
+                "jcr:primaryType": "nt:unstructured",
+                "cq:panelTitle": "Demo Heading D",
+                "jcr:lastModifiedBy": "nicole.hogan@Site B.com",
+                "textStyle": "tdds:text-inherit",
+                "marginTop": "tdds:mt-0",
+                "isAccessRestricted": "false",
+                "colorTextSource": "default",
+                "contentToggle": "false",
+                "marginBottom": "tdds:mb-0",
+                "text": "<p>Customers shouldn't cancel an existing line with the intention of replacing it with a newly activated line to take advantage of this promo, even if the cancellation happens after the new line activation.</p>\r\n<p>Customers should never be told to cancel lines, before or after a promotion, in an effort to qualify or justify a promotion. If customers do not need additional lines, explore other promotions or discuss device price points. Driving CHURN to close sales is not the right thing to do.</p>\r\n",
+                "jcr:lastModified": "Fri Apr 18 2025 17:14:36 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/text",
+                "colorTextPalette": "tdds:color-primary-100",
+                "textIsRich": [
+                  "true",
+                  "true"
+                ],
+                "colorText": "color-initial",
+                "textAlignment": "tdds:ta-inherit"
+              },
+              "item_1744996211359": {
+                "jcr:primaryType": "nt:unstructured",
+                "cq:panelTitle": "Demo Heading F",
+                "jcr:lastModifiedBy": "nicole.hogan@Site B.com",
+                "textStyle": "tdds:text-inherit",
+                "marginTop": "tdds:mt-0",
+                "isAccessRestricted": "false",
+                "colorTextSource": "default",
+                "contentToggle": "false",
+                "marginBottom": "tdds:mb-0",
+                "text": "<p>Yes, the new phone's EIP must be associated with the new line activated for this promo in order to qualify.</p>\r\n",
+                "jcr:lastModified": "Fri Apr 18 2025 17:15:11 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/text",
+                "colorTextPalette": "tdds:color-primary-100",
+                "textIsRich": [
+                  "true",
+                  "true"
+                ],
+                "colorText": "color-initial",
+                "textAlignment": "tdds:ta-inherit"
+              },
+              "item_1744996240605": {
+                "jcr:primaryType": "nt:unstructured",
+                "cq:panelTitle": "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet.",
+                "jcr:lastModifiedBy": "nicole.hogan@Site B.com",
+                "textStyle": "tdds:text-inherit",
+                "marginTop": "tdds:mt-0",
+                "isAccessRestricted": "false",
+                "colorTextSource": "default",
+                "contentToggle": "false",
+                "marginBottom": "tdds:mb-0",
+                "text": "<p>No. As long as the TFB customers are already enrolled in the promotion <i>BEFORE </i>adding the additional lines to their account, the account will continue to receive this promotion on the lines already enrolled.</p>\r\n",
+                "jcr:lastModified": "Fri Apr 18 2025 17:16:45 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/text",
+                "colorTextPalette": "tdds:color-primary-100",
+                "textIsRich": [
+                  "true",
+                  "true"
+                ],
+                "colorText": "color-initial",
+                "textAlignment": "tdds:ta-inherit"
+              },
+              "item_1744996261219": {
+                "jcr:primaryType": "nt:unstructured",
+                "cq:panelTitle": "Demo Heading D",
+                "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+                "textStyle": "tdds:text-inherit",
+                "marginTop": "tdds:mt-0",
+                "isAccessRestricted": "false",
+                "colorTextSource": "default",
+                "contentToggle": "false",
+                "marginBottom": "tdds:mb-0",
+                "text": "<p>Customers can only have one RDC promo attached to an active EIP. They may have multiple RDCs on the same line if they are attached to separate EIPs.</p>\r\n<p>Check <a href=\"/content/demo/us/en/customer-support/promotions/promotion-handling/recurring-device-credits-rdc.html\">Recurring Device Credits (RDC)</a> for more details on multiple RDCs on the same line.</p>\r\n",
+                "jcr:lastModified": "Fri Feb 06 2026 18:43:33 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/text",
+                "colorTextPalette": "tdds:color-primary-100",
+                "textIsRich": [
+                  "true",
+                  "true"
+                ],
+                "colorText": "color-initial",
+                "textAlignment": "tdds:ta-inherit"
+              },
+              "item_1744996281924": {
+                "jcr:primaryType": "nt:unstructured",
+                "cq:panelTitle": "Demo Heading E",
+                "jcr:lastModifiedBy": "nicole.hogan@Site B.com",
+                "textStyle": "tdds:text-inherit",
+                "marginTop": "tdds:mt-0",
+                "isAccessRestricted": "false",
+                "colorTextSource": "default",
+                "contentToggle": "false",
+                "marginBottom": "tdds:mb-0",
+                "text": "<p>Customers who enroll in a device promotion need to maintain the line of service and EIP tied to the promotion to receive the full value of their promo, but if either is closed or canceled, the monthly credits will stop.&nbsp;</p>\r\n",
+                "jcr:lastModified": "Fri Apr 18 2025 17:24:44 GMT+0000",
+                "sling:resourceType": "demo/components/proxy/content/text",
+                "colorTextPalette": "tdds:color-primary-100",
+                "textIsRich": [
+                  "true",
+                  "true"
+                ],
+                "colorText": "color-initial",
+                "textAlignment": "tdds:ta-inherit"
+              }
+            }
+          },
+          "container_1686881978": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "Epcy.Zacharias1@Site B.com",
+            "jcr:lastModifiedBy": "Epcy.Zacharias1@Site B.com",
+            "jcr:created": "Fri Oct 18 2024 05:31:42 GMT+0000",
+            "jcr:lastModified": "Fri Oct 18 2024 05:31:42 GMT+0000",
+            "sling:resourceType": "demo/components/proxy/content/container",
+            "cq:styleIds": [
+              "1720169131534"
+            ],
+            "text": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:createdBy": "Epcy.Zacharias1@Site B.com",
+              "jcr:lastModifiedBy": "Alkia.Morris@Site B.com",
+              "textStyle": "tdds:text-legal",
+              "marginTop": "tdds:mt-0",
+              "isAccessRestricted": "false",
+              "colorTextSource": "default",
+              "jcr:created": "Fri Oct 18 2024 05:33:24 GMT+0000",
+              "contentToggle": "false",
+              "marginBottom": "tdds:mb-0",
+              "text": "<p><b>Legal Disclaimer:&nbsp;</b>With 24 monthly bill credits when you add a line on most plans. For well qualified customers; plus tax &amp; $35 device connection charge.&nbsp;<b>Contact us before cancelling entire account to continue remaining bill credits, or credits stop &amp; balance on required finance agreement is due (e.g., $899.99 – Galaxy S26 256GB). Bill credits end if you pay off device early. </b>Tax on pre-credit price due at sale. Limited time; subject to change. Qualifying credit and service ($60+/mo. plan w/AutoPay; plus taxes/fees) required.  If you have cancelled lines in past 90 days, you may need to reactivate them first. $35 device connection charge due at sale. Up to $900 via bill credits; line with promo must be active and in good standing to receive credits; allow 2 bill cycles. Max 4 discounted devices/account. May not be combinable with some offers, discounts, or promotions.</p>\r\n",
+              "jcr:lastModified": "Mon May 18 2026 22:15:17 GMT+0000",
+              "sling:resourceType": "demo/components/proxy/content/text",
+              "colorTextPalette": "tdds:color-primary-100",
+              "textIsRich": [
+                "true",
+                "true"
+              ],
+              "colorText": "color-initial",
+              "textAlignment": "tdds:ta-inherit"
+            }
+          }
+        }
+      }
+    },
+    "cq:featuredimage": {
+      "jcr:primaryType": "nt:unstructured",
+      "jcr:lastModifiedBy": "pushpavathi.2.kammela@Site B.com",
+      "jcr:lastModified": "Wed May 20 2026 18:28:30 GMT+0000",
+      "sling:resourceType": "core/wcm/components/image/v3/image",
+      "altValueFromDAM": "false"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -162,6 +162,24 @@ describe("fetcher-fixtures", () => {
     expect(() => lookupFixture(dir, "/content/x.infinity.json")).toThrow(
       /both a body file and a meta sidecar exist/,
     );
+  });
+
+  it("lookupFixture resolves bucket subdirs (content/ and components/)", async () => {
+    mkdirSync(join(dir, "content"), { recursive: true });
+    mkdirSync(join(dir, "components"), { recursive: true });
+    writeFileSync(
+      join(dir, "content", "content__page.infinity.json"),
+      JSON.stringify({ page: true }),
+    );
+    writeFileSync(
+      join(dir, "components", "apps__foo__bar.infinity.json"),
+      JSON.stringify({ dialog: true }),
+    );
+    const fetchImpl = buildFixturesFetch(dir, baseUrl);
+    const page = await fetchInfinityJson(deps(fetchImpl), "/content/page");
+    expect(page).toEqual({ page: true });
+    const dialog = await fetchInfinityJson(deps(fetchImpl), "/apps/foo/bar");
+    expect(dialog).toEqual({ dialog: true });
   });
 
   it("maybeApplyFixturesMode only fires when deps.fixturesDir is set (env is ignored)", async () => {

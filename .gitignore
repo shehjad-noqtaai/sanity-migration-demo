@@ -21,6 +21,11 @@ dist/
 # add a new file to the template, also add it here.
 tenants/*
 !tenants/template
+!tenants/demo
+!tenants/demo/**
+# Pipeline output and install artifacts are always local — even under the committed demo tenant.
+tenants/*/output/
+tenants/*/node_modules/
 !tenants/template/.env.example
 !tenants/template/aem-component-containers.json
 !tenants/template/aem-component-exceptions

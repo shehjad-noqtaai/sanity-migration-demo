@@ -1,0 +1,112 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Properties",
+    "height": 600,
+    "width": 730,
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "section": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/abstract-section/cq:dialog/content/items/tabs/items/section",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            },
+            "properties": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Properties",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "faq-categories": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "composite": "true",
+                  "fieldLabel": "FAQ Sections",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                  "field": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "name": "./sections",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sectionTitle": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "required": true,
+                        "name": "sectionTitle",
+                        "fieldLabel": "Section title",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                      },
+                      "asset": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "fileReferenceParameter": "./fileReference",
+                        "required": true,
+                        "useHTML5": false,
+                        "mimeTypes": [
+                          "image/*"
+                        ],
+                        "fileNameParameter": "./fileName",
+                        "name": "./image",
+                        "class": "cq-droptarget",
+                        "disabled": false,
+                        "fieldLabel": "Category image",
+                        "multiple": false,
+                        "allowUpload": false,
+                        "sling:resourceType": "cq/gui/components/authoring/dialog/fileupload",
+                        "autoStart": false
+                      },
+                      "links": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "composite": "true",
+                        "fieldLabel": "Section links",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                        "field": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "nestedLinks",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "linkText": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "required": true,
+                              "name": "text",
+                              "fieldLabel": "Link text",
+                              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                            },
+                            "linkLocation": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "required": true,
+                              "rootPath": "/content",
+                              "name": "link",
+                              "fieldLabel": "Link location",
+                              "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "buttonsTab": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/buttons-tab/cq:dialog/content/items/tabs/items/buttonsTab",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            }
+          }
+        }
+      }
+    }
+  }
+}

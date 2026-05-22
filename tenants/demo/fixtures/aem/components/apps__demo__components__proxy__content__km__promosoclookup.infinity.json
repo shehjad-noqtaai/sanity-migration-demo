@@ -1,0 +1,58 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Promo SOC Lookup",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "properties": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Properties",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "promoID": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": "true",
+                      "name": "./promoID",
+                      "fieldLabel": "Promo ID",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                      "fieldDescription": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                    },
+                    "showAllEligibleSOCs": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "defaultChecked": "true",
+                      "defaultValue": "true",
+                      "uncheckedValue": "false",
+                      "name": "./showAllEligibleSOCs",
+                      "text": "Show All Eligible SOCs",
+                      "value": "true",
+                      "checked": "true",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

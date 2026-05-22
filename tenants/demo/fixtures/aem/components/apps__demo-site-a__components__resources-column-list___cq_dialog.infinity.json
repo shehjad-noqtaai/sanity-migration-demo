@@ -1,0 +1,89 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Properties",
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:hideChildren": [
+            "properties"
+          ],
+          "section": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/apps/demo-site-a/components/dialog/abstract-padding/cq:dialog/content/items/tabs/items/section",
+            "sling:resourceType": "granite/ui/components/foundation/include"
+          },
+          "main": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "General",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sidebarLinkTarget": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "rootPath": "/content",
+                        "name": "./sidebarLink",
+                        "fieldLabel": "Sidebar link target",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                      },
+                      "sidebarLinkText": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./sidebarLinkText",
+                        "fieldLabel": "Sidebar link text",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                      },
+                      "theme": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./theme",
+                        "fieldLabel": "Theme",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "white": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "White",
+                            "value": "white"
+                          },
+                          "seashell": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Seashell",
+                            "value": "seashell"
+                          },
+                          "mocassin": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Mocassin",
+                            "value": "mocassin"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

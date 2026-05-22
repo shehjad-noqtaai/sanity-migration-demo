@@ -1,0 +1,70 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Favorites Products grid",
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "column": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:resourceType": "granite/ui/components/coral/foundation/container",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "dashboardLink": {
+              "jcr:primaryType": "nt:unstructured",
+              "required": true,
+              "name": "./dashboardLink",
+              "fieldLabel": "Dashboard Page",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+              "fieldDescription": "Please provide a path to dashboard page"
+            },
+            "myOrdersLink": {
+              "jcr:primaryType": "nt:unstructured",
+              "required": true,
+              "name": "./myOrdersLink",
+              "fieldLabel": "My Orders Page",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+              "fieldDescription": "Please provide a path to my orders page"
+            },
+            "myReturnsLink": {
+              "jcr:primaryType": "nt:unstructured",
+              "required": true,
+              "name": "./myReturnsLink",
+              "fieldLabel": "My Returns Page",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+              "fieldDescription": "Please provide a path to returns page"
+            },
+            "addressBookLink": {
+              "jcr:primaryType": "nt:unstructured",
+              "required": true,
+              "name": "./addressBookLink",
+              "fieldLabel": "Address Book Page",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+              "fieldDescription": "Demo Heading F"
+            },
+            "accountInfoLink": {
+              "jcr:primaryType": "nt:unstructured",
+              "required": true,
+              "name": "./accountInfoLink",
+              "fieldLabel": "Account Info page",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+              "fieldDescription": "Demo Heading D"
+            },
+            "newsLetterLink": {
+              "jcr:primaryType": "nt:unstructured",
+              "required": true,
+              "name": "./newsLetterLink",
+              "fieldLabel": "Newletter Subscriptions Page",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+              "fieldDescription": "Demo Heading G"
+            }
+          }
+        }
+      }
+    }
+  }
+}

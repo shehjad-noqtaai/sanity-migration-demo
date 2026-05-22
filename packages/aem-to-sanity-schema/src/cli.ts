@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import {
   DialogNodeSchema,
+  applyFixturesFromEnv,
   createColors,
   createLogger,
   fetchInfinityJson,
@@ -174,7 +175,7 @@ async function main(): Promise<void> {
   );
 
   const fetcher = (jcrPath: string): Promise<DialogNode> =>
-    fetchInfinityJson({ config, logger }, jcrPath, (raw) => {
+    fetchInfinityJson(applyFixturesFromEnv({ config, logger }), jcrPath, (raw) => {
       const parsed = DialogNodeSchema.safeParse(raw);
       if (!parsed.success) {
         throw new Error(

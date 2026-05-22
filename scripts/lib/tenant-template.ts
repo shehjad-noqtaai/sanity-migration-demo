@@ -14,6 +14,9 @@ export const REPO_ROOT = resolve(here, "..", "..");
 export const TENANTS_DIR = join(REPO_ROOT, "tenants");
 export const TEMPLATE_DIR = join(TENANTS_DIR, "template");
 
+/** Committed tenants that are not created via migrate:init. */
+export const COMMITTED_TENANTS = new Set(["demo"]);
+
 /**
  * Files whose contents come from the template. Doctor compares these and
  * reports drift; init seeds them verbatim.

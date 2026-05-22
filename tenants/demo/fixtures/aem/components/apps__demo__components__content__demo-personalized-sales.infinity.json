@@ -1,0 +1,200 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Favoritable 4 Column - Staggered Grid",
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "properties": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Select the Best Selling products",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "titleText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./titleText",
+                          "fieldLabel": "Title Header Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Title Header Text"
+                        },
+                        "imageMulti": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "composite": true,
+                          "fieldLabel": "Select Products",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                          "field": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./products",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "column": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                                "items": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "title": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./productPath",
+                                    "selectionId": "sku",
+                                    "fieldLabel": "Select Product ",
+                                    "eaem-show-on-collapse": "EAEM.showProductName",
+                                    "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+                                    "fieldDescription": "Magento Product Path"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "ctaText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./ctaText",
+                          "fieldLabel": "CTA Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textarea",
+                          "fieldDescription": "CTA Text"
+                        },
+                        "ctaCategoryPath": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./ctaCategoryPath",
+                          "selectionId": "path",
+                          "fieldLabel": "PLP Path",
+                          "eaem-show-on-collapse": "EAEM.showProductName",
+                          "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+                          "fieldDescription": "Choose the PLP Page Path"
+                        },
+                        "ctaProductPath": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./ctaProductPath",
+                          "selectionId": "slug",
+                          "fieldLabel": "Product Path",
+                          "eaem-show-on-collapse": "EAEM.showProductName",
+                          "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+                          "fieldDescription": "Choose the PDP Page Path"
+                        },
+                        "ctaLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "rootPath": "/content/demo",
+                          "name": "./ctaLink",
+                          "fieldLabel": "CTA Link",
+                          "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser",
+                          "fieldDescription": "CTA Link"
+                        },
+                        "backdrop": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./backdropSelection",
+                          "fieldLabel": "Backdrop",
+                          "sling:resourceType": "granite/ui/components/foundation/form/select",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "noBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "No Backdrop",
+                              "value": ""
+                            },
+                            "fullBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Full Backdrop",
+                              "value": "component-backdrop--full"
+                            },
+                            "halfBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Half Backdrop",
+                              "value": "component-backdrop--half"
+                            },
+                            "offsetBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Offset Backdrop",
+                              "value": "component-backdrop--offset"
+                            },
+                            "overlapBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Overlap Backdrop",
+                              "value": "component-backdrop--overlap"
+                            }
+                          }
+                        },
+                        "imageDisplay": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq:showOnCreate": false,
+                          "name": "./imageDisplay",
+                          "fieldLabel": "Image Display",
+                          "sling:resourceType": "granite/ui/components/foundation/form/select",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "inline": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Inline",
+                              "value": "staggered-grid--inline"
+                            },
+                            "staggered": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Staggered",
+                              "value": ""
+                            }
+                          }
+                        },
+                        "image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "jcr:title": "Image",
+                          "margin": true,
+                          "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "columns": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "margin": true,
+                              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                              "items": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "column": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                                  "items": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "include": {
+                                      "jcr:primaryType": "nt:unstructured",
+                                      "path": "/apps/demo/components/common/demo-image/cq:dialog/content/items/tabs/items/image/items/columns/items/column",
+                                      "sling:resourceType": "granite/ui/components/coral/foundation/include"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Page Information",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "column": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:resourceType": "granite/ui/components/coral/foundation/container",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "disablePageTitleToggle": {
+              "jcr:primaryType": "nt:unstructured",
+              "uncheckedValue": false,
+              "name": "./disablePageTitleToggle",
+              "value": true,
+              "fieldLabel": "Disable Page Title",
+              "checked": false,
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+              "fieldDescription": "Demo Heading C"
+            },
+            "disableAuthorToggle": {
+              "jcr:primaryType": "nt:unstructured",
+              "uncheckedValue": false,
+              "name": "./disableAuthorToggle",
+              "value": true,
+              "fieldLabel": "Disable Author Name ",
+              "checked": false,
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+              "fieldDescription": "Demo Heading B"
+            },
+            "disablePublishDateToggle": {
+              "jcr:primaryType": "nt:unstructured",
+              "uncheckedValue": false,
+              "name": "./disablePublishDateToggle",
+              "value": true,
+              "fieldLabel": "Disable Published Date",
+              "checked": false,
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+              "fieldDescription": "Demo Heading C"
+            },
+            "disablePageId": {
+              "jcr:primaryType": "nt:unstructured",
+              "uncheckedValue": false,
+              "name": "./disablePageId",
+              "value": true,
+              "fieldLabel": "Disable Page Id",
+              "checked": false,
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+              "fieldDescription": "Demo Heading C"
+            },
+            "disablePageDescriptionToggle": {
+              "jcr:primaryType": "nt:unstructured",
+              "uncheckedValue": false,
+              "name": "./disablePageDescriptionToggle",
+              "value": true,
+              "fieldLabel": "Disable Page Description",
+              "checked": false,
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+              "fieldDescription": "Demo Heading E"
+            }
+          }
+        }
+      }
+    }
+  }
+}

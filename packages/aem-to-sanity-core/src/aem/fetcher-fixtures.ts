@@ -31,6 +31,16 @@ import {
  *   GET  /apps/dbi/components/content/about/_cq_dialog.infinity.json
  *        → apps__dbi__components__content__about___cq_dialog.infinity.json
  *
+ * ## Subdirectory layout (optional)
+ *
+ * Demo tenants may split fixtures under bucket folders beneath `fixturesDir`:
+ *
+ *   fixtures/aem/content/     — `/content/...` page + tag trees
+ *   fixtures/aem/components/  — `/apps/...` component + dialog trees
+ *
+ * `lookupFixture` checks the bucket subdir first, then falls back to a flat
+ * `fixturesDir` for backward compatibility with older captures.
+ *
  * Non-200 responses are captured by placing a sibling `<filename>.meta.json`
  * next to the response body (or in place of it, for 404s where we never get a
  * body). The meta file is a JSON object:
@@ -66,6 +76,24 @@ export function fixtureFilenameForUrl(relativePath: string): string {
   return trimmed.replace(/\//g, "__");
 }
 
+/** Bucket subfolder for a relative AEM URL path, when using split fixture trees. */
+export function fixtureBucketForUrl(relativePath: string): "content" | "components" | undefined {
+  const normalized = relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+  if (normalized.startsWith("/content/")) return "content";
+  if (normalized.startsWith("/apps/")) return "components";
+  return undefined;
+}
+
+/** Search order for fixture files: bucket subdir (if any), then flat root. */
+export function fixtureSearchDirs(
+  fixturesDir: string,
+  relativePath: string,
+): string[] {
+  const bucket = fixtureBucketForUrl(relativePath);
+  const out = bucket ? [join(fixturesDir, bucket), fixturesDir] : [fixturesDir];
+  return [...new Set(out)];
+}
+
 export interface FixtureMeta {
   status: number;
   body?: string;
@@ -87,13 +115,12 @@ export interface FixtureLookup {
  * `fixturesDir`. Returns `undefined` if no fixture exists (caller decides
  * whether that's a 404 or a hard error).
  */
-export function lookupFixture(
-  fixturesDir: string,
-  relativePath: string,
+function lookupFixtureInDir(
+  dir: string,
+  filename: string,
 ): FixtureLookup | undefined {
-  const filename = fixtureFilenameForUrl(relativePath);
-  const bodyPath = join(fixturesDir, filename);
-  const metaPath = join(fixturesDir, `${filename}.meta.json`);
+  const bodyPath = join(dir, filename);
+  const metaPath = join(dir, `${filename}.meta.json`);
 
   const hasBody = existsSync(bodyPath);
   const hasMeta = existsSync(metaPath);
@@ -107,7 +134,7 @@ export function lookupFixture(
   // trying to avoid). Fail loudly instead.
   if (hasBody && hasMeta) {
     throw new Error(
-      `Fixture ${filename}: both a body file and a meta sidecar exist under ${fixturesDir}. ` +
+      `Fixture ${filename}: both a body file and a meta sidecar exist under ${dir}. ` +
         `Remove one — a body file implies a 200 response; a meta sidecar implies a non-200.`,
     );
   }
@@ -129,6 +156,18 @@ export function lookupFixture(
   }
 
   return { body200, meta, resolvedPath: bodyPath };
+}
+
+export function lookupFixture(
+  fixturesDir: string,
+  relativePath: string,
+): FixtureLookup | undefined {
+  const filename = fixtureFilenameForUrl(relativePath);
+  for (const dir of fixtureSearchDirs(fixturesDir, relativePath)) {
+    const hit = lookupFixtureInDir(dir, filename);
+    if (hit) return hit;
+  }
+  return undefined;
 }
 
 /**

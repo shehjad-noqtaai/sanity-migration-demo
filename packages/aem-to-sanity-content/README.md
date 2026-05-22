@@ -86,6 +86,8 @@ MIGRATION_DRY_RUN=false pnpm aem-import                  # commit docs (categori
 
 - `--upload-only` — skip phase 1 (download from AEM); assumes local cache is populated.
 - `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup finds assets already in the Media Library and links them into the dataset. Useful for re-runs, for iterating on link/rewrite logic without re-hitting AEM, or when assets were pushed out-of-band. Mutually exclusive with `--upload-only`. See § *aem-assets — Media Library flow* below for the caveat about the `aemSource` aspect.
+- When `AEM_FIXTURES_DIR` is set, phase 1 copies DAM binaries from `{AEM_FIXTURES_DIR}/images/` (offline demo tenant). See § *Fixture images mode*.
+- `--placeholders` (or `MIGRATION_ASSETS_PLACEHOLDERS=true`) — legacy: skip AEM download; copy SVG files from `./placeholders/` into the local cache (hashed to 12 slots). Mutually exclusive with `--link-only`, `--upload-only`, and `AEM_FIXTURES_DIR`. See § *`--placeholders` mode*.
 - `--no-rewrite` — skip the in-place rewrite of `clean/*.json`.
 
 `aem-import` flags:
@@ -226,6 +228,14 @@ Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (de
 ### `--link-only` mode
 
 Runs phase 0, skips phases 1 + 2, runs phases 3 + 4. Use when assets are already in the ML (from an earlier run or pushed out-of-band). Any DAM path that phase 0 can't find in the ML is reported up front and ends up in the phase-4 `unresolved` summary. Phase 0's lookup only finds assets that this pipeline previously stamped — assets uploaded through the Studio UI without the `aemSource` aspect won't resolve by DAM path.
+
+### Fixture images mode
+
+When `AEM_FIXTURES_DIR` is set, phase 1 copies committed DAM binaries from `{AEM_FIXTURES_DIR}/images/` into the local asset cache (same flatten naming as the asset cache: `/content/dam/foo/bar.jpg` → `foo--bar.jpg`). Phases 2–4 run unchanged. Used by the offline [`tenants/demo/`](../../tenants/demo/) tenant. Mutually exclusive with `--placeholders`.
+
+### `--placeholders` mode (legacy)
+
+Skips AEM download (phase 1). Copies SVG files from `./placeholders/` into the local asset cache — each DAM path hashes to one of 12 slots (`placeholder-slot-00.svg` … `placeholder-slot-11.svg`). Prefer fixture images for the demo tenant. Mutually exclusive with `--link-only`, `--upload-only`, and `AEM_FIXTURES_DIR`.
 
 Manifest entry shape (`output/assets/manifest.json`):
 

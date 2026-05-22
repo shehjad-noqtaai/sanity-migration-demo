@@ -19,7 +19,9 @@
  * Dry-run by default. Set `MIGRATION_DRY_RUN=false` to upload + link + rewrite.
  */
 import "dotenv/config";
+import { createHash } from "node:crypto";
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -27,7 +29,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { basename, extname, join, resolve } from "node:path";
+import { basename, dirname, extname, join, resolve } from "node:path";
 import { createColors, formatDuration, resolveConfig, startTimer, type AuthMode } from "aem-to-sanity-core";
 
 // ── Types ────────────────────────────────────────────────────────────────
@@ -181,6 +183,84 @@ function mimeFor(path: string): string {
 
 function flatten(damPath: string): string {
   return damPath.replace(/^\/content\/dam\//, "").replace(/\//g, "--");
+}
+
+function fixtureImagePath(fixturesRoot: string, damPath: string): string {
+  return join(fixturesRoot, "images", flatten(damPath));
+}
+
+/**
+ * Copy a committed DAM binary from `fixtures/aem/images/` into the asset cache.
+ * Used when `AEM_FIXTURES_DIR` is set (offline demo tenant).
+ */
+function cacheFromFixtures(
+  damPath: string,
+  cacheDir: string,
+  fixturesRoot: string,
+): ManifestEntry {
+  const src = fixtureImagePath(fixturesRoot, damPath);
+  if (!existsSync(src)) {
+    return {
+      damPath,
+      status: "failed-download",
+      error: `fixture image missing: ${src} (re-run pnpm build:demo-fixtures)`,
+    };
+  }
+  const cachedFile = join(cacheDir, flatten(damPath));
+  mkdirSync(dirname(cachedFile), { recursive: true });
+  if (!existsSync(cachedFile)) {
+    copyFileSync(src, cachedFile);
+  }
+  return {
+    damPath,
+    cachedFile,
+    fileSize: statSync(cachedFile).size,
+    mimeType: mimeFor(cachedFile),
+    downloadedAt: new Date().toISOString(),
+    status: "cached",
+  };
+}
+
+const PLACEHOLDER_SLOT_COUNT = 12;
+
+/** Deterministic slot for a DAM path — matches demo tenant placeholder SVGs. */
+function slotForDamPath(damPath: string): number {
+  const hash = createHash("sha1").update(damPath).digest("hex");
+  return parseInt(hash.slice(0, 8), 16) % PLACEHOLDER_SLOT_COUNT;
+}
+
+function placeholderSvgPath(slot: number): string {
+  const slug = `slot-${String(slot).padStart(2, "0")}`;
+  return resolve(process.cwd(), "placeholders", `placeholder-${slug}.svg`);
+}
+
+/**
+ * Copy a local placeholder SVG into the asset cache instead of downloading
+ * from AEM. Used by the offline demo tenant (`--placeholders`).
+ */
+function cachePlaceholder(damPath: string, cacheDir: string): ManifestEntry {
+  const slot = slotForDamPath(damPath);
+  const src = placeholderSvgPath(slot);
+  if (!existsSync(src)) {
+    return {
+      damPath,
+      status: "failed-download",
+      error: `placeholder missing: ${src} (run build:demo-fixtures or add placeholders/)`,
+    };
+  }
+  const cachedFile = join(cacheDir, `${flatten(damPath)}.svg`);
+  mkdirSync(dirname(cachedFile), { recursive: true });
+  if (!existsSync(cachedFile)) {
+    copyFileSync(src, cachedFile);
+  }
+  return {
+    damPath,
+    cachedFile,
+    fileSize: statSync(cachedFile).size,
+    mimeType: "image/svg+xml",
+    downloadedAt: new Date().toISOString(),
+    status: "cached",
+  };
 }
 
 function aemAuthHeader(auth: AuthMode): string {
@@ -628,8 +708,23 @@ async function main(): Promise<void> {
   const linkOnly =
     process.argv.includes("--link-only") ||
     process.env.MIGRATION_LINK_ONLY === "true";
+  const usePlaceholders =
+    process.argv.includes("--placeholders") ||
+    process.env.MIGRATION_ASSETS_PLACEHOLDERS === "true";
+  const fixturesRoot = process.env.AEM_FIXTURES_DIR?.trim() || "";
+  const useFixtureImages = fixturesRoot.length > 0;
   if (linkOnly && uploadOnly) {
     console.error("--link-only and --upload-only are mutually exclusive.");
+    process.exit(2);
+  }
+  if (usePlaceholders && (linkOnly || uploadOnly)) {
+    console.error("--placeholders is mutually exclusive with --link-only and --upload-only.");
+    process.exit(2);
+  }
+  if (usePlaceholders && useFixtureImages) {
+    console.error(
+      "--placeholders is not used with AEM_FIXTURES_DIR — read DAM binaries from fixtures/aem/images/ instead.",
+    );
     process.exit(2);
   }
   const skipRewrite = process.argv.includes("--no-rewrite");
@@ -650,11 +745,15 @@ async function main(): Promise<void> {
   }
   const sortedPaths = [...damPaths].sort();
 
-  const modeLabel = linkOnly
-    ? " [link-only: skip download + upload]"
-    : uploadOnly
-      ? " [upload-only: skip download]"
-      : "";
+  const modeLabel = useFixtureImages
+    ? " [fixture images: skip AEM download]"
+    : usePlaceholders
+      ? " [placeholders: local SVGs, skip AEM download]"
+      : linkOnly
+        ? " [link-only: skip download + upload]"
+        : uploadOnly
+          ? " [upload-only: skip download]"
+          : "";
   console.error(
     `[assets] ${c.green(sortedPaths.length)} unique asset(s) across ${c.green(cleanFiles.length)} page(s)${c.dim(modeLabel)}`,
   );
@@ -786,8 +885,13 @@ async function main(): Promise<void> {
   if (!uploadOnly && !linkOnly) {
     const concurrency = assetConcurrency();
     console.error(
-      c.bold("\n── 1. Download from AEM DAM ──") +
-        c.dim(` (concurrency: ${concurrency})`),
+      c.bold(
+        useFixtureImages
+          ? "\n── 1. Cache fixture DAM images ──"
+          : usePlaceholders
+            ? "\n── 1. Cache local placeholder assets ──"
+            : "\n── 1. Download from AEM DAM ──",
+      ) + c.dim(` (concurrency: ${concurrency})`),
     );
     const phase1 = startTimer();
     let done = 0;
@@ -804,11 +908,18 @@ async function main(): Promise<void> {
         console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${c.dim("skip  ")} ${damPath}  ${c.dim("(already in ML)")}`);
         return;
       }
-      const entry = await downloadOne(damPath, assetsDir, config.baseUrl, config.auth);
+      const entry = useFixtureImages
+        ? cacheFromFixtures(damPath, assetsDir, fixturesRoot)
+        : usePlaceholders
+          ? cachePlaceholder(damPath, assetsDir)
+          : await downloadOne(damPath, assetsDir, config.baseUrl, config.auth);
       manifest[damPath] = { ...existing, ...entry };
       writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
       done++;
-      const marker = entry.status === "failed-download" ? c.yellow("fail  ") : c.dim("↓      ");
+      const marker =
+        entry.status === "failed-download"
+          ? c.yellow("fail  ")
+          : c.dim(useFixtureImages ? "fx    " : usePlaceholders ? "ph    " : "↓      ");
       console.error(`  ${c.dim(`${done}/${sortedPaths.length}`)} ${w} ${marker} ${damPath}`);
     });
     phaseTimings.phase1 = phase1.elapsedMs();

@@ -1,0 +1,216 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Properties",
+    "height": 600,
+    "width": 630,
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "section": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/abstract-section/cq:dialog/content/items/tabs/items/section",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            },
+            "layout": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Properties",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "theme": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./theme",
+                          "fieldLabel": "Theme",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "white": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "White",
+                              "value": "white"
+                            },
+                            "seashell": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Seashell",
+                              "value": "seashell"
+                            },
+                            "seashell-alt": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Seashell-alt",
+                              "value": "seashell-alt"
+                            },
+                            "mocassin": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Mocassin",
+                              "value": "mocassin"
+                            },
+                            "mocassin-alt": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Mocassin-alt",
+                              "value": "mocassin-alt"
+                            },
+                            "claret": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Claret",
+                              "value": "claret"
+                            },
+                            "claret-alt": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Claret-alt",
+                              "value": "claret-alt"
+                            },
+                            "black": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Black",
+                              "value": "black"
+                            },
+                            "black-alt": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Black-alt",
+                              "value": "black-alt"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "colorsTab": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Colors",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "color-heading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "text": "Colors options",
+                          "level": "3",
+                          "sling:resourceType": "granite/ui/components/foundation/heading"
+                        },
+                        "asset-allowed-heading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "text": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate.",
+                          "level": "2",
+                          "sling:resourceType": "granite/ui/components/foundation/heading"
+                        },
+                        "colors": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "composite": "true",
+                          "fieldLabel": "Add colors",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                          "field": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./colors",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "name": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "name": "name",
+                                "fieldLabel": "Color name",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                              },
+                              "description": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "description",
+                                "fieldLabel": "Description",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                              },
+                              "hex-value": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "hexValue",
+                                "fieldLabel": "HEX VALUE",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                              },
+                              "image": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "fileReferenceParameter": "./fileReference",
+                                "required": false,
+                                "useHTML5": false,
+                                "mimeTypes": [
+                                  "image/gif",
+                                  "image/jpeg",
+                                  "image/webp",
+                                  "image/tiff",
+                                  "image/svg+xml"
+                                ],
+                                "fileNameParameter": "./fileName",
+                                "name": "./image",
+                                "class": "cq-droptarget",
+                                "disabled": false,
+                                "fieldLabel": "Image",
+                                "multiple": false,
+                                "allowUpload": false,
+                                "sling:resourceType": "cq/gui/components/authoring/dialog/fileupload",
+                                "autoStart": false
+                              },
+                              "colorLinkTo": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "rootPath": "/content",
+                                "name": "link",
+                                "fieldLabel": "Color link",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "buttonsTab": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/buttons-tab/cq:dialog/content/items/tabs/items/buttonsTab",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            },
+            "id-tab": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/id-tab/cq:dialog/content/items/tabs/items/id-tab",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            }
+          }
+        }
+      }
+    }
+  }
+}

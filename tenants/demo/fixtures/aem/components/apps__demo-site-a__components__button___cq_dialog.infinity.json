@@ -1,0 +1,161 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Button",
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "properties": {
+            "jcr:primaryType": "nt:unstructured",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:hideChildren": [
+                        "icon"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "general": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "General",
+            "margin": true,
+            "sling:orderBefore": "accessibility",
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "color": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./color",
+                        "selectDefaultValue": "primary",
+                        "fieldLabel": "Color",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "gray500": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Nickel",
+                            "value": "gray500"
+                          },
+                          "gray700": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "gray700",
+                            "value": "gray700"
+                          },
+                          "gray800": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "DEMO Black",
+                            "value": "gray800"
+                          },
+                          "primary": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Spanish Crimson",
+                            "value": "primary"
+                          },
+                          "primaryDark": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "primaryDark",
+                            "value": "primaryDark"
+                          },
+                          "secondary": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Mocassin",
+                            "value": "secondary"
+                          },
+                          "secondaryLight": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Seashell",
+                            "value": "secondaryLight"
+                          }
+                        }
+                      },
+                      "variant": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./variant",
+                        "fieldLabel": "Variant",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "solid": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "solid",
+                            "value": "solid"
+                          },
+                          "outlined": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "outlined",
+                            "value": "outlined"
+                          },
+                          "flat": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "flat",
+                            "value": "flat"
+                          },
+                          "link": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "link",
+                            "value": "link"
+                          },
+                          "underlined": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "underlined",
+                            "value": "underlined"
+                          }
+                        }
+                      },
+                      "measure": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./measure",
+                        "fieldLabel": "Measure",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sm": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "sm",
+                            "value": "sm"
+                          },
+                          "md": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "md",
+                            "value": "md"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

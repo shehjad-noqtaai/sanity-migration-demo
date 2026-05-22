@@ -17,6 +17,7 @@
     "migrate:content": "turbo run migrate:content",
     "migrate:init": "tsx scripts/migrate-init.ts",
     "migrate:doctor": "tsx scripts/migrate-doctor.ts",
+    "build:demo-fixtures": "tsx scripts/build-demo-fixtures.ts",
     "typegen": "turbo run typegen",
     "changeset": "changeset",
     "version": "changeset version",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.27.9",
     "@types/node": "^25.6.0",
+    "gifenc": "^1.0.3",
     "tsx": "^4.21.0",
     "turbo": "^2.3.0",
     "typescript": "^5.9.3"

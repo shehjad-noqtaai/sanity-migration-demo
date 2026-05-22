@@ -1,0 +1,64 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Properties",
+  "height": 600,
+  "width": 630,
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "main": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Properties",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "bookAppointmentsButtonText": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./bookAppointmentsButtonText",
+                        "fieldLabel": "Book Appointments Button Text",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                      },
+                      "bookAppointmentsButtonLink": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "rootPath": "/content",
+                        "name": "./bookAppointmentsButtonLink",
+                        "fieldLabel": "Book Appointments Button Link",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "id-tab": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/apps/demo-site-a/components/dialog/id-tab/cq:dialog/content/items/tabs/items/id-tab",
+            "sling:resourceType": "granite/ui/components/foundation/include"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,357 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "properties": {
+            "jcr:primaryType": "nt:unstructured",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "text": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./text",
+                        "sling:resourceType": "cq/gui/components/authoring/dialog/richtext",
+                        "useFixedInlineToolbar": true,
+                        "rtePlugins": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "styles": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*",
+                            "styles": {
+                              "jcr:primaryType": "cq:WidgetCollection",
+                              "P1": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "text": "P1",
+                                "cssName": "paragraph-p1"
+                              },
+                              "P2": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "text": "P2",
+                                "cssName": "paragraph-p2"
+                              },
+                              "P3": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "text": "P3",
+                                "cssName": "paragraph-p3"
+                              },
+                              "P4": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "text": "P4",
+                                "cssName": "paragraph-p4"
+                              },
+                              "primary": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "text": "primary",
+                                "cssName": "font-primary"
+                              },
+                              "secondary": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "text": "secondary",
+                                "cssName": "font-secondary"
+                              },
+                              "tertiary": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "text": "tertiary",
+                                "cssName": "font-tertiary"
+                              }
+                            }
+                          },
+                          "paraformat": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*",
+                            "formats": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "default_p": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "description": "Paragraph",
+                                "tag": "p"
+                              },
+                              "default_h2": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "description": "Heading 2",
+                                "tag": "h2"
+                              },
+                              "default_h3": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "description": "Heading 3",
+                                "tag": "h3"
+                              },
+                              "default_h4": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "description": "Heading 4",
+                                "tag": "h4"
+                              },
+                              "default_h5": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "description": "Heading 5",
+                                "tag": "h5"
+                              },
+                              "default_h6": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "description": "Heading 6",
+                                "tag": "h6"
+                              },
+                              "default_blockquote": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "description": "Quote",
+                                "tag": "blockquote"
+                              },
+                              "default_pre": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "description": "Preformatted",
+                                "tag": "pre"
+                              }
+                            }
+                          },
+                          "table": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*"
+                          },
+                          "misctools": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "specialchars",
+                            "specialCharsConfig": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "chars": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "override": "true",
+                                "item0": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "entity": "&copy;",
+                                  "name": "copyright"
+                                },
+                                "item1": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "entity": "&euro;",
+                                  "name": "euro"
+                                },
+                                "item2": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "entity": "&reg;",
+                                  "name": "registered"
+                                },
+                                "item3": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "entity": "&trade;",
+                                  "name": "trademark"
+                                }
+                              }
+                            }
+                          },
+                          "edit": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "cut,copy,paste-default,paste-plaintext"
+                          },
+                          "findreplace": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*"
+                          },
+                          "undo": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*"
+                          },
+                          "spellcheck": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*"
+                          },
+                          "image": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*"
+                          },
+                          "lists": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*"
+                          },
+                          "justify": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*"
+                          },
+                          "format": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "bold,italic,underline"
+                          },
+                          "links": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "modifylink,unlink"
+                          },
+                          "subsuperscript": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "features": "*"
+                          }
+                        },
+                        "htmlRules": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "docType": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "typeConfig": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "useSemanticMarkup": true
+                            }
+                          },
+                          "links": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "ensureInternalLinkExt": false
+                          }
+                        },
+                        "uiSettings": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cui": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "inline": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "toolbar": [
+                                "links#modifylink",
+                                "links#unlink",
+                                "format#bold",
+                                "format#italic",
+                                "format#underline",
+                                "subsuperscript#subscript",
+                                "subsuperscript#superscript",
+                                "edit#cut",
+                                "edit#copy",
+                                "edit#paste-plaintext",
+                                "edit#paste-default",
+                                "findreplace#find",
+                                "findreplace#replace",
+                                "undo#undo",
+                                "undo#redo",
+                                "justify#justifyleft",
+                                "justify#justifycenter",
+                                "justify#justifyright",
+                                "lists#unordered",
+                                "lists#ordered",
+                                "lists#outdent",
+                                "lists#indent",
+                                "spellcheck#checktext",
+                                "misctools#specialchars",
+                                "#styles",
+                                "#paraformat",
+                                "table#createoredit",
+                                "table-style-aem#touchuitablestyle",
+                                "fullscreen#start",
+                                "control#close",
+                                "control#save"
+                              ],
+                              "popovers": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "styles": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "ref": "styles",
+                                  "items": "styles:getStyles:styles-pulldown"
+                                },
+                                "paraformat": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "ref": "paraformat",
+                                  "items": "paraformat:getFormats:paraformat-pulldown"
+                                }
+                              }
+                            },
+                            "dialogFullScreen": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "toolbar": [
+                                "links#modifylink",
+                                "links#unlink",
+                                "format#bold",
+                                "format#italic",
+                                "format#underline",
+                                "subsuperscript#subscript",
+                                "subsuperscript#superscript",
+                                "edit#cut",
+                                "edit#copy",
+                                "edit#paste-plaintext",
+                                "edit#paste-default",
+                                "findreplace#find",
+                                "findreplace#replace",
+                                "undo#undo",
+                                "undo#redo",
+                                "justify#justifyleft",
+                                "justify#justifycenter",
+                                "justify#justifyright",
+                                "lists#unordered",
+                                "lists#ordered",
+                                "lists#outdent",
+                                "lists#indent",
+                                "spellcheck#checktext",
+                                "misctools#specialchars",
+                                "#styles",
+                                "#paraformat",
+                                "table#createoredit",
+                                "table-style-aem#touchuitablestyle",
+                                "fullscreen#start",
+                                "control#close",
+                                "control#save"
+                              ],
+                              "popovers": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "styles": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "ref": "styles",
+                                  "items": "styles:getStyles:styles-pulldown"
+                                },
+                                "paraformat": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "ref": "paraformat",
+                                  "items": "paraformat:getFormats:paraformat-pulldown"
+                                }
+                              }
+                            },
+                            "tableEditOptions": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "toolbar": [
+                                "table#insertcolumn-before",
+                                "table#insertcolumn-after",
+                                "table#removecolumn",
+                                "table#insertrow-before",
+                                "table#insertrow-after",
+                                "table#removerow",
+                                "table#mergecells-right",
+                                "table#mergecells-down",
+                                "table#mergecells",
+                                "table#splitcell-horizontal",
+                                "table#splitcell-vertical",
+                                "table#selectrow",
+                                "table#selectcolumn",
+                                "table#ensureparagraph",
+                                "table#removetable",
+                                "undo#undo",
+                                "undo#redo",
+                                "table#exitTableEditing"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "options": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/apps/demo-site-a/components/text/cq:dialog/content/items/tabs/items/options",
+            "sling:resourceType": "granite/ui/components/foundation/include"
+          },
+          "margin": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/apps/demo-site-a/components/box/cq:dialog/content/items/tabs/items/margin",
+            "sling:resourceType": "granite/ui/components/foundation/include"
+          }
+        }
+      }
+    }
+  }
+}

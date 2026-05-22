@@ -1,0 +1,97 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Breadcrumb",
+    "trackingFeature": "core-components:breadcrumb:v2",
+    "helpPath": "https://www.adobe.com/go/aem_cmp_breadcrumb_v2",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "properties": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Properties",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "startLevel": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "max": "100",
+                          "min": "1",
+                          "name": "./startLevel",
+                          "step": "1",
+                          "value": "Demo Heading F",
+                          "fieldLabel": "Navigation Start Level",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield",
+                          "fieldDescription": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris."
+                        },
+                        "showHidden": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "uncheckedValue": "false",
+                          "name": "./showHidden",
+                          "text": "Show hidden navigation items",
+                          "value": "true",
+                          "checked": "Demo Heading G",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "hideCurrent": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "uncheckedValue": "false",
+                          "name": "./hideCurrent",
+                          "text": "Hide current page",
+                          "value": "true",
+                          "checked": "Demo Heading A",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "disableShadowing": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "uncheckedValue": false,
+                          "name": "./disableShadowing",
+                          "text": "Disable shadowing",
+                          "value": true,
+                          "checked": "Demo Heading A",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                          "fieldDescription": "Demo Heading F"
+                        },
+                        "id": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./id",
+                          "fieldLabel": "ID",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

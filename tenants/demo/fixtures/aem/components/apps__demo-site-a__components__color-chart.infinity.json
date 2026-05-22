@@ -1,0 +1,281 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Properties",
+    "height": 600,
+    "extraClientlibs": [
+      "multifield.max-items.author"
+    ],
+    "width": 800,
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "section": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/abstract-section/cq:dialog/content/items/tabs/items/section",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            },
+            "colorsTab": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Colors",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "colorPaletteId": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": false,
+                          "name": "./colorPaletteId",
+                          "fieldLabel": "Color palette ID",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "caption": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./caption",
+                          "fieldLabel": "Caption",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "color-heading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "text": "Colors options",
+                          "level": "3",
+                          "sling:resourceType": "granite/ui/components/foundation/heading"
+                        },
+                        "asset-allowed-heading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "text": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.",
+                          "level": "2",
+                          "sling:resourceType": "granite/ui/components/foundation/heading"
+                        },
+                        "max-items-heading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "text": "Maximum 32 items allowed",
+                          "level": "3",
+                          "sling:resourceType": "granite/ui/components/foundation/heading"
+                        },
+                        "colors": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "composite": "true",
+                          "fieldLabel": "Add colors",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "min-item": "1",
+                            "max-item": "32"
+                          },
+                          "field": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./colors",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "name": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "name": "name",
+                                "fieldLabel": "Color name",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                              },
+                              "description": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "description",
+                                "fieldLabel": "Description",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                              },
+                              "hex-value": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "hexValue",
+                                "fieldLabel": "HEX VALUE",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                              },
+                              "image": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "fileReferenceParameter": "./fileReference",
+                                "required": false,
+                                "useHTML5": false,
+                                "mimeTypes": [
+                                  "image/gif",
+                                  "image/jpeg",
+                                  "image/png",
+                                  "image/webp",
+                                  "image/tiff",
+                                  "image/svg+xml"
+                                ],
+                                "fileNameParameter": "./fileName",
+                                "name": "./image",
+                                "class": "cq-droptarget",
+                                "disabled": false,
+                                "fieldLabel": "Image",
+                                "multiple": false,
+                                "allowUpload": false,
+                                "sling:resourceType": "cq/gui/components/authoring/dialog/fileupload",
+                                "autoStart": false
+                              },
+                              "colorLinkTo": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "rootPath": "/content",
+                                "name": "link",
+                                "fieldLabel": "Color link",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                              },
+                              "popupFieldSet": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/well",
+                                "items": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "popupButtons": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "composite": "true",
+                                    "fieldLabel": "Popup buttons",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                                    "field": {
+                                      "jcr:primaryType": "nt:unstructured",
+                                      "name": "popupButtons",
+                                      "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                                      "items": {
+                                        "jcr:primaryType": "nt:unstructured",
+                                        "linkText": {
+                                          "jcr:primaryType": "nt:unstructured",
+                                          "required": true,
+                                          "name": "text",
+                                          "fieldLabel": "Button text",
+                                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                                        },
+                                        "linkLocation": {
+                                          "jcr:primaryType": "nt:unstructured",
+                                          "required": true,
+                                          "rootPath": "/content",
+                                          "name": "link",
+                                          "fieldLabel": "Button location",
+                                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                                        },
+                                        "buttonColor": {
+                                          "jcr:primaryType": "nt:unstructured",
+                                          "name": "buttonColor",
+                                          "fieldLabel": "Button color",
+                                          "emptyOption": true,
+                                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                                          "items": {
+                                            "jcr:primaryType": "nt:unstructured",
+                                            "claret": {
+                                              "jcr:primaryType": "nt:unstructured",
+                                              "text": "Claret",
+                                              "value": "claret"
+                                            },
+                                            "primary": {
+                                              "jcr:primaryType": "nt:unstructured",
+                                              "text": "Spanish Crimson",
+                                              "value": "primary"
+                                            },
+                                            "black": {
+                                              "jcr:primaryType": "nt:unstructured",
+                                              "text": "Black",
+                                              "value": "black"
+                                            },
+                                            "white": {
+                                              "jcr:primaryType": "nt:unstructured",
+                                              "text": "White",
+                                              "value": "white"
+                                            },
+                                            "seashell": {
+                                              "jcr:primaryType": "nt:unstructured",
+                                              "text": "Seashell",
+                                              "value": "seashell"
+                                            },
+                                            "mocassin": {
+                                              "jcr:primaryType": "nt:unstructured",
+                                              "text": "Mocassin",
+                                              "value": "mocassin"
+                                            },
+                                            "black-ghost": {
+                                              "jcr:primaryType": "nt:unstructured",
+                                              "text": "Black ghost",
+                                              "value": "black-ghost"
+                                            },
+                                            "white-grost": {
+                                              "jcr:primaryType": "nt:unstructured",
+                                              "text": "White ghost",
+                                              "value": "white-ghost"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "popupLinks": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "composite": "true",
+                                    "fieldLabel": "Popup links",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                                    "field": {
+                                      "jcr:primaryType": "nt:unstructured",
+                                      "name": "popupLinks",
+                                      "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                                      "items": {
+                                        "jcr:primaryType": "nt:unstructured",
+                                        "linkText": {
+                                          "jcr:primaryType": "nt:unstructured",
+                                          "required": true,
+                                          "name": "text",
+                                          "fieldLabel": "Link text",
+                                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                                        },
+                                        "linkLocation": {
+                                          "jcr:primaryType": "nt:unstructured",
+                                          "required": true,
+                                          "rootPath": "/content",
+                                          "name": "link",
+                                          "fieldLabel": "Link location",
+                                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "buttonsTab": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/buttons-tab/cq:dialog/content/items/tabs/items/buttonsTab",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            },
+            "id-tab": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/id-tab/cq:dialog/content/items/tabs/items/id-tab",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            }
+          }
+        }
+      }
+    }
+  }
+}

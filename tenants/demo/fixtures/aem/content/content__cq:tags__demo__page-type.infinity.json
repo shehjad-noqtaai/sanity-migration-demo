@@ -1,0 +1,346 @@
+{
+  "jcr:primaryType": "cq:Tag",
+  "jcr:createdBy": "David.Parker105@Site B.com",
+  "jcr:title": "Page Type",
+  "jcr:created": "Tue Oct 08 2024 17:41:16 GMT+0000",
+  "sling:resourceType": "cq/tagging/components/tag",
+  "news": {
+    "jcr:primaryType": "cq:Tag",
+    "jcr:mixinTypes": [
+      "cq:ReplicationStatus",
+      "cq:ReplicationStatus2"
+    ],
+    "jcr:createdBy": "David.Parker105@Site B.com",
+    "jcr:title": "News",
+    "cq:lastReplicatedBy_publish": "workflow-process-service",
+    "cq:isDelivered": false,
+    "cq:lastReplicationAction": "Activate",
+    "cq:lastReplicatedBy": "workflow-process-service",
+    "cq:lastReplicationAction_publish": "Activate",
+    "jcr:created": "Tue Oct 08 2024 17:41:16 GMT+0000",
+    "cq:lastReplicated": "Wed Mar 26 2025 21:33:51 GMT+0000",
+    "sling:resourceType": "cq/tagging/components/tag",
+    "cq:lastReplicated_publish": "Wed Mar 26 2025 21:33:51 GMT+0000",
+    "act": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:mixinTypes": [
+        "cq:ReplicationStatus",
+        "cq:ReplicationStatus2"
+      ],
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Act",
+      "cq:lastReplicatedBy_publish": "dhanashree.botre1@Site B.com",
+      "cq:isDelivered": false,
+      "cq:lastReplicationAction": "Activate",
+      "cq:lastReplicatedBy": "dhanashree.botre1@Site B.com",
+      "cq:lastReplicationAction_publish": "Activate",
+      "jcr:created": "Tue Oct 08 2024 17:41:16 GMT+0000",
+      "cq:lastReplicated": "Tue Aug 12 2025 05:32:06 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag",
+      "cq:lastReplicated_publish": "Tue Aug 12 2025 05:32:06 GMT+0000",
+      "corporate": {
+        "jcr:primaryType": "cq:Tag",
+        "jcr:mixinTypes": [
+          "cq:ReplicationStatus",
+          "cq:ReplicationStatus2"
+        ],
+        "jcr:createdBy": "David.Parker105@Site B.com",
+        "jcr:title": "Corporate",
+        "cq:lastReplicatedBy_publish": "marissa.mancini@Site B.com",
+        "cq:isDelivered": false,
+        "cq:lastReplicationAction_scene7": "Activate",
+        "cq:lastReplicationAction": "Activate",
+        "cq:lastReplicatedBy": "marissa.mancini@Site B.com",
+        "cq:lastReplicationAction_publish": "Activate",
+        "cq:lastReplicatedBy_scene7": "marissa.mancini@Site B.com",
+        "jcr:created": "Tue Oct 08 2024 17:41:16 GMT+0000",
+        "cq:lastReplicated": "Wed Jan 15 2025 19:44:11 GMT+0000",
+        "cq:lastReplicated_scene7": "Wed Jan 15 2025 19:44:11 GMT+0000",
+        "sling:resourceType": "cq/tagging/components/tag",
+        "cq:lastReplicated_publish": "Wed Jan 15 2025 19:44:11 GMT+0000"
+      },
+      "seller": {
+        "jcr:primaryType": "cq:Tag",
+        "jcr:mixinTypes": [
+          "cq:ReplicationStatus",
+          "cq:ReplicationStatus2"
+        ],
+        "jcr:createdBy": "David.Parker105@Site B.com",
+        "jcr:title": "Seller",
+        "cq:lastReplicatedBy_publish": "marissa.mancini@Site B.com",
+        "cq:isDelivered": false,
+        "cq:lastReplicationAction_scene7": "Activate",
+        "cq:lastReplicationAction": "Activate",
+        "cq:lastReplicatedBy": "marissa.mancini@Site B.com",
+        "cq:lastReplicationAction_publish": "Activate",
+        "cq:lastReplicatedBy_scene7": "marissa.mancini@Site B.com",
+        "jcr:created": "Tue Oct 08 2024 17:41:16 GMT+0000",
+        "cq:lastReplicated": "Wed Jan 15 2025 19:44:11 GMT+0000",
+        "cq:lastReplicated_scene7": "Wed Jan 15 2025 19:44:11 GMT+0000",
+        "sling:resourceType": "cq/tagging/components/tag",
+        "cq:lastReplicated_publish": "Wed Jan 15 2025 19:44:11 GMT+0000"
+      },
+      "servicer": {
+        "jcr:primaryType": "cq:Tag",
+        "jcr:mixinTypes": [
+          "cq:ReplicationStatus",
+          "cq:ReplicationStatus2"
+        ],
+        "jcr:createdBy": "David.Parker105@Site B.com",
+        "jcr:title": "Servicer",
+        "cq:lastReplicatedBy_publish": "marissa.mancini@Site B.com",
+        "cq:isDelivered": false,
+        "cq:lastReplicationAction_scene7": "Activate",
+        "cq:lastReplicationAction": "Activate",
+        "cq:lastReplicatedBy": "marissa.mancini@Site B.com",
+        "cq:lastReplicationAction_publish": "Activate",
+        "cq:lastReplicatedBy_scene7": "marissa.mancini@Site B.com",
+        "jcr:created": "Tue Oct 08 2024 17:41:16 GMT+0000",
+        "cq:lastReplicated": "Wed Jan 15 2025 19:44:11 GMT+0000",
+        "cq:lastReplicated_scene7": "Wed Jan 15 2025 19:44:11 GMT+0000",
+        "sling:resourceType": "cq/tagging/components/tag",
+        "cq:lastReplicated_publish": "Wed Jan 15 2025 19:44:11 GMT+0000"
+      }
+    },
+    "engage": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Engage",
+      "jcr:created": "Tue Oct 08 2024 17:41:16 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag",
+      "corporate": {
+        "jcr:primaryType": "cq:Tag",
+        "jcr:mixinTypes": [
+          "cq:ReplicationStatus",
+          "cq:ReplicationStatus2"
+        ],
+        "jcr:createdBy": "David.Parker105@Site B.com",
+        "jcr:title": "Corporate",
+        "cq:lastReplicatedBy_publish": "dhanashree.botre1@Site B.com",
+        "cq:isDelivered": false,
+        "cq:lastReplicationAction_scene7": "Activate",
+        "cq:lastReplicationAction": "Activate",
+        "cq:lastReplicatedBy": "dhanashree.botre1@Site B.com",
+        "cq:lastReplicationAction_publish": "Activate",
+        "cq:lastReplicatedBy_scene7": "dhanashree.botre1@Site B.com",
+        "jcr:created": "Tue Oct 08 2024 17:41:17 GMT+0000",
+        "cq:lastReplicated": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "cq:lastReplicated_scene7": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "sling:resourceType": "cq/tagging/components/tag",
+        "cq:lastReplicated_publish": "Mon Aug 11 2025 11:43:21 GMT+0000"
+      },
+      "seller": {
+        "jcr:primaryType": "cq:Tag",
+        "jcr:mixinTypes": [
+          "cq:ReplicationStatus",
+          "cq:ReplicationStatus2"
+        ],
+        "jcr:createdBy": "David.Parker105@Site B.com",
+        "jcr:title": "Seller",
+        "cq:lastReplicatedBy_publish": "dhanashree.botre1@Site B.com",
+        "cq:isDelivered": false,
+        "cq:lastReplicationAction_scene7": "Activate",
+        "cq:lastReplicationAction": "Activate",
+        "cq:lastReplicatedBy": "dhanashree.botre1@Site B.com",
+        "cq:lastReplicationAction_publish": "Activate",
+        "cq:lastReplicatedBy_scene7": "dhanashree.botre1@Site B.com",
+        "jcr:created": "Tue Oct 08 2024 17:41:17 GMT+0000",
+        "cq:lastReplicated": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "cq:lastReplicated_scene7": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "sling:resourceType": "cq/tagging/components/tag",
+        "cq:lastReplicated_publish": "Mon Aug 11 2025 11:43:21 GMT+0000"
+      },
+      "servicer": {
+        "jcr:primaryType": "cq:Tag",
+        "jcr:mixinTypes": [
+          "cq:ReplicationStatus",
+          "cq:ReplicationStatus2"
+        ],
+        "jcr:createdBy": "David.Parker105@Site B.com",
+        "jcr:title": "Servicer",
+        "cq:lastReplicatedBy_publish": "dhanashree.botre1@Site B.com",
+        "cq:isDelivered": false,
+        "cq:lastReplicationAction_scene7": "Activate",
+        "cq:lastReplicationAction": "Activate",
+        "cq:lastReplicatedBy": "dhanashree.botre1@Site B.com",
+        "cq:lastReplicationAction_publish": "Activate",
+        "cq:lastReplicatedBy_scene7": "dhanashree.botre1@Site B.com",
+        "jcr:created": "Tue Oct 08 2024 17:41:17 GMT+0000",
+        "cq:lastReplicated": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "cq:lastReplicated_scene7": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "sling:resourceType": "cq/tagging/components/tag",
+        "cq:lastReplicated_publish": "Mon Aug 11 2025 11:43:21 GMT+0000"
+      }
+    },
+    "company-news": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Company News",
+      "jcr:created": "Tue Oct 08 2024 17:41:17 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag"
+    },
+    "customer-ready": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Customer Ready",
+      "jcr:created": "Tue Oct 08 2024 17:41:17 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag",
+      "seller": {
+        "jcr:primaryType": "cq:Tag",
+        "jcr:mixinTypes": [
+          "cq:ReplicationStatus",
+          "cq:ReplicationStatus2"
+        ],
+        "jcr:createdBy": "David.Parker105@Site B.com",
+        "jcr:title": "Seller",
+        "cq:lastReplicatedBy_publish": "dhanashree.botre1@Site B.com",
+        "cq:isDelivered": false,
+        "cq:lastReplicationAction_scene7": "Activate",
+        "cq:lastReplicationAction": "Activate",
+        "cq:lastReplicatedBy": "dhanashree.botre1@Site B.com",
+        "cq:lastReplicationAction_publish": "Activate",
+        "cq:lastReplicatedBy_scene7": "dhanashree.botre1@Site B.com",
+        "jcr:created": "Tue Oct 08 2024 17:41:17 GMT+0000",
+        "cq:lastReplicated": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "cq:lastReplicated_scene7": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "sling:resourceType": "cq/tagging/components/tag",
+        "cq:lastReplicated_publish": "Mon Aug 11 2025 11:43:21 GMT+0000"
+      },
+      "servicer": {
+        "jcr:primaryType": "cq:Tag",
+        "jcr:mixinTypes": [
+          "cq:ReplicationStatus",
+          "cq:ReplicationStatus2"
+        ],
+        "jcr:createdBy": "David.Parker105@Site B.com",
+        "jcr:title": "Servicer",
+        "cq:lastReplicatedBy_publish": "dhanashree.botre1@Site B.com",
+        "cq:isDelivered": false,
+        "cq:lastReplicationAction_scene7": "Activate",
+        "cq:lastReplicationAction": "Activate",
+        "cq:lastReplicatedBy": "dhanashree.botre1@Site B.com",
+        "cq:lastReplicationAction_publish": "Activate",
+        "cq:lastReplicatedBy_scene7": "dhanashree.botre1@Site B.com",
+        "jcr:created": "Tue Oct 08 2024 17:41:17 GMT+0000",
+        "cq:lastReplicated": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "cq:lastReplicated_scene7": "Mon Aug 11 2025 11:43:21 GMT+0000",
+        "sling:resourceType": "cq/tagging/components/tag",
+        "cq:lastReplicated_publish": "Mon Aug 11 2025 11:43:21 GMT+0000"
+      }
+    }
+  },
+  "how-to": {
+    "jcr:primaryType": "cq:Tag",
+    "jcr:mixinTypes": [
+      "cq:ReplicationStatus",
+      "cq:ReplicationStatus2"
+    ],
+    "jcr:createdBy": "David.Parker105@Site B.com",
+    "jcr:title": "How To",
+    "cq:lastReplicatedBy_publish": "workflow-process-service",
+    "cq:isDelivered": false,
+    "cq:lastReplicationAction": "Activate",
+    "cq:lastReplicatedBy": "workflow-process-service",
+    "cq:lastReplicationAction_publish": "Activate",
+    "jcr:created": "Tue Oct 08 2024 17:41:18 GMT+0000",
+    "cq:lastReplicated": "Wed Mar 26 2025 21:29:52 GMT+0000",
+    "sling:resourceType": "cq/tagging/components/tag",
+    "cq:lastReplicated_publish": "Wed Mar 26 2025 21:29:52 GMT+0000",
+    "self-service": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:mixinTypes": [
+        "cq:ReplicationStatus",
+        "cq:ReplicationStatus2"
+      ],
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Self-Service",
+      "cq:lastReplicatedBy_publish": "Gretchen.gniffke@Site B.com",
+      "cq:isDelivered": false,
+      "cq:lastReplicationAction_scene7": "Activate",
+      "cq:lastReplicationAction": "Activate",
+      "cq:lastReplicatedBy": "Gretchen.gniffke@Site B.com",
+      "cq:lastReplicationAction_publish": "Activate",
+      "cq:lastReplicatedBy_scene7": "Gretchen.gniffke@Site B.com",
+      "jcr:created": "Tue Oct 08 2024 17:41:18 GMT+0000",
+      "cq:lastReplicated": "Wed Jul 16 2025 20:44:44 GMT+0000",
+      "cq:lastReplicated_scene7": "Wed Jul 16 2025 20:44:44 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag",
+      "cq:lastReplicated_publish": "Wed Jul 16 2025 20:44:44 GMT+0000"
+    }
+  },
+  "issues-error-troubleshooting": {
+    "jcr:primaryType": "cq:Tag",
+    "jcr:mixinTypes": [
+      "cq:ReplicationStatus",
+      "cq:ReplicationStatus2"
+    ],
+    "jcr:createdBy": "David.Parker105@Site B.com",
+    "jcr:title": "Issues Error Troubleshooting",
+    "cq:lastReplicatedBy_publish": "workflow-process-service",
+    "cq:isDelivered": false,
+    "cq:lastReplicationAction": "Activate",
+    "cq:lastReplicatedBy": "workflow-process-service",
+    "cq:lastReplicationAction_publish": "Activate",
+    "jcr:created": "Tue Oct 08 2024 17:41:18 GMT+0000",
+    "cq:lastReplicated": "Wed Mar 26 2025 21:30:36 GMT+0000",
+    "sling:resourceType": "cq/tagging/components/tag",
+    "cq:lastReplicated_publish": "Wed Mar 26 2025 21:30:36 GMT+0000"
+  },
+  "overview": {
+    "jcr:primaryType": "cq:Tag",
+    "jcr:mixinTypes": [
+      "cq:ReplicationStatus",
+      "cq:ReplicationStatus2"
+    ],
+    "jcr:createdBy": "David.Parker105@Site B.com",
+    "jcr:title": "Overview",
+    "cq:lastReplicatedBy_publish": "workflow-process-service",
+    "cq:isDelivered": false,
+    "cq:lastReplicationAction": "Activate",
+    "cq:lastReplicatedBy": "workflow-process-service",
+    "cq:lastReplicationAction_publish": "Activate",
+    "jcr:created": "Tue Oct 08 2024 17:41:18 GMT+0000",
+    "cq:lastReplicated": "Wed Mar 26 2025 21:29:52 GMT+0000",
+    "sling:resourceType": "cq/tagging/components/tag",
+    "cq:lastReplicated_publish": "Wed Mar 26 2025 21:29:52 GMT+0000"
+  },
+  "onboarding": {
+    "jcr:primaryType": "cq:Tag",
+    "jcr:mixinTypes": [
+      "cq:ReplicationStatus",
+      "cq:ReplicationStatus2"
+    ],
+    "jcr:createdBy": "David.Parker105@Site B.com",
+    "jcr:title": "Onboarding",
+    "cq:lastReplicatedBy_publish": "Gretchen.gniffke@Site B.com",
+    "cq:isDelivered": false,
+    "cq:lastReplicationAction_scene7": "Activate",
+    "cq:lastReplicationAction": "Activate",
+    "cq:lastReplicatedBy": "Gretchen.gniffke@Site B.com",
+    "cq:lastReplicationAction_publish": "Activate",
+    "cq:lastReplicatedBy_scene7": "Gretchen.gniffke@Site B.com",
+    "jcr:created": "Tue Oct 08 2024 17:41:18 GMT+0000",
+    "cq:lastReplicated": "Thu Jul 17 2025 16:02:52 GMT+0000",
+    "cq:lastReplicated_scene7": "Thu Jul 17 2025 16:02:52 GMT+0000",
+    "sling:resourceType": "cq/tagging/components/tag",
+    "cq:lastReplicated_publish": "Thu Jul 17 2025 16:02:52 GMT+0000"
+  },
+  "faqs": {
+    "jcr:primaryType": "cq:Tag",
+    "jcr:mixinTypes": [
+      "cq:ReplicationStatus",
+      "cq:ReplicationStatus2"
+    ],
+    "jcr:createdBy": "David.Parker105@Site B.com",
+    "jcr:title": "FAQs",
+    "cq:lastReplicatedBy_publish": "workflow-process-service",
+    "cq:isDelivered": false,
+    "cq:lastReplicationAction": "Activate",
+    "cq:lastReplicatedBy": "workflow-process-service",
+    "cq:lastReplicationAction_publish": "Activate",
+    "jcr:created": "Tue Oct 08 2024 17:41:18 GMT+0000",
+    "cq:lastReplicated": "Wed Mar 26 2025 21:30:36 GMT+0000",
+    "sling:resourceType": "cq/tagging/components/tag",
+    "cq:lastReplicated_publish": "Wed Mar 26 2025 21:30:36 GMT+0000"
+  }
+}

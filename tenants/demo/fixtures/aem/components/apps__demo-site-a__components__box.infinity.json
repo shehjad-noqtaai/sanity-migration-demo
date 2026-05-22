@@ -1,0 +1,300 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Properties",
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "text": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "General",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "align": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./align",
+                          "fieldLabel": "Align type",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/alighndatasource"
+                          }
+                        },
+                        "alignItems": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./alignItems",
+                          "fieldLabel": "Align items type",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/alighnitemsdatasource"
+                          }
+                        },
+                        "color": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./color",
+                          "selectDefaultValue": "gray800",
+                          "fieldLabel": "Color",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/colortypedatasource"
+                          }
+                        },
+                        "bg": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./bg",
+                          "selectDefaultValue": "transparent",
+                          "fieldLabel": "Background color",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/colortypedatasource"
+                          }
+                        },
+                        "display": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./display",
+                          "fieldLabel": "Display type",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/displaytypedatasource"
+                          }
+                        },
+                        "fontFamily": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./fontFamily",
+                          "fieldLabel": "Font family",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/fontfamilydatasource"
+                          }
+                        },
+                        "fontWeight": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./fontWeight",
+                          "fieldLabel": "Font weight",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/fontweightdatasource"
+                          }
+                        },
+                        "float": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./float",
+                          "fieldLabel": "Float",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/floatdatasource"
+                          }
+                        },
+                        "justifyContent": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./justifyContent",
+                          "fieldLabel": "Justify content",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/justifycontentdatasource"
+                          }
+                        },
+                        "clearfix": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "uncheckedValue": "false",
+                          "name": "./clearfix",
+                          "text": "Clearfix",
+                          "value": "true",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox"
+                        },
+                        "fullWidth": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "uncheckedValue": "false",
+                          "name": "./fullWidth",
+                          "text": "Full width",
+                          "value": "true",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox"
+                        },
+                        "as": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./as",
+                          "selectDefaultValue": "div",
+                          "fieldLabel": "As default type",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/asdefaultdatasource"
+                          }
+                        },
+                        "position": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./position",
+                          "fieldLabel": "Position",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "datasource": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "demo-site-a/components/datasources/positiondatasource"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "margin": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Margin and padding",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "mt": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./mt",
+                          "fieldLabel": "mt",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                        },
+                        "mr": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./mr",
+                          "fieldLabel": "mr",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                        },
+                        "mb": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./mb",
+                          "fieldLabel": "mb",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                        },
+                        "ml": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./ml",
+                          "fieldLabel": "ml",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                        },
+                        "pt": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./pt",
+                          "fieldLabel": "pt",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                        },
+                        "pr": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./pr",
+                          "fieldLabel": "pr",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                        },
+                        "pb": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./pb",
+                          "fieldLabel": "pb",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                        },
+                        "pl": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./pl",
+                          "fieldLabel": "pl",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "asset": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Background image",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "asset-allowed-heading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "text": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate.",
+                          "level": "2",
+                          "sling:resourceType": "granite/ui/components/foundation/heading"
+                        },
+                        "box-bg-image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "fileReferenceParameter": "./fileReference",
+                          "useHTML5": true,
+                          "mimeTypes": [
+                            "image/gif",
+                            "image/jpeg",
+                            "image/webp",
+                            "image/tiff",
+                            "image/svg+xml"
+                          ],
+                          "fileNameParameter": "./bgImageName",
+                          "name": "./bgImage",
+                          "class": "cq-droptarget",
+                          "title": "Upload Image",
+                          "fieldLabel": "Bg image",
+                          "multiple": false,
+                          "allowUpload": false,
+                          "sling:resourceType": "cq/gui/components/authoring/dialog/fileupload",
+                          "uploadUrl": "${suffix.path}",
+                          "autoStart": false
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

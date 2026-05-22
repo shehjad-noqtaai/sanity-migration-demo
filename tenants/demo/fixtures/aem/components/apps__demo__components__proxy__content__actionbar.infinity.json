@@ -1,0 +1,115 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Action Bar",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "editShareableLink": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Edit Shareable Link Properties",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "shareablelinks": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "composite": true,
+                          "fieldLabel": "Configure edit shareable link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                          "fieldDescription": "A list of the Shareable Links.",
+                          "field": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./shareablelinks",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "column": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                                "items": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "englishTitle": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "required": "true",
+                                    "name": "./englishTitle",
+                                    "fieldLabel": "English Title",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                    "fieldDescription": "English Title"
+                                  },
+                                  "spanishTitle": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./spanishTitle",
+                                    "fieldLabel": "Spanish Title",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                    "fieldDescription": "Spanish Title"
+                                  },
+                                  "englishSubheading": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./englishSubheading",
+                                    "fieldLabel": "English Subheading",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                    "fieldDescription": "English Subheading"
+                                  },
+                                  "spanishSubheading": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./spanishSubheading",
+                                    "fieldLabel": "Spanish Subheading",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                    "fieldDescription": "Spanish Subheading"
+                                  },
+                                  "englishLink": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "required": "true",
+                                    "rootPath": "/content/demo/site-b",
+                                    "name": "./englishLink",
+                                    "fieldLabel": "English URL",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/pathbrowser",
+                                    "fieldDescription": "English URL"
+                                  },
+                                  "spanishLink": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "rootPath": "/content/demo/site-b",
+                                    "name": "./spanishLink",
+                                    "fieldLabel": "Spanish URL",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/pathbrowser",
+                                    "fieldDescription": "Spanish URL"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

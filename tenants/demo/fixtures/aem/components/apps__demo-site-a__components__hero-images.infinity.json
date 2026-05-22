@@ -1,0 +1,249 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Properties",
+    "height": 600,
+    "width": 630,
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "main-image": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Main image",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "images": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "composite": "true",
+                          "fieldLabel": "Main image options",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                          "field": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "jcr:title": "Image options",
+                            "name": "./mainImages",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "image": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "fileReferenceParameter": "./fileReference",
+                                "required": true,
+                                "useHTML5": false,
+                                "mimeTypes": [
+                                  "image/png",
+                                  "image/gif",
+                                  "image/jpeg",
+                                  "image/webp",
+                                  "image/tiff",
+                                  "image/svg+xml"
+                                ],
+                                "fileNameParameter": "./fileName",
+                                "name": "./image",
+                                "class": "cq-droptarget",
+                                "disabled": false,
+                                "fieldLabel": "Image",
+                                "multiple": false,
+                                "allowUpload": false,
+                                "sling:resourceType": "cq/gui/components/authoring/dialog/fileupload",
+                                "autoStart": false
+                              },
+                              "visible": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "visible",
+                                "fieldLabel": "Devices",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                                "items": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "desktop": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": "desktop",
+                                    "value": "desktop"
+                                  },
+                                  "tablet": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": "tablet",
+                                    "value": "tablet"
+                                  },
+                                  "mobile": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": "mobile",
+                                    "value": "mobile"
+                                  }
+                                }
+                              },
+                              "imageLink": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "rootPath": "/content",
+                                "name": "imageLink",
+                                "fieldLabel": "Image Link",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "rignt-images": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Right images",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "asset-allowed-heading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "text": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate.",
+                          "level": "2",
+                          "sling:resourceType": "granite/ui/components/foundation/heading"
+                        },
+                        "images": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "composite": "true",
+                          "fieldLabel": "Right images",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                          "field": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "jcr:title": "Image options",
+                            "name": "./rightImages",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "right-image": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "fileReferenceParameter": "./fileReference",
+                                "required": true,
+                                "useHTML5": false,
+                                "mimeTypes": [
+                                  "image/gif",
+                                  "image/jpeg",
+                                  "image/webp",
+                                  "image/tiff",
+                                  "image/svg+xml"
+                                ],
+                                "fileNameParameter": "./fileName",
+                                "name": "./image",
+                                "class": "cq-droptarget",
+                                "disabled": false,
+                                "fieldLabel": "Image",
+                                "multiple": false,
+                                "allowUpload": false,
+                                "sling:resourceType": "cq/gui/components/authoring/dialog/fileupload",
+                                "autoStart": false
+                              },
+                              "imageLink": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "rootPath": "/content",
+                                "name": "imageLink",
+                                "fieldLabel": "Image link",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                              },
+                              "buttonLabel": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "text",
+                                "fieldLabel": "Button text",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                              },
+                              "buttonLinkTo": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "rootPath": "/content",
+                                "name": "link",
+                                "fieldLabel": "Button link",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                              },
+                              "buttonHexColor": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "buttonHexColor",
+                                "fieldLabel": "Button color",
+                                "emptyOption": true,
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/colorfield"
+                              },
+                              "buttonType": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "type",
+                                "fieldLabel": "Button type",
+                                "emptyOption": true,
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                                "items": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "ghost": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": "Ghost",
+                                    "value": "ghost"
+                                  },
+                                  "filled": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": "Filled",
+                                    "value": "filled"
+                                  },
+                                  "link": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": "link",
+                                    "value": "link"
+                                  }
+                                }
+                              },
+                              "ctaTextColor": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "ctaTextHexColor",
+                                "fieldLabel": "CTA Text Color",
+                                "emptyOption": true,
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/colorfield"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "buttonsTab": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/buttons-tab/cq:dialog/content/items/tabs/items/buttonsTab",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            }
+          }
+        }
+      }
+    }
+  }
+}

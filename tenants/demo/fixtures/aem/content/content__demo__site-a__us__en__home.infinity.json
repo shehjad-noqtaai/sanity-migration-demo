@@ -1,0 +1,1000 @@
+{
+  "jcr:primaryType": "cq:Page",
+  "jcr:createdBy": "admin",
+  "jcr:created": "Tue May 18 2021 21:00:43 GMT+0000",
+  "jcr:content": {
+    "jcr:primaryType": "cq:PageContent",
+    "jcr:mixinTypes": [
+      "mix:versionable",
+      "mix:lockable"
+    ],
+    "jcr:createdBy": "admin",
+    "jcr:title": "Demo Heading D",
+    "cq:lastReplicationAction": "Activate",
+    "jcr:versionHistory": "0101b9da-5aec-424a-be88-b95b031d2ea8",
+    "cq:template": "/conf/demo-site-a/settings/wcm/templates/spa-page-template",
+    "cq:lastReplicatedBy": "scotton",
+    "jcr:language": "en_us",
+    "jcr:predecessors": [
+      "44d91844-0cb8-438e-8f03-40e35cf3d28a"
+    ],
+    "jcr:created": "Tue May 18 2021 21:00:43 GMT+0000",
+    "cq:lastReplicated": "Wed May 20 2026 15:33:33 GMT+0000",
+    "cq:lastModified": "Thu May 21 2026 17:44:20 GMT+0000",
+    "jcr:description": "At vero eos et accusamus et iusto odio dignissimos ducimus.",
+    "jcr:baseVersion": "44d91844-0cb8-438e-8f03-40e35cf3d28a",
+    "jcr:isCheckedOut": true,
+    "pageTitle": "Demo Heading D",
+    "jcr:uuid": "9059bdd2-e07e-4e03-94ef-f1637cfe6248",
+    "sling:resourceType": "demo-site-a/components/page",
+    "cq:lastModifiedBy": "scotton",
+    "navTitle": "home",
+    "root": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "wcm/foundation/components/responsivegrid",
+      "responsivegrid": {
+        "jcr:primaryType": "nt:unstructured",
+        "sling:resourceType": "wcm/foundation/components/responsivegrid",
+        "header_one_copy": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:title": "Demo Heading A",
+          "fontFamily": "primary",
+          "jcr:lastModifiedBy": "smujeeb",
+          "fontWeight": "light",
+          "jcr:created": "Thu May 05 2022 17:07:07 GMT+0000",
+          "align": "left",
+          "color": "gray800",
+          "uppercase": "false",
+          "fontSize": "12",
+          "jcr:lastModified": "Tue Jul 26 2022 14:36:49 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/header-one",
+          "display": "none"
+        },
+        "wyng_experience_copy_956448470": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "scotton",
+          "jcr:lastModifiedBy": "v.canand",
+          "jcr:created": "Tue Jan 06 2026 16:42:26 GMT+0000",
+          "scriptSrc": "<a href=\"https://appointments.example.com/appointments/\" style=\"text-decoration:none;\"><div style='background-color:#d30000; color:#ffffff; font-size:.85em; text-align:center; margin:0px 0px; padding-bottom:10px; margin:0px 0px 0px 0px;'>   <div>Your dream dress is waiting</div><div style='text-decoration:underline'>BOOK NOW!</div> </div></a>",
+          "htmlElement": "<a href=\"/\" data-db-open-appointment-modal style=\"text-decoration:none;\" aria-label=\"Book free appointment\">\r\n  <div style=\"background-color:#F4D5D5; color:#000000; font-size:.85em; text-align:center; margin:0; padding-bottom:10px;\">\r\n    <div>Ready to find your dream dress?</div>\r\n    <div style=\"text-decoration:underline; font-weight:bold;\">BOOK FREE APPOINTMENT</div>\r\n  </div>\r\n</a>",
+          "jcr:lastModified": "Thu May 14 2026 11:44:18 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/wyng-experience"
+        },
+        "promo_1436939073_cop_823580276": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "description": "<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n",
+          "jcr:lastModifiedBy": "scotton",
+          "copySize": "h5",
+          "jcr:created": "Mon Jan 13 2025 19:20:33 GMT+0000",
+          "size": "large",
+          "align": "center",
+          "theme": "image-dark",
+          "jcr:lastModified": "Thu May 21 2026 17:44:20 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/promo",
+          "backgroundColor": "transparent",
+          "textIsRich": "true",
+          "bgImages": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-desktop.gif",
+              "imageLink": "/sale/all-clearance?sc=hp_sample-bride",
+              "visible": "desktop",
+              "alignment": "middle-center"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-mobile.gif",
+              "imageLink": "/sale/all-clearance?sc=hp_sample-bride",
+              "imageServerUrl": "https://example.com",
+              "visible": "mobile",
+              "alignment": "middle-center"
+            }
+          },
+          "buttons": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#FFFFFF",
+              "link": "/sale/all-clearance?sc=hp_sample-bride",
+              "text": "Save now",
+              "type": "ghost",
+              "ctaTextHexColor": "#FFFFFF"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#FFFFFF",
+              "link": "/stores",
+              "text": "find a store",
+              "type": "ghost",
+              "ctaTextHexColor": "#FFFFFF"
+            }
+          }
+        },
+        "hr_copy_copy_6568060_1068031368": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "color_carousel": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "true",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "scotton",
+          "removeTopPadding": "true",
+          "jcr:created": "Fri Dec 29 2023 18:13:43 GMT+0000",
+          "headline2": "Shop By Category",
+          "theme": "white",
+          "jcr:lastModified": "Mon May 04 2026 18:27:44 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/color-carousel",
+          "textIsRich": "true",
+          "colors": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "link": "/brides/event-dresses?sc=hp_sbc1",
+              "name": "event dresses"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "link": "/companion/companion-dresses?sc=hp_sbc2",
+              "name": "companion dresses"
+            },
+            "item2": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/tile-circle.gif",
+              "link": "Demo Heading A",
+              "name": "dresses for mom"
+            },
+            "item3": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "link": "/juniors/prom-dresses?sc=hp_sbc5",
+              "name": "Prom Dresses"
+            },
+            "item4": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/tile-circle.gif",
+              "link": "/dresses/all-dresses?sc=hp_sbc4",
+              "name": "occasion dresses"
+            },
+            "item5": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/tile-circle.gif",
+              "link": "Demo Heading F",
+              "name": "little white dresses"
+            },
+            "item6": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "link": "/inspiration/trending?sc=hp_sbc17",
+              "name": "Now Trending"
+            },
+            "item7": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/icon.gif",
+              "link": "/kynah?sc=hp_sbc18",
+              "name": "Indian Apparel"
+            },
+            "item8": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/event.gif",
+              "link": "/all-new-arrivals?sc=hp_sbc19",
+              "name": "New Arrivals"
+            },
+            "item9": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/tile-circle.gif",
+              "link": "/dresses/flower-girl-dresses?sc=hp_sbc6",
+              "name": "flower girl dresses"
+            },
+            "item10": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/tile-circle.gif",
+              "link": "/shoes/all-shoes?sc=hp_sbc8",
+              "name": "shoes"
+            },
+            "item11": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/tile-circle.gif",
+              "link": "Demo Heading D",
+              "name": "veils & hair accessories"
+            },
+            "item12": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/icon.gif",
+              "link": "Demo Heading C",
+              "name": "gifts & decor"
+            },
+            "item13": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/tile-circle.gif",
+              "link": "/accessories/lingerie?sc=hp_sbc12",
+              "name": "Lingerie & shapewear"
+            },
+            "item14": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/tile-circle.gif",
+              "link": "Demo Heading E",
+              "name": "mens"
+            },
+            "item15": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/tile-circle.gif",
+              "link": "/accessories/jewelry?sc=hp_sbc13",
+              "name": "jewelry"
+            },
+            "item16": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/icon.gif",
+              "link": "Demo Heading A",
+              "name": "personalization mall"
+            },
+            "item17": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/icon.gif",
+              "imageServerUrl": "https://example.com",
+              "link": "Demo Heading C",
+              "name": "little tuxedos"
+            }
+          }
+        },
+        "promo_1436939073_cop_1724370771": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "description": "<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n",
+          "jcr:lastModifiedBy": "scotton",
+          "copySize": "h5",
+          "jcr:created": "Mon Jan 13 2025 19:20:33 GMT+0000",
+          "size": "large",
+          "align": "center",
+          "theme": "image-dark",
+          "jcr:lastModified": "Mon May 18 2026 17:22:58 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/promo",
+          "backgroundColor": "transparent",
+          "textIsRich": "true",
+          "bgImages": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-desktop.gif",
+              "imageLink": "/product/lace-thong-with-rhinestone-heart-1236pantydmnd",
+              "visible": "desktop",
+              "alignment": "middle-center"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-mobile.gif",
+              "imageLink": "/product/lace-thong-with-rhinestone-heart-1236pantydmnd",
+              "imageServerUrl": "https://example.com",
+              "visible": "mobile",
+              "alignment": "middle-center"
+            }
+          },
+          "buttons": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#FFFFFF",
+              "link": "/product/lace-thong-with-rhinestone-heart-1236pantydmnd",
+              "text": "add to your bag",
+              "type": "ghost",
+              "ctaTextHexColor": "#FFFFFF"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#FFFFFF",
+              "link": "/stores",
+              "text": "find a store",
+              "type": "ghost",
+              "ctaTextHexColor": "#FFFFFF"
+            }
+          }
+        },
+        "hr_copy_copy_6568060_1706346928": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "hr_copy_copy_6568060_1950302557": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "hr_copy_copy_6568060_1243073955": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "promo_1436939073_cop_1284989867": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "description": "<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n",
+          "jcr:lastModifiedBy": "scotton",
+          "copySize": "h5",
+          "jcr:created": "Mon Jan 13 2025 19:20:33 GMT+0000",
+          "size": "large",
+          "align": "center",
+          "theme": "image-dark",
+          "jcr:lastModified": "Thu May 21 2026 17:43:14 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/promo",
+          "backgroundColor": "transparent",
+          "textIsRich": "true",
+          "bgImages": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-desktop.gif",
+              "imageLink": "Demo Heading H",
+              "visible": "desktop",
+              "alignment": "middle-center"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-mobile.gif",
+              "imageLink": "Demo Heading H",
+              "imageServerUrl": "https://example.com",
+              "visible": "mobile",
+              "alignment": "middle-center"
+            }
+          },
+          "buttons": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#FFFFFF",
+              "link": "Demo Heading H",
+              "text": "shop companion dresses",
+              "type": "ghost",
+              "ctaTextHexColor": "#FFFFFF"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#FFFFFF",
+              "link": "https://example.com",
+              "text": "book your free appointment",
+              "type": "ghost",
+              "ctaTextHexColor": "#FFFFFF"
+            }
+          }
+        },
+        "wyng_experience_copy_1874497334": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "scotton",
+          "jcr:lastModifiedBy": "scotton",
+          "jcr:created": "Tue Jan 06 2026 16:42:26 GMT+0000",
+          "scriptSrc": "<a href=\"https://www.example.com/companion/color-swatches?sc=hp_banner_swatches\" style=\"text-decoration:none;\"><div style='background-color:#000000; color:#ffffff; font-size:.85em; text-align:center; margin:0px 0px; padding-bottom:10px; margin:0px 0px 0px 0px;'>   <div>Get 3 Free Swatches</div><div style='text-decoration:underline'>Shop Swatches!</div> </div></a>",
+          "htmlElement": "<a href=\"https://www.example.com/companion/color-swatches?sc=hp_banner_swatches\" style=\"text-decoration:none;\"><div style='background-color:#F4D5D5; color:#000000; font-size:.85em; text-align:center; margin:0px 0px; padding-bottom:10px; margin:0px 0px 0px 0px;'>\r\n  <div>3 FREE SWATCHES</div><div style='text-decoration:underline'>Get Yours!</div>\r\n</div></a>\r\n",
+          "jcr:lastModified": "Thu Feb 05 2026 20:50:01 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/wyng-experience"
+        },
+        "hr_copy_copy_6568060_348688952": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "color_carousel_copy_": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "true",
+          "jcr:createdBy": "ktoler",
+          "jcr:lastModifiedBy": "scotton",
+          "removeTopPadding": "true",
+          "jcr:created": "Tue Jun 15 2021 16:52:15 GMT+0000",
+          "headline2": "Shop By Companion Color",
+          "theme": "white",
+          "jcr:lastModified": "Mon Mar 24 2025 16:29:05 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/color-carousel",
+          "textIsRich": "true",
+          "colors": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "imageServerUrl": "https://example.com",
+              "link": "Demo Heading C",
+              "name": "floral"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "hexValue": "205241",
+              "link": "Demo Heading C",
+              "name": "green"
+            },
+            "item2": {
+              "jcr:primaryType": "nt:unstructured",
+              "hexValue": "0F4473",
+              "link": "Demo Heading H",
+              "name": "blue"
+            },
+            "item3": {
+              "jcr:primaryType": "nt:unstructured",
+              "hexValue": "d94514",
+              "link": "Demo Heading D",
+              "name": "orange"
+            },
+            "item4": {
+              "jcr:primaryType": "nt:unstructured",
+              "hexValue": "981C41",
+              "link": "Demo Heading B",
+              "name": "red"
+            },
+            "item5": {
+              "jcr:primaryType": "nt:unstructured",
+              "hexValue": "040A05",
+              "link": "Demo Heading H",
+              "name": "black"
+            },
+            "item6": {
+              "jcr:primaryType": "nt:unstructured",
+              "hexValue": "EAADAD",
+              "link": "Demo Heading H",
+              "name": "pink"
+            },
+            "item7": {
+              "jcr:primaryType": "nt:unstructured",
+              "hexValue": "E4BCA3",
+              "link": "Demo Heading D",
+              "name": "neutral"
+            },
+            "item8": {
+              "jcr:primaryType": "nt:unstructured",
+              "hexValue": "470040",
+              "link": "Demo Heading D",
+              "name": "purple"
+            },
+            "item9": {
+              "jcr:primaryType": "nt:unstructured",
+              "hexValue": "#FFFFFF",
+              "link": "Demo Heading G",
+              "name": "white"
+            }
+          },
+          "buttons": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#000000",
+              "link": "Demo Heading G",
+              "text": "see all colors",
+              "type": "link",
+              "ctaTextHexColor": "#000000"
+            }
+          }
+        },
+        "hr_copy_copy_6568060_1252218391": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "variable_column_1916": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "false",
+          "jcr:createdBy": "arajis",
+          "description": "<p> Everything you need to make your friends look good</p>\r\n",
+          "jcr:lastModifiedBy": "scotton",
+          "textAlign": "center",
+          "removeTopPadding": "false",
+          "jcr:created": "Tue Nov 22 2022 20:43:07 GMT+0000",
+          "headline2": "Apparel Party Perfection",
+          "cardType": "type_belowImage",
+          "theme": "seashell",
+          "gridType": "inset",
+          "columns": "5",
+          "jcr:lastModified": "Tue Mar 10 2026 19:27:59 GMT+0000",
+          "aspectRatio": "3:2",
+          "sling:resourceType": "demo-site-a/components/variable-column",
+          "textIsRich": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "true",
+            "true"
+          ],
+          "mobileLayout": "scroll",
+          "columnContents": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "columnText": "<p> </p>\r\n<p>Plus, swatches ship free!</p>\r\n",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "headline": "3 Free Swatches",
+              "imageLink": "Demo Heading A",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "Demo Heading A",
+                  "text": "shop swatches",
+                  "type": "link"
+                }
+              }
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "columnText": "<p> </p>\r\n<p>Mix and match your party<br />\r\n</p>\r\n",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "headline": "17 New Colors!",
+              "imageLink": "Demo Heading G",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "Demo Heading G",
+                  "text": "Shop all colors",
+                  "type": "link"
+                }
+              }
+            },
+            "item2": {
+              "jcr:primaryType": "nt:unstructured",
+              "columnText": "<p>Come find your dress!</p>\r\n",
+              "fileReference": "/content/dam/demo/_generated/module.gif",
+              "headline": "Free Appointments & Walk-Ins Welcome",
+              "imageLink": "https://example.com",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "https://example.com",
+                  "text": "Book now",
+                  "type": "link"
+                }
+              }
+            },
+            "item3": {
+              "jcr:primaryType": "nt:unstructured",
+              "columnText": "<p>As glam as it gets<br />\r\n</p>\r\n",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "headline": "New Matte Satin Fabric",
+              "imageLink": "Demo Heading C",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "Demo Heading C",
+                  "text": "shop matte satin",
+                  "type": "link"
+                }
+              }
+            },
+            "item4": {
+              "jcr:primaryType": "nt:unstructured",
+              "columnText": "<p>Create your perfect party<br />\r\n</p>\r\n",
+              "fileReference": "/content/dam/demo/_generated/module.gif",
+              "headline": "Mix & Match Inspiration",
+              "imageLink": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate.",
+              "imageServerUrl": "https://example.com",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate.",
+                  "text": "mix & match guide",
+                  "type": "link"
+                }
+              }
+            }
+          }
+        },
+        "promo_1436939073_cop": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "description": "<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n",
+          "jcr:lastModifiedBy": "scotton",
+          "copySize": "h5",
+          "jcr:created": "Mon Jan 13 2025 19:20:33 GMT+0000",
+          "size": "large",
+          "align": "center",
+          "theme": "image-dark",
+          "jcr:lastModified": "Tue May 12 2026 15:59:40 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/promo",
+          "backgroundColor": "transparent",
+          "textIsRich": "true",
+          "bgImages": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-desktop.gif",
+              "imageLink": "/fit-guarantee?sc=hp_fit-banner",
+              "visible": "desktop",
+              "alignment": "middle-center"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-mobile.gif",
+              "imageLink": "/fit-guarantee?sc=hp_fit-banner",
+              "imageServerUrl": "https://example.com",
+              "visible": "mobile",
+              "alignment": "middle-center"
+            }
+          },
+          "buttons": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#FFFFFF",
+              "link": "/fit-guarantee?sc=hp_fit-banner",
+              "text": "learn more",
+              "type": "ghost",
+              "ctaTextHexColor": "#FFFFFF"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#FFFFFF",
+              "link": "/stores",
+              "text": "find a store",
+              "type": "ghost",
+              "ctaTextHexColor": "#FFFFFF"
+            }
+          }
+        },
+        "hr_copy_copy_6568060": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "hr_copy_copy_6568060_1283544945": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "hr_copy_copy_6568060_1939454740": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "promo_1436939073_cop_20764981": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "description": "<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n",
+          "jcr:lastModifiedBy": "scotton",
+          "copySize": "h5",
+          "jcr:created": "Mon Jan 13 2025 19:20:33 GMT+0000",
+          "size": "large",
+          "align": "center",
+          "theme": "image-dark",
+          "jcr:lastModified": "Thu Apr 30 2026 19:52:14 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/promo",
+          "backgroundColor": "transparent",
+          "textIsRich": "true",
+          "bgImages": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-desktop.gif",
+              "imageLink": "Demo Heading E",
+              "visible": "desktop",
+              "alignment": "middle-center"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-mobile.gif",
+              "imageLink": "Demo Heading E",
+              "imageServerUrl": "https://example.com",
+              "visible": "mobile",
+              "alignment": "middle-center"
+            }
+          },
+          "buttons": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#FFFFFF",
+              "link": "Demo Heading E",
+              "text": "shop graduation dresses",
+              "type": "ghost",
+              "ctaTextHexColor": "#FFFFFF"
+            }
+          }
+        },
+        "hr_copy_copy_6568060_1463411056": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "hr_copy_copy_6568060_931808015": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "hr_copy_copy_6568060_405672135": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "promo_1610784589_cop": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "description": "<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n<p> </p>\r\n",
+          "jcr:lastModifiedBy": "DCarnegie",
+          "copySize": "h5",
+          "jcr:created": "Wed Jul 17 2024 16:06:11 GMT+0000",
+          "size": "small",
+          "align": "center",
+          "theme": "image-light",
+          "jcr:lastModified": "Fri Apr 03 2026 18:33:09 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/promo",
+          "backgroundColor": "transparent",
+          "textIsRich": "true",
+          "bgImages": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-desktop.gif",
+              "imageLink": "Demo Heading F",
+              "visible": "desktop",
+              "alignment": "middle-center"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-mobile.gif",
+              "imageLink": "Demo Heading F",
+              "imageServerUrl": "https://example.com",
+              "visible": "mobile",
+              "alignment": "middle-center"
+            }
+          },
+          "buttons": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "buttonHexColor": "#000000",
+              "link": "Demo Heading F",
+              "text": "learn more",
+              "type": "link",
+              "ctaTextHexColor": "#000000"
+            }
+          }
+        },
+        "hr_copy_copy_6568060_1075838470": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "hr_copy_copy_6568060_1232111807": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "hr_copy_copy_6568060_814651536": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Mon Sep 16 2024 15:20:38 GMT+0000",
+          "pb": "10",
+          "color": "transparent",
+          "jcr:lastModified": "Mon Sep 16 2024 15:20:57 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hr"
+        },
+        "variable_column_1750": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "true",
+          "jcr:createdBy": "v.smujeeb",
+          "jcr:lastModifiedBy": "scotton",
+          "textAlign": "center",
+          "removeTopPadding": "false",
+          "jcr:created": "Sun Jul 25 2021 03:22:42 GMT+0000",
+          "headline2": "Our Partners",
+          "cardType": "type_belowImage",
+          "theme": "seashell",
+          "gridType": "inset",
+          "columns": "5",
+          "jcr:lastModified": "Wed May 20 2026 15:33:22 GMT+0000",
+          "aspectRatio": "3:2",
+          "sling:resourceType": "demo-site-a/components/variable-column",
+          "textIsRich": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "true",
+            "true"
+          ],
+          "mobileLayout": "scroll",
+          "columnContents": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/partner.gif",
+              "headline": "Personalization Mall",
+              "imageLink": "Demo Heading F",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "Demo Heading F",
+                  "text": "shop now",
+                  "type": "link"
+                }
+              }
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "headline": "Friar Tux",
+              "imageLink": "/friar-tux?sc=hp_partner-ft",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "/friar-tux?sc=hp_partner-ft",
+                  "text": "shop now",
+                  "type": "link"
+                }
+              }
+            },
+            "item2": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/partner.gif",
+              "headline": "MyRegistry",
+              "imageLink": "https://example.com",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "https://example.com",
+                  "text": "Create your Registry",
+                  "type": "link"
+                }
+              }
+            },
+            "item3": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/content.gif",
+              "headline": "Events by Shutterfly",
+              "imageLink": "https://www.dpbolvw.net/click-100597011-15207309",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "https://www.dpbolvw.net/click-100597011-15207309",
+                  "text": "learn more",
+                  "type": "link"
+                }
+              }
+            },
+            "item4": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/module.gif",
+              "headline": "Little Tuxedos",
+              "imageLink": "Demo Heading C",
+              "imageServerUrl": "https://example.com",
+              "cta": {
+                "jcr:primaryType": "nt:unstructured",
+                "item0": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "link": "Demo Heading C",
+                  "text": "learn more",
+                  "type": "link"
+                }
+              }
+            }
+          }
+        },
+        "properties": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "viktoriia.s",
+          "jcr:lastModifiedBy": "viktoriia.s",
+          "jcr:created": "Wed Jul 13 2022 16:46:06 GMT+0000",
+          "jcr:lastModified": "Wed Jul 13 2022 16:46:06 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "properties_311439517": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "viktoriia.s",
+          "jcr:lastModifiedBy": "viktoriia.s",
+          "jcr:created": "Fri Jul 15 2022 07:20:53 GMT+0000",
+          "jcr:lastModified": "Fri Jul 15 2022 07:20:53 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "properties_1941996330": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "viktoriia.s",
+          "jcr:lastModifiedBy": "viktoriia.s",
+          "jcr:created": "Fri Jul 15 2022 07:25:59 GMT+0000",
+          "jcr:lastModified": "Fri Jul 15 2022 07:25:59 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "properties_320547042": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "viktoriia.s",
+          "jcr:lastModifiedBy": "viktoriia.s",
+          "jcr:created": "Fri Jul 15 2022 09:18:49 GMT+0000",
+          "jcr:lastModified": "Fri Jul 15 2022 09:18:49 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "properties_291843978": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "smujeeb",
+          "jcr:lastModifiedBy": "smujeeb",
+          "jcr:created": "Tue Jul 26 2022 14:37:18 GMT+0000",
+          "jcr:lastModified": "Tue Jul 26 2022 14:37:18 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "properties_1809273802": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "smujeeb",
+          "jcr:lastModifiedBy": "smujeeb",
+          "jcr:created": "Tue Jul 26 2022 14:37:33 GMT+0000",
+          "jcr:lastModified": "Tue Jul 26 2022 14:37:33 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        }
+      }
+    }
+  }
+}

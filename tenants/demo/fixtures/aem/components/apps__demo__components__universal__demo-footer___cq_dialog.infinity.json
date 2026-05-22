@@ -1,0 +1,377 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Banner Configuration",
+  "mode": "edit",
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/foundation/container",
+    "layout": {
+      "jcr:primaryType": "nt:unstructured",
+      "type": "nav",
+      "sling:resourceType": "granite/ui/components/foundation/layouts/tabs"
+    },
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tab1": {
+        "jcr:primaryType": "nt:unstructured",
+        "jcr:title": "References",
+        "sling:resourceType": "granite/ui/components/foundation/section",
+        "layout": {
+          "jcr:primaryType": "nt:unstructured",
+          "margin": false,
+          "sling:resourceType": "granite/ui/components/foundation/layouts/fixedcolumns"
+        },
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "column": {
+            "jcr:primaryType": "nt:unstructured",
+            "sling:resourceType": "granite/ui/components/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "references": {
+                "jcr:primaryType": "nt:unstructured",
+                "composite": true,
+                "fieldLabel": "References",
+                "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                "field": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "name": "./referncesMulti",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "referencesHeading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./referencesHeading",
+                          "fieldLabel": "Section Heading",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "referencesInfo": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "composite": true,
+                          "fieldLabel": "Reference Details",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                          "eaem-max-items": "5",
+                          "field": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./referenceDetails",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "column": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                                "items": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "title": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./footerRefTitle",
+                                    "fieldLabel": "Reference title",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                    "fieldDescription": "Enter reference title"
+                                  },
+                                  "ctaCategoryPath": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./ctaCategoryPath",
+                                    "selectionId": "path",
+                                    "fieldLabel": "PLP Path",
+                                    "eaem-show-on-collapse": "EAEM.showProductName",
+                                    "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+                                    "fieldDescription": "Choose the PLP Page Path"
+                                  },
+                                  "ctaProductPath": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./ctaProductPath",
+                                    "selectionId": "slug",
+                                    "fieldLabel": "Product Path",
+                                    "eaem-show-on-collapse": "EAEM.showProductName",
+                                    "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+                                    "fieldDescription": "Choose the PDP Page Path"
+                                  },
+                                  "link": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "rootPath": "/content/demo",
+                                    "name": "./footerRefLink",
+                                    "fieldLabel": "Reference link",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                                    "fieldDescription": "Enter reference link"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "tab2": {
+        "jcr:primaryType": "nt:unstructured",
+        "jcr:title": "Contact Information",
+        "sling:resourceType": "granite/ui/components/foundation/section",
+        "layout": {
+          "jcr:primaryType": "nt:unstructured",
+          "margin": false,
+          "sling:resourceType": "granite/ui/components/foundation/layouts/fixedcolumns"
+        },
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "column": {
+            "jcr:primaryType": "nt:unstructured",
+            "sling:resourceType": "granite/ui/components/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "heading": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./footerConnectHeading",
+                "fieldLabel": "Footer Icon Heading",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+                "fieldDescription": "Enter Icon Heading"
+              },
+              "socialMulti": {
+                "jcr:primaryType": "nt:unstructured",
+                "composite": true,
+                "fieldLabel": "Social Media Multifield",
+                "eaem-show-on-collapse": "EAEM.showProductName",
+                "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                "field": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "name": "./footerSocialMulti",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "mediaSelection": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./footerContactSocial",
+                          "fieldLabel": "Choose the media",
+                          "sling:resourceType": "granite/ui/components/foundation/form/select",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "youtube": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Youtube",
+                              "value": "#icon--youtube"
+                            },
+                            "instagram": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Instagram",
+                              "value": "#icon--instagram"
+                            },
+                            "pinterest": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Pinterest",
+                              "value": "#icon--pinterest"
+                            },
+                            "facebook": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Facebook",
+                              "value": "#icon--facebook"
+                            },
+                            "twitter": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Twitter",
+                              "value": "#icon--twitter"
+                            }
+                          }
+                        },
+                        "link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./footerRefSocialLink",
+                          "fieldLabel": "Social media link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Enter social media link"
+                        },
+                        "names": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./footerRefSocialMediaName",
+                          "fieldLabel": "Social media name",
+                          "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "contactMulti": {
+                "jcr:primaryType": "nt:unstructured",
+                "composite": true,
+                "fieldLabel": "Contact us Multifield",
+                "eaem-show-on-collapse": "EAEM.showProductName",
+                "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                "field": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "name": "./footerContactMulti",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "header": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./footerContactHeader",
+                          "fieldLabel": "Section header",
+                          "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+                          "fieldDescription": "Enter the section Header"
+                        },
+                        "contact": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./footerContactNumber",
+                          "fieldLabel": "Contact number",
+                          "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+                          "fieldDescription": "Enter the contact number"
+                        },
+                        "email": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./footerRefEmailId",
+                          "fieldLabel": "Email ID",
+                          "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+                          "fieldDescription": "Enter email  ID"
+                        },
+                        "emailLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./footerRefEmailLink",
+                          "fieldLabel": "Email Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Enter email  link"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "countryIcon": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./footerCountryIcon",
+                "fieldLabel": "Choose country flag",
+                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                "fieldDescription": "Choose the country flag"
+              },
+              "countryName": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./footerCountryName",
+                "fieldLabel": "Country name",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+                "fieldDescription": "Enter the country name"
+              },
+              "redirection": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./footerCountryRedirection",
+                "fieldLabel": "Redirection path",
+                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                "fieldDescription": "Choose the redirection path"
+              },
+              "scriptText": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./footerScriptText",
+                "fieldLabel": "Footer Script Text",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+                "fieldDescription": "Enter the Script Text"
+              },
+              "iconHeading": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./footerIconHeading",
+                "fieldLabel": "Footer Icon Heading",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+                "fieldDescription": "Enter Icon Heading"
+              }
+            }
+          }
+        }
+      },
+      "tab3": {
+        "jcr:primaryType": "nt:unstructured",
+        "jcr:title": "Copyright Text",
+        "sling:resourceType": "granite/ui/components/foundation/section",
+        "layout": {
+          "jcr:primaryType": "nt:unstructured",
+          "margin": false,
+          "sling:resourceType": "granite/ui/components/foundation/layouts/fixedcolumns"
+        },
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "column": {
+            "jcr:primaryType": "nt:unstructured",
+            "sling:resourceType": "granite/ui/components/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "informationlMulti": {
+                "jcr:primaryType": "nt:unstructured",
+                "composite": true,
+                "fieldLabel": "Information  Multifield",
+                "eaem-show-on-collapse": "EAEM.showProductName",
+                "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                "field": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "name": "./footerInformationMulti",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "linkName": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./footerInfoLink",
+                          "fieldLabel": "Link name",
+                          "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+                          "fieldDescription": "Enter the link name"
+                        },
+                        "ctaCategoryPath": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./infoCtaCategoryPath",
+                          "selectionId": "path",
+                          "fieldLabel": "PLP Path",
+                          "eaem-show-on-collapse": "EAEM.showProductName",
+                          "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+                          "fieldDescription": "Choose the PLP Page Path"
+                        },
+                        "ctaProductPath": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./infoCtaProductPath",
+                          "selectionId": "slug",
+                          "fieldLabel": "Product Path",
+                          "eaem-show-on-collapse": "EAEM.showProductName",
+                          "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+                          "fieldDescription": "Choose the PDP Page Path"
+                        },
+                        "link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "rootPath": "/content/demo",
+                          "name": "./footerInformationLink",
+                          "fieldLabel": "Redirection link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Redirection link"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -43,6 +43,32 @@ pnpm install                         # pnpm auto-discovers via the `tenants/*` g
 
 Existing tenant folders may lag the template as new env vars, scripts, or pipeline stages get added. Run `pnpm -w migrate:doctor <your-tenant>` to detect drift and missing env, and `pnpm -w migrate:doctor <your-tenant> --fix` to auto-repair the `package.json` scripts block. Use `pnpm -w migrate:doctor --all` to scan every tenant under `tenants/` at once.
 
+### 1-pre-bis. Demo tenant (no AEM)
+
+[`tenants/demo/`](../tenants/demo/) is a **committed** tenant with scrubbed AEM REST fixtures under `fixtures/aem/content/` (pages + tags), `fixtures/aem/components/` (dialogs), and `fixtures/aem/images/` (DAM binaries). It runs the full pipeline without a live AEM instance — extract, tags, schema, transform, assets, and import all replay from disk via `AEM_FIXTURES_DIR`.
+
+**Operator flow:**
+
+```bash
+cd tenants/demo
+cp .env.example .env              # fill SANITY_* with your project
+pnpm migrate:demo               # full offline pipeline
+pnpm --filter studio dev        # verify in Studio
+```
+
+The demo `.env.example` ships dummy AEM auth (`AEM_AUTHOR_URL=http://demo.local`, `AEM_TOKEN=offline-fixtures`) plus `AEM_FIXTURES_DIR=./fixtures/aem`. No real AEM credentials are needed.
+
+**Maintainer flow** (regenerate fixtures from source tenant caches):
+
+```bash
+pnpm build:demo-fixtures --capture-tags   # needs gitignored source tenants + live AEM for tags once
+pnpm migrate:doctor demo
+```
+
+Use `--scratch` to write to `output/demo-scratch/` for review before promoting to `tenants/demo/`.
+
+**Assets:** `migrate:demo` runs `aem-assets` with `AEM_FIXTURES_DIR` set, which copies committed DAM binaries from `fixtures/aem/images/` instead of downloading from AEM (see § 4c-quater).
+
 ### 1a. Pipeline `.env` — `tenants/<your-tenant>/.env`
 
 ```bash
@@ -72,6 +98,8 @@ cp tenants/<your-tenant>/.env.example tenants/<your-tenant>/.env
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
 | `MIGRATION_DRY_RUN` | optional | `aem-assets` and `aem-import` are dry-run unless this is explicitly set to `false`. Default (unset): dry-run. |
 | `MIGRATION_LINK_ONLY` | optional | `aem-assets` only. `true` ⇔ passing `--link-only`. Skips phases 1 + 2 (download + upload) and relies on phase 0 to find assets already in the Media Library. See § 4c. |
+| `MIGRATION_ASSETS_PLACEHOLDERS` | optional | `aem-assets` only. `true` ⇔ passing `--placeholders`. Skips AEM download; copies local SVG placeholders instead. See § 4c-ter. |
+| `AEM_FIXTURES_DIR` | optional | When set, all AEM fetch CLIs (`aem-extract`, `aem-tags`, `migrate:schema`) read captured responses from this directory instead of HTTP. `aem-assets` also reads `images/` under this dir when set. Demo tenants use `./fixtures/aem` with `content/` (pages + tags), `components/` (dialogs), and `images/` (DAM binaries) subfolders. See § 1-pre-bis. |
 | `ASSET_CONCURRENCY` | optional | `aem-assets` only. Number of parallel workers used across phases 0 (ML dedup), 1 (AEM download), 2 (ML upload), 3 (dataset link). Default: `4`. Dedup in phase 0 guarantees each DAM path is processed by exactly one worker, so the shared manifest is never contended at the same key. |
 | `MIGRATION_DISCARD_DRAFTS` | optional | `aem-import` only. `true` ⇔ passing `--discard-drafts`. Deletes `drafts.{id}` alongside each published `createOrReplace` so the Studio shows the freshly-imported content instead of a stale draft from a prior run. Opt-in — destroys authored in-progress edits. |
 | `MIGRATION_RECREATE_ON_TYPE_CHANGE` | optional | `aem-import` only. `true` ⇔ passing `--recreate-on-type-change`. When an existing doc's `_type` differs from what the migration wants to write (e.g. a `page` doc becoming `planDetailsPage` after declaring it in `aem-page-components.json`), Sanity rejects the `createOrReplace` because `_type` is immutable. With this flag, `aem-import` pre-fetches the existing types and uses `delete + create` (within one transaction) for the affected ids. Opt-in — destroys the publish history and any draft of the affected docs. |
@@ -585,6 +613,8 @@ interface ManifestEntry {
 - **Flags:**
   - `--upload-only` — skip phase 1 (download). Assumes the local cache already exists.
   - `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup resolves existing assets by `aemSource.damPath`; phases 3 + 4 run as normal. Dry-run + `--link-only` = preview of which DAM paths would be linked vs. missing from the ML. Mutually exclusive with `--upload-only`. Intended for re-runs against an ML that already holds the binaries (either from a prior pipeline run or stamped out-of-band). Any DAM path that phase 0 can't resolve stays in `/content/dam/*` form in clean docs and is listed in `output/assets-report.json → rewrite.unresolved`. Caveat: phase 0 keys on the `aemSource` aspect stamped by this pipeline on upload, so assets uploaded through the Studio UI without that aspect will not be found by DAM path.
+  - When `AEM_FIXTURES_DIR` is set, phase 1 copies DAM binaries from `{AEM_FIXTURES_DIR}/images/` instead of downloading from AEM. Used by the offline demo tenant. See § 4c-quater.
+  - `--placeholders` (or `MIGRATION_ASSETS_PLACEHOLDERS=true`) — legacy: skip AEM download (phase 1). Copies SVG files from `./placeholders/` into the local asset cache instead, hashing each DAM path to one of 12 slots. Mutually exclusive with `--link-only`, `--upload-only`, and `AEM_FIXTURES_DIR`. See § 4c-ter.
   - `--no-rewrite` — skip phase 4 (in-place rewrite of `clean/*.json`).
 
 Ordering contract: the link phase must complete before `aem-import` runs, because the clean docs only contain the linked `_ref` after phase 4. The `migrate:content` chain (`extract → transform → assets → import`) already enforces this.
@@ -638,6 +668,22 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 - `401` → token doesn't have Media Library access. Regenerate via Option A or check the user's grants per Option B.
 
 After updating the token, re-run `pnpm assets`. Phase 0 picks up where you left off — already-uploaded assets in the manifest are reconciled against the ML by id, so no duplicate uploads.
+
+### 4c-quater. Fixture images mode (offline demo)
+
+When `AEM_FIXTURES_DIR` is set, `aem-assets` phase 1 copies DAM binaries from `{AEM_FIXTURES_DIR}/images/` into the local asset cache instead of downloading from AEM. The demo tenant uses twelve procedural animated GIFs under `/content/dam/demo/_generated/{layout}.gif` — content references are rewritten to these canonical paths at fixture build time. Phases 2–4 run unchanged.
+
+- **Trigger:** `AEM_FIXTURES_DIR=./fixtures/aem` (no extra flag)
+- **Mutually exclusive with:** `--placeholders`
+- **Requires:** committed files under `fixtures/aem/images/` (12 animated GIFs generated by `pnpm build:demo-fixtures`)
+
+### 4c-ter. `--placeholders` mode (legacy)
+
+`aem-assets --placeholders` skips AEM DAM download and copies SVG files from `./placeholders/` into the local asset cache — each unique DAM path hashes to one of 12 slots. Prefer fixture images (§ 4c-quater) for the demo tenant.
+
+- **Flag:** `--placeholders` or `MIGRATION_ASSETS_PLACEHOLDERS=true`
+- **Mutually exclusive with:** `--link-only`, `--upload-only`, `AEM_FIXTURES_DIR`
+- **Requires:** `placeholders/` directory in the tenant cwd
 
 ### 4d. `aem-import` — `output/cache/categories/` + `output/clean/` → Sanity
 

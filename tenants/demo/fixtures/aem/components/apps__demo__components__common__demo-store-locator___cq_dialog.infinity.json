@@ -1,0 +1,260 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "column": {
+        "jcr:primaryType": "nt:unstructured",
+        "sling:resourceType": "granite/ui/components/coral/foundation/container",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "scriptHeading": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./scriptHeading",
+            "fieldLabel": "Script Heading",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Hand written heading text"
+          },
+          "backdrop": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./backdropSelection",
+            "fieldLabel": "Backdrop",
+            "sling:resourceType": "granite/ui/components/foundation/form/select",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "noBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "No Backdrop",
+                "value": ""
+              },
+              "fullBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "Full Backdrop",
+                "value": "component-backdrop--full"
+              },
+              "halfBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "Half Backdrop",
+                "value": "component-backdrop--half"
+              },
+              "offsetBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "Offset Backdrop",
+                "value": "component-backdrop--offset"
+              },
+              "overlapBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "Overlap Backdrop",
+                "value": "component-backdrop--overlap"
+              }
+            }
+          },
+          "storeId": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./storeId",
+            "fieldLabel": "Store Identifier",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Please provide the store identifier"
+          },
+          "heading": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./heading",
+            "fieldLabel": "Heading text",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Please provide the heading text"
+          },
+          "storeDetails": {
+            "jcr:primaryType": "nt:unstructured",
+            "text": "Store details",
+            "sling:resourceType": "granite/ui/components/foundation/heading"
+          },
+          "well": {
+            "jcr:primaryType": "nt:unstructured",
+            "sling:resourceType": "granite/ui/components/foundation/container",
+            "layout": {
+              "jcr:primaryType": "nt:unstructured",
+              "sling:resourceType": "granite/ui/components/foundation/layouts/well"
+            },
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "changeStoreText": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./changeStoreText",
+                "fieldLabel": "Change store text",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+              },
+              "changeStoreCategoryPath": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./changeStoreCategoryPath",
+                "selectionId": "path",
+                "fieldLabel": "PLP Path",
+                "eaem-show-on-collapse": "EAEM.showProductName",
+                "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+                "fieldDescription": "Choose the PLP Page Path"
+              },
+              "changeStoreProductPath": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./changeStoreProductPath",
+                "selectionId": "slug",
+                "fieldLabel": "Product Path",
+                "eaem-show-on-collapse": "EAEM.showProductName",
+                "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+                "fieldDescription": "Choose the PDP Page Path"
+              },
+              "changeStoreLink": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./changeStoreLink",
+                "fieldLabel": "Change Store Link",
+                "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser",
+                "fieldDescription": "Please provide the change store link"
+              },
+              "changeStoreTitle": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./changeStoreTitle",
+                "fieldLabel": "Change store Title",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+              },
+              "storeDetailsText": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./storeDetailText",
+                "fieldLabel": "Store Details Text",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+              },
+              "storeDetailsCategoryPath": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./storeDetailsCategoryPath",
+                "selectionId": "path",
+                "fieldLabel": "PLP Path",
+                "eaem-show-on-collapse": "EAEM.showProductName",
+                "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+                "fieldDescription": "Choose the PLP Page Path"
+              },
+              "storeDetailsProductPath": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./storeDetailsProductPath",
+                "selectionId": "slug",
+                "fieldLabel": "Product Path",
+                "eaem-show-on-collapse": "EAEM.showProductName",
+                "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+                "fieldDescription": "Choose the PDP Page Path"
+              },
+              "storeDetailsLink": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./storeDetailLink",
+                "fieldLabel": "Store Details Link",
+                "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser",
+                "fieldDescription": "Please provide the store link"
+              },
+              "storeDetailsTitle": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./storeDetailsTitle",
+                "fieldLabel": "Store Details Title",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+              },
+              "storeName": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./storeName",
+                "fieldLabel": "Store Name",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+              },
+              "storePlace": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./storePlace",
+                "fieldLabel": "Store Place",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+              },
+              "addressLineOne": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./addressLineOne",
+                "fieldLabel": "Address Line One",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+              },
+              "addressLineTwo": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./addressLineTwo",
+                "fieldLabel": "Address Line Two",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+              },
+              "storeTime": {
+                "jcr:primaryType": "nt:unstructured",
+                "name": "./storeTime",
+                "fieldLabel": "Store Time",
+                "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+              }
+            }
+          },
+          "backgroundImage": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./backgroundImage",
+            "fieldLabel": "Background Image",
+            "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser"
+          },
+          "buttonLabel": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./buttonLabel",
+            "fieldLabel": "Book appointment Button Text",
+            "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+          },
+          "categoryPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./categoryPath",
+            "selectionId": "path",
+            "fieldLabel": "PLP Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+            "fieldDescription": "Choose the PLP Page Path"
+          },
+          "productPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./productPath",
+            "selectionId": "slug",
+            "fieldLabel": "Product Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+            "fieldDescription": "Choose the PDP Page Path"
+          },
+          "buttonLink": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./buttonLink",
+            "fieldLabel": "Book appointment button link",
+            "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser"
+          },
+          "buttonTitle": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./buttonTitle",
+            "fieldLabel": "Book appointment Button Title",
+            "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+          },
+          "buttonHeader": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./buttonHeader",
+            "fieldLabel": "Button Header",
+            "sling:resourceType": "granite/ui/components/foundation/form/textfield",
+            "fieldDescription": "Book Appointment button header"
+          },
+          "mobileBackgroundImage": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./mobileBackgroundImage",
+            "fieldLabel": "Mobile Background Image",
+            "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser"
+          },
+          "imageTitle": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./imageTitle",
+            "fieldLabel": "Image Title",
+            "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+          },
+          "altTag": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./altTag",
+            "fieldLabel": "Alt Tag",
+            "sling:resourceType": "granite/ui/components/foundation/form/textfield"
+          }
+        }
+      }
+    }
+  }
+}

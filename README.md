@@ -86,6 +86,16 @@ pnpm --filter studio dev              # http://localhost:3333
 
 Need `AEM_*` and `SANITY_*` credentials before step 4 — see [`docs/running-the-migration.md` § 1a](docs/running-the-migration.md) for the full env table, including the **AEMaaCS Service Credentials** flow (recommended over basic auth / dev tokens).
 
+### Demo without AEM
+
+The committed [`tenants/demo/`](tenants/demo/) tenant replays scrubbed AEM REST fixtures offline — no live AEM instance required. Copy `.env.example` → `.env`, fill in your Sanity project vars, then:
+
+```bash
+pnpm --filter tenant-demo migrate:demo
+```
+
+See [`docs/running-the-migration.md` § 1-pre-bis](docs/running-the-migration.md) for maintainer fixture regeneration (`pnpm build:demo-fixtures`).
+
 ---
 
 ## Where everything lives
@@ -102,7 +112,8 @@ aem-to-sanity/
 │                                      (Frontend apps moved to aem-to-sanity-demo-web — separate repo)
 │
 ├── tenants/                          Per-tenant working folders
-│   ├── tenant/                        Committed template (copy this to start a new migration)
+│   ├── template/                      Committed template (copy this to start a new migration)
+│   ├── demo/                          Committed offline demo (scrubbed AEM fixtures, no live AEM)
 │   ├── davids-bridal/                 (gitignored) operator working copy
 │   └── t-mobile/                      (gitignored) operator working copy
 │

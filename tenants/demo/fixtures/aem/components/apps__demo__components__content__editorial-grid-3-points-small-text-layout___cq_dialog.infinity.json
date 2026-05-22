@@ -1,0 +1,301 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Demo Heading G",
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "column": {
+        "jcr:primaryType": "nt:unstructured",
+        "sling:resourceType": "granite/ui/components/coral/foundation/container",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "title": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./title",
+            "fieldLabel": "Title",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Title"
+          },
+          "backdrop": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./backdropSelection",
+            "fieldLabel": "Backdrop",
+            "sling:resourceType": "granite/ui/components/foundation/form/select",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "noBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "No Backdrop",
+                "value": ""
+              },
+              "fullBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "Full Backdrop",
+                "value": "component-backdrop--full"
+              },
+              "halfBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "Half Backdrop",
+                "value": "component-backdrop--half"
+              },
+              "offsetBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "Offset Backdrop",
+                "value": "component-backdrop--offset"
+              },
+              "overlapBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "Overlap Backdrop",
+                "value": "component-backdrop--overlap"
+              },
+              "offsetMidLeftBackdrop": {
+                "jcr:primaryType": "nt:unstructured",
+                "text": "Offset Mid Left Backdrop",
+                "value": "component-backdrop__offset--mid-left"
+              }
+            }
+          },
+          "scriptTitle": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./scriptTitle",
+            "fieldLabel": "Script Title",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Handwritten subtitle"
+          },
+          "copyText": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./copyText",
+            "fieldLabel": "Copy Text",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Copy Text"
+          },
+          "imageDesktop": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/dam",
+            "name": "./imageDesktop",
+            "fieldLabel": "Desktop Image",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/pathbrowser",
+            "fieldDescription": "Give Desktop Image"
+          },
+          "imageMobile": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/dam",
+            "name": "./imageMobile",
+            "fieldLabel": "Mobile Image",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/pathbrowser",
+            "fieldDescription": "Give Mobile Image"
+          },
+          "imageCtaText": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./imageCtaText",
+            "fieldLabel": "Image Cta Text",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Image Cta Text"
+          },
+          "ctaCategoryPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./ctaCategoryPath1",
+            "selectionId": "path",
+            "fieldLabel": "PLP Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+            "fieldDescription": "Choose the PLP Page Path"
+          },
+          "ctaProductPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./ctaProductPath1",
+            "selectionId": "slug",
+            "fieldLabel": "Product Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+            "fieldDescription": "Choose the PDP Page Path"
+          },
+          "imageCtaLink": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/demo",
+            "name": "./imageCtaLink",
+            "fieldLabel": "Image Cta Link",
+            "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser",
+            "fieldDescription": "Image Cta Link"
+          },
+          "altText": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./altText",
+            "fieldLabel": "Alt Text",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Alt Text"
+          },
+          "titleTag": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./titleTag",
+            "fieldLabel": "Title Tag",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Title Tag"
+          },
+          "secondImageDesktop": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/dam",
+            "name": "./secondImageDesktop",
+            "fieldLabel": "Desktop Image",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/pathbrowser",
+            "fieldDescription": "Give Desktop Image"
+          },
+          "secondImageMobile": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/dam",
+            "name": "./secondImageMobile",
+            "fieldLabel": "Mobile Image",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/pathbrowser",
+            "fieldDescription": "Give Mobile Image"
+          },
+          "secondImageCtaText": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./secondImageCtaText",
+            "fieldLabel": "Second Image Cta Text",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Image Cta Text"
+          },
+          "secondCtaCategoryPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./ctaCategoryPath2",
+            "selectionId": "path",
+            "fieldLabel": "PLP Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+            "fieldDescription": "Choose the PLP Page Path"
+          },
+          "secondCtaProductPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./ctaProductPath2",
+            "selectionId": "slug",
+            "fieldLabel": "Product Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+            "fieldDescription": "Choose the PDP Page Path"
+          },
+          "secondImageCtaLink": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/demo",
+            "name": "./secondImageCtaLink",
+            "fieldLabel": "Second Image Cta Link",
+            "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser",
+            "fieldDescription": "Image Cta Link"
+          },
+          "secondAltText": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./secondAltText",
+            "fieldLabel": "Second Alt Text",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Second Alt Text"
+          },
+          "secondTitleTag": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./secondTitleTag",
+            "fieldLabel": "Second Title Tag",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Second Title Tag"
+          },
+          "thirdImageDesktop": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/dam",
+            "name": "./thirdImageDesktop",
+            "fieldLabel": "Desktop Image",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/pathbrowser",
+            "fieldDescription": "Give Desktop Image"
+          },
+          "thirdImageMobile": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/dam",
+            "name": "./thirdImageMobile",
+            "fieldLabel": "Mobile Image",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/pathbrowser",
+            "fieldDescription": "Give Mobile Image"
+          },
+          "thirdImageCtaText": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./thirdImageCtaText",
+            "fieldLabel": "Third Image Cta Text",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Image Cta Text"
+          },
+          "thirdCtaCategoryPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./ctaCategoryPath3",
+            "selectionId": "path",
+            "fieldLabel": "PLP Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+            "fieldDescription": "Choose the PLP Page Path"
+          },
+          "thirdCtaProductPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./ctaProductPath3",
+            "selectionId": "slug",
+            "fieldLabel": "Product Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+            "fieldDescription": "Choose the PDP Page Path"
+          },
+          "thirdImageCtaLink": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/demo",
+            "name": "./thirdImageCtaLink",
+            "fieldLabel": "Third Image Cta Link",
+            "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser",
+            "fieldDescription": "Image Cta Link"
+          },
+          "thirdAltText": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./thirdAltText",
+            "fieldLabel": "Third Alt Text",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Third  Alt Text"
+          },
+          "thirdTitleTag": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./thirdTitleTag",
+            "fieldLabel": "Third Title Tag",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Third Title Tag"
+          },
+          "bottomCtaText": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./bottomCtaText",
+            "fieldLabel": "Bottom Cta Text",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textarea",
+            "fieldDescription": "Text for the Link at the Bottom"
+          },
+          "bottomCtaCategoryPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./ctaCategoryPath4",
+            "selectionId": "path",
+            "fieldLabel": "PLP Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+            "fieldDescription": "Choose the PLP Page Path"
+          },
+          "bottomCtaProductPath": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./ctaProductPath4",
+            "selectionId": "slug",
+            "fieldLabel": "Product Path",
+            "eaem-show-on-collapse": "EAEM.showProductName",
+            "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+            "fieldDescription": "Choose the PDP Page Path"
+          },
+          "bottomCtaLink": {
+            "jcr:primaryType": "nt:unstructured",
+            "rootPath": "/content/demo",
+            "name": "./bottomCtaLink",
+            "fieldLabel": "Bottom Cta Link",
+            "sling:resourceType": "granite/ui/components/foundation/form/pathbrowser",
+            "fieldDescription": "Link at the Bottom"
+          }
+        }
+      }
+    }
+  }
+}

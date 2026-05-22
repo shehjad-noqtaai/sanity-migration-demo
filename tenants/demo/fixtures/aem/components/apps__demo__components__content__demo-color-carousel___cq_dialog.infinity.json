@@ -1,0 +1,240 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Color Group",
+  "trackingFeature": "core-components:title:v1",
+  "helpPath": "https://www.adobe.com/go/aem_cmp_title_v1",
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "column": {
+        "jcr:primaryType": "nt:unstructured",
+        "sling:resourceType": "granite/ui/components/coral/foundation/container",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "title": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./title",
+            "fieldLabel": "Color Title",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Name of the Color Group"
+          },
+          "colorName1": {
+            "jcr:primaryType": "nt:unstructured",
+            "sling_resourceType": "granite/ui/component/coral/foundation/form/textfield",
+            "name": "./colorName1",
+            "fieldLabel": "Color Name #1",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode1": {
+            "jcr:primaryType": "nt:unstructured",
+            "sling_resourceType": "granite/ui/component/coral/foundation/form/textfield",
+            "name": "./colorCode1",
+            "fieldLabel": "Color Code #1",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Code"
+          },
+          "colorName2": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName2",
+            "fieldLabel": "Color Name #2",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode2": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode2",
+            "fieldLabel": "Color Code #2",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Code"
+          },
+          "colorName3": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName3",
+            "fieldLabel": "Color Name #3",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode3": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode3",
+            "fieldLabel": "Color Code #3",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Code Hex Code"
+          },
+          "colorName4": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName4",
+            "fieldLabel": "Color Name #4",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode4": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode4",
+            "fieldLabel": "Color Code #4",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Code"
+          },
+          "colorName5": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName5",
+            "fieldLabel": "Color Name #5 ",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode5": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode5",
+            "fieldLabel": "Color Code #5 ",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName6": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName6",
+            "fieldLabel": "Color Name #6",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode6": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode6",
+            "fieldLabel": "Color Code #6",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName7": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName7",
+            "fieldLabel": "Color Name #7",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode7": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode7",
+            "fieldLabel": "Color Code #7",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName8": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName8",
+            "fieldLabel": "Color Name #8",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode8": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode8",
+            "fieldLabel": "Color Code #8",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName9": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName9",
+            "fieldLabel": "Color Name #9",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode9": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode9",
+            "fieldLabel": "Color Code #9",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName10": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName10",
+            "fieldLabel": "Color Name #10",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode10": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode10",
+            "fieldLabel": "Color Code #10",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName11": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName11",
+            "fieldLabel": "Color Name #11",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode11": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode11",
+            "fieldLabel": "Color Code #11",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName12": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName12",
+            "fieldLabel": "Color Name #12",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode12": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode12",
+            "fieldLabel": "Color Code #12",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName13": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName13",
+            "fieldLabel": "Color Name #13",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode13": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode13",
+            "fieldLabel": "Color Code #13",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName14": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName14",
+            "fieldLabel": "Color Name #14",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode14": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode14",
+            "fieldLabel": "Color Code #14",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          },
+          "colorName15": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorName15",
+            "fieldLabel": "Color Name #15",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Name"
+          },
+          "colorCode15": {
+            "jcr:primaryType": "nt:unstructured",
+            "name": "./colorCode15",
+            "fieldLabel": "Color Code #15",
+            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+            "fieldDescription": "Color Hex Code"
+          }
+        }
+      }
+    }
+  }
+}
