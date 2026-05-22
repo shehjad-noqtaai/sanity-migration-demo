@@ -175,10 +175,52 @@ export interface FixturesLayout {
   fixturesRoot: string;
   exists: boolean;
   isDirectory: boolean;
+  /** Path-mirror or legacy `.infinity.json` bodies under `content/`. */
   contentJsonCount: number;
+  /** Path-mirror or legacy `.infinity.json` bodies under `apps/`. */
   componentsJsonCount: number;
+  /** Legacy flat `.infinity.json` files at the fixtures root. */
   flatInfinityJsonCount: number;
-  imageCount: number;
+  assetCount: number;
+}
+
+function isInfinityBodyFile(name: string): boolean {
+  return name.endsWith(".infinity.json") && !name.endsWith(".infinity.json.meta.json");
+}
+
+function walkInfinityFixtures(
+  dir: string,
+  relPrefix: string,
+  layout: FixturesLayout,
+): void {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if ((entry.name === "assets" || entry.name === "images") && relPrefix === "") continue;
+    const relPath = relPrefix ? `${relPrefix}/${entry.name}` : entry.name;
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkInfinityFixtures(full, relPath, layout);
+      continue;
+    }
+    if (!isInfinityBodyFile(entry.name)) continue;
+    if (relPrefix === "" && entry.name.includes("__")) {
+      layout.flatInfinityJsonCount++;
+    }
+    const inLegacyContentBucket = relPrefix === "content" || relPath.startsWith("content/");
+    const inLegacyAppsBucket = relPrefix === "components" || relPath.startsWith("components/");
+    if (
+      relPath.startsWith("content/") ||
+      entry.name.startsWith("content__") ||
+      (inLegacyContentBucket && !entry.name.startsWith("apps__"))
+    ) {
+      layout.contentJsonCount++;
+    } else if (
+      relPath.startsWith("apps/") ||
+      entry.name.startsWith("apps__") ||
+      inLegacyAppsBucket
+    ) {
+      layout.componentsJsonCount++;
+    }
+  }
 }
 
 /** Resolve `AEM_FIXTURES_DIR` relative to the tenant folder. */
@@ -187,7 +229,7 @@ export function resolveFixturesRoot(tenantDirPath: string, envValue: string): st
   return isAbsolute(trimmed) ? trimmed : resolve(tenantDirPath, trimmed);
 }
 
-/** Count `.infinity.json` files under content/, components/, and the fixtures root. */
+/** Count `.infinity.json` fixture bodies (path-mirror or legacy layout). */
 export function inspectFixturesLayout(fixturesRoot: string): FixturesLayout {
   const layout: FixturesLayout = {
     fixturesRoot,
@@ -196,35 +238,21 @@ export function inspectFixturesLayout(fixturesRoot: string): FixturesLayout {
     contentJsonCount: 0,
     componentsJsonCount: 0,
     flatInfinityJsonCount: 0,
-    imageCount: 0,
+    assetCount: 0,
   };
   if (!layout.exists) return layout;
   if (!statSync(fixturesRoot).isDirectory()) return layout;
   layout.isDirectory = true;
 
-  for (const name of readdirSync(fixturesRoot)) {
-    if (name.endsWith(".infinity.json")) layout.flatInfinityJsonCount++;
-  }
+  walkInfinityFixtures(fixturesRoot, "", layout);
 
-  const contentDir = join(fixturesRoot, "content");
-  if (existsSync(contentDir) && statSync(contentDir).isDirectory()) {
-    for (const name of readdirSync(contentDir)) {
-      if (name.endsWith(".infinity.json")) layout.contentJsonCount++;
+  for (const subdir of ["assets", "images"] as const) {
+    const dir = join(fixturesRoot, subdir);
+    if (!existsSync(dir) || !statSync(dir).isDirectory()) continue;
+    for (const name of readdirSync(dir)) {
+      if (!name.startsWith(".")) layout.assetCount++;
     }
-  }
-
-  const componentsDir = join(fixturesRoot, "components");
-  if (existsSync(componentsDir) && statSync(componentsDir).isDirectory()) {
-    for (const name of readdirSync(componentsDir)) {
-      if (name.endsWith(".infinity.json")) layout.componentsJsonCount++;
-    }
-  }
-
-  const imagesDir = join(fixturesRoot, "images");
-  if (existsSync(imagesDir) && statSync(imagesDir).isDirectory()) {
-    for (const name of readdirSync(imagesDir)) {
-      if (!name.startsWith(".")) layout.imageCount++;
-    }
+    break;
   }
 
   return layout;

@@ -9,34 +9,33 @@ regenerates `output/cache/raw/`, `clean/`, schemas, and imports locally.
 
 ```
 fixtures/aem/
-├── content/      page + tag .infinity.json trees (/content/...)
-├── components/   component + dialog .infinity.json trees (/apps/...)
-└── images/       procedural animated GIFs per layout kind (/_generated/*.gif)
+├── content/...   page + tag .infinity.json trees (mirrors /content/...)
+├── apps/...      component + dialog .infinity.json trees (mirrors /apps/...)
+└── assets/       procedural animated GIFs per layout kind (/_generated/*.gif)
 ```
 
-Pipeline stages resolve fixtures from the matching bucket automatically when
-`AEM_FIXTURES_DIR=./fixtures/aem` is set. `aem-assets` reads `images/`
-when that env var is set. Content references canonical `/_generated/{layout}.gif` paths.
+Fixture paths mirror AEM URLs. When `AEM_FIXTURES_DIR=./fixtures/aem` is set,
+`aem-assets` reads `assets/` for DAM binaries. Content references canonical
+`/_generated/{layout}.gif` paths.
 
 ## Quick start (operators)
 
 ```bash
 cd tenants/demo
 cp .env.example .env          # fill SANITY_* vars with your project
-pnpm install                  # from repo root if needed
-pnpm migrate:demo
-pnpm --filter studio dev
+pnpm migrate                  # full offline pipeline
+pnpm --filter studio dev      # verify in Studio
 ```
 
 No AEM credentials are required — `AEM_FIXTURES_DIR` replays committed fixtures.
 
-## Regenerating fixtures (maintainers)
+## Maintainer flow
 
-Requires local source tenant caches under `tenants/` (gitignored) plus
-live AEM for tag capture once:
+Regenerate fixtures from source tenant caches:
 
 ```bash
 pnpm build:demo-fixtures --capture-tags
+pnpm migrate:doctor demo
 ```
 
-Review with `--scratch` first (`output/demo-scratch/`) if desired.
+Use `--scratch` to write to `output/demo-scratch/` for review before promoting.

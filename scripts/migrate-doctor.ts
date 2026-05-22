@@ -138,14 +138,14 @@ function recordFixturesLayoutFindings(
     record(
       "error",
       "fixtures",
-      `fixtures content/ missing or has no .infinity.json files${hint}`,
+      `fixtures missing /content/ .infinity.json trees${hint}`,
     );
   }
   if (!hasComponents) {
     record(
       "error",
       "fixtures",
-      `fixtures components/ missing or has no .infinity.json files${hint}`,
+      `fixtures missing /apps/ .infinity.json trees${hint}`,
     );
   }
   if (hasFlat && !hasContent && !hasComponents) {
@@ -156,12 +156,12 @@ function recordFixturesLayoutFindings(
     );
   }
 
-  if (layout.imageCount === 0) {
+  if (layout.assetCount === 0) {
     const msg =
-      "fixtures images/ missing or empty — run assets with --link-only or set MIGRATION_LINK_ONLY=true";
+      "fixtures assets/ missing or empty — run assets with --link-only or set MIGRATION_LINK_ONLY=true";
     record(opts.strictImages ? "error" : "warn", "fixtures", msg);
   } else {
-    record("info", "fixtures", `${layout.imageCount} fixture image(s) under images/`);
+    record("info", "fixtures", `${layout.assetCount} fixture asset(s) under assets/`);
   }
 
   if (hasFixturesContent(layout)) {

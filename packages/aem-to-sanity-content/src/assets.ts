@@ -185,12 +185,20 @@ function flatten(damPath: string): string {
   return damPath.replace(/^\/content\/dam\//, "").replace(/\//g, "--");
 }
 
-function fixtureImagePath(fixturesRoot: string, damPath: string): string {
-  return join(fixturesRoot, "images", flatten(damPath));
+function fixtureAssetsDir(fixturesRoot: string): string {
+  const assetsDir = join(fixturesRoot, "assets");
+  if (existsSync(assetsDir)) return assetsDir;
+  const legacyImagesDir = join(fixturesRoot, "images");
+  if (existsSync(legacyImagesDir)) return legacyImagesDir;
+  return assetsDir;
+}
+
+function fixtureAssetPath(fixturesRoot: string, damPath: string): string {
+  return join(fixtureAssetsDir(fixturesRoot), flatten(damPath));
 }
 
 /**
- * Copy a committed DAM binary from `fixtures/aem/images/` into the asset cache.
+ * Copy a committed DAM binary from `{AEM_FIXTURES_DIR}/assets/` into the asset cache.
  * Used when `AEM_FIXTURES_DIR` is set (offline demo tenant).
  */
 function cacheFromFixtures(
@@ -198,7 +206,7 @@ function cacheFromFixtures(
   cacheDir: string,
   fixturesRoot: string,
 ): ManifestEntry {
-  const src = fixtureImagePath(fixturesRoot, damPath);
+  const src = fixtureAssetPath(fixturesRoot, damPath);
   if (!existsSync(src)) {
     return {
       damPath,
@@ -723,7 +731,7 @@ async function main(): Promise<void> {
   }
   if (usePlaceholders && useFixtureImages) {
     console.error(
-      "--placeholders is not used with AEM_FIXTURES_DIR — read DAM binaries from fixtures/aem/images/ instead.",
+      "--placeholders is not used with AEM_FIXTURES_DIR — read DAM binaries from fixtures/aem/assets/ instead.",
     );
     process.exit(2);
   }

@@ -28,7 +28,7 @@ import {
   resolveConfig,
   type Config,
 } from "../packages/aem-to-sanity-core/src/index.ts";
-import { fixtureFilenameForUrl } from "../packages/aem-to-sanity-core/src/aem/fetcher-fixtures.ts";
+import { fixturePathForUrl, fixtureRelativePathForUrl } from "../packages/aem-to-sanity-core/src/aem/fetcher-fixtures.ts";
 import {
   classifyDemoLayout,
   DEMO_LAYOUT_KINDS,
@@ -346,8 +346,7 @@ async function writeFixture(
 ): Promise<void> {
   const scrubbed = scrubValue(body, ctx);
   const url = fixtureUrlForJcrPath(jcrPath);
-  const filename = fixtureFilenameForUrl(url);
-  const outPath = join(fixturesDir, filename);
+  const outPath = fixturePathForUrl(fixturesDir, url);
   await writeJsonFile(outPath, scrubbed);
   ctx.report.fixturesWritten += 1;
 }
@@ -469,12 +468,12 @@ async function resolveTenantConfig(tenantDir: string): Promise<Config> {
   }
 }
 
-async function emitImageFixtures(imagesDir: string, ctx: ScrubCtx): Promise<void> {
-  await mkdir(imagesDir, { recursive: true });
+async function emitAssetFixtures(assetsDir: string, ctx: ScrubCtx): Promise<void> {
+  await mkdir(assetsDir, { recursive: true });
 
   for (const kind of DEMO_LAYOUT_KINDS) {
     const damPath = generatedDamPath(kind);
-    const destFile = join(imagesDir, flattenDamPath(damPath));
+    const destFile = join(assetsDir, flattenDamPath(damPath));
     console.log(`[build-demo] generating ${kind} → ${relative(REPO_ROOT, destFile)}`);
     writeAnimatedLayoutGif(destFile, kind);
     ctx.report.imagesWritten += 1;
@@ -529,8 +528,7 @@ async function ensureTagFixtures(
   captureTags: boolean,
 ): Promise<void> {
   const missing = TAG_ROOTS_DEMO.filter((p) => {
-    const filename = fixtureFilenameForUrl(fixtureUrlForJcrPath(p));
-    return !existsSync(join(fixturesDir, filename));
+    return !existsSync(fixturePathForUrl(fixturesDir, fixtureUrlForJcrPath(p)));
   });
   if (missing.length === 0) return;
   if (captureTags) {
@@ -695,13 +693,13 @@ regenerates \`output/cache/raw/\`, \`clean/\`, schemas, and imports locally.
 
 \`\`\`
 fixtures/aem/
-├── content/      page + tag .infinity.json trees (/content/...)
-├── components/   component + dialog .infinity.json trees (/apps/...)
-└── images/       procedural animated GIFs per layout kind (/_generated/*.gif)
+├── content/...   page + tag .infinity.json trees (mirrors /content/...)
+├── apps/...      component + dialog .infinity.json trees (mirrors /apps/...)
+└── assets/       procedural animated GIFs per layout kind (/_generated/*.gif)
 \`\`\`
 
-Pipeline stages resolve fixtures from the matching bucket automatically when
-\`AEM_FIXTURES_DIR=./fixtures/aem\` is set. \`aem-assets\` reads \`images/\`
+Fixture paths mirror AEM URL paths — \`/content/demo/...\` becomes
+\`fixtures/aem/content/demo/....infinity.json\`. \`aem-assets\` reads \`assets/\`
 when that env var is set. Content references canonical \`/_generated/{layout}.gif\` paths.
 
 ## Quick start (operators)
@@ -736,9 +734,11 @@ Scrubbed AEM REST responses consumed when \`AEM_FIXTURES_DIR=./fixtures/aem\`.
 
 | Folder | AEM paths | Used by |
 |--------|-----------|---------|
-| \`content/\` | \`/content/...\` | \`aem-extract\`, \`aem-tags\` |
-| \`components/\` | \`/apps/...\` | \`migrate:schema\` |
-| \`images/\` | \`/content/dam/demo/_generated/*.gif\` | \`aem-assets\` (when \`AEM_FIXTURES_DIR\` is set) |
+| \`content/...\` | \`/content/...\` | \`aem-extract\`, \`aem-tags\` |
+| \`apps/...\` | \`/apps/...\` | \`migrate:schema\` |
+| \`assets/\` | \`/content/dam/demo/_generated/*.gif\` | \`aem-assets\` (when \`AEM_FIXTURES_DIR\` is set) |
+
+Paths mirror AEM URLs — no \`__\` encoding. Legacy flat captures are still read if present.
 
 Twelve procedural animated GIFs (hero, banner, icon, tile, etc.) — no AEM download.
 Regenerate with \`pnpm build:demo-fixtures --capture-tags\`.
@@ -795,7 +795,7 @@ async function checkBrandLeaks(outDir: string, report: ScrubReport): Promise<voi
   const files = await walk(outDir);
   for (const file of files) {
     const relPath = relative(REPO_ROOT, file);
-    if (relPath.includes("/fixtures/aem/images/")) continue;
+    if (relPath.includes("/fixtures/aem/assets/")) continue;
     if (/\.(png|jpe?g|gif|webp|avif|svg|pdf|mp4|mov|webm|ico)$/i.test(file)) continue;
     if (BRAND_LEAK_REGEX.test(relPath)) {
       report.brandLeaks.push({ file: relPath, line: 0, sample: `[path] ${relPath}` });
@@ -834,12 +834,9 @@ async function main(): Promise<void> {
   await mkdir(outDir, { recursive: true });
 
   const fixturesRoot = join(outDir, "fixtures/aem");
-  const contentFixturesDir = join(fixturesRoot, "content");
-  const componentFixturesDir = join(fixturesRoot, "components");
-  const imageFixturesDir = join(fixturesRoot, "images");
-  await mkdir(contentFixturesDir, { recursive: true });
-  await mkdir(componentFixturesDir, { recursive: true });
-  await mkdir(imageFixturesDir, { recursive: true });
+  const assetFixturesDir = join(fixturesRoot, "assets");
+  await mkdir(fixturesRoot, { recursive: true });
+  await mkdir(assetFixturesDir, { recursive: true });
 
   const report: ScrubReport = {
     fixturesWritten: 0,
@@ -851,11 +848,11 @@ async function main(): Promise<void> {
   };
   const ctx: ScrubCtx = { sourceKey: "build", report };
 
-  await emitContentFixtures(contentFixturesDir, ctx);
-  await emitDialogFixtures(componentFixturesDir, ctx);
-  await ensureTagFixtures(contentFixturesDir, ctx, captureTags);
-  await writeTagNamespaceFixture(contentFixturesDir, ctx);
-  await emitImageFixtures(imageFixturesDir, ctx);
+  await emitContentFixtures(fixturesRoot, ctx);
+  await emitDialogFixtures(fixturesRoot, ctx);
+  await ensureTagFixtures(fixturesRoot, ctx, captureTags);
+  await writeTagNamespaceFixture(fixturesRoot, ctx);
+  await emitAssetFixtures(assetFixturesDir, ctx);
   await writeFixturesReadme(fixturesRoot);
   await writeTenantConfigs(outDir, ctx);
   await checkBrandLeaks(outDir, report);
