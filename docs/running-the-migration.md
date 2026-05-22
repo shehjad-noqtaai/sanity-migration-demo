@@ -664,6 +664,8 @@ pnpm --filter tenant-<your-tenant> migrate
 
 Chains `extract` → `tags` → `migrate:schema` → `transform` → `assets` → `import --discard-drafts` in a single shell. Each stage's `Elapsed:` line surfaces as it runs, so timing breakdowns are visible without parsing logs after the fact. Use this for "blow away and re-run" workflows on datasets only the pipeline writes to — `--discard-drafts` is destructive of in-progress author edits.
 
+**Execution log.** Both `migrate` and `migrate:content` are wrapped in `scripts/run-with-log.ts`, which tees combined stdout/stderr to a timestamped file under the tenant's `output/` folder — e.g. `tenants/<your-tenant>/output/execution-2026-05-22_00-51-45.log`. Console output is unchanged (you still see live progress); the file is for sharing post-run, attaching to bug reports, and `grep`-ing audit trails across runs. The wrapper banners the log path at startup so it's easy to find. Logs are gitignored (under `output/`) and not auto-rotated — delete old ones manually if they pile up.
+
 More granular variants:
 
 - `pnpm --filter tenant-<your-tenant> migrate:content` — content stages only, no `--discard-drafts`.
