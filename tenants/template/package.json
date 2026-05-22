@@ -13,15 +13,15 @@
     "transform": "aem-transform --registry ./output/cache/content-type-registry.json",
     "assets": "aem-assets",
     "import": "aem-import",
-    "migrate:content": "pnpm run extract && pnpm run tags && pnpm run transform && pnpm run assets && pnpm run import",
+    "migrate:content": "tsx ../../scripts/run-with-log.ts \"pnpm run extract && pnpm run tags && pnpm run transform && pnpm run assets && pnpm run import\"",
     "migrate:all": "pnpm run migrate:schema && pnpm run typegen",
-    "migrate": "pnpm run extract && pnpm run tags && pnpm run migrate:schema && pnpm run transform && pnpm run assets && pnpm run import -- --discard-drafts",
+    "migrate": "tsx ../../scripts/run-with-log.ts \"pnpm run extract && pnpm run tags && pnpm run migrate:schema && pnpm run transform && pnpm run assets && pnpm run import -- --discard-drafts\"",
     "wipe:media-library": "tsx ../../scripts/wipe-media-library.ts"
   },
   "devDependencies": {
     "aem-to-sanity-content": "workspace:*",
     "aem-to-sanity-schema": "workspace:*",
-    "sanity": "^5.21.0",
+    "sanity": "^5.26.0",
     "tsx": "^4.21.0"
   }
 }

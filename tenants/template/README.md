@@ -55,6 +55,8 @@ pnpm -F tenant-<your-tenant> import           # clean docs → Sanity dataset
 pnpm -F tenant-<your-tenant> migrate
 ```
 
+The `migrate` and `migrate:content` scripts tee their combined output to `output/execution-<timestamp>.log` (console output is unchanged — the file is for sharing post-run). Log path is banner'd at startup; files are gitignored under `output/`.
+
 ## Keeping a tenant in sync with the template
 
 The template grows over time — new env vars, new pipeline stages, new defaults. To check whether an existing tenant folder lags behind:
