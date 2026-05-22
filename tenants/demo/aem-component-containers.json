@@ -1,0 +1,22 @@
+{
+  "demo-site-a/components/expander": {
+    "childrenField": "items"
+  },
+  "demo-site-a/components/box": {
+    "childrenField": "items"
+  },
+  "demo-site-a/components/resources-column-container": {
+    "childrenField": "items"
+  },
+  "wcm/foundation/components/responsivegrid": {
+    "childrenField": "items",
+    "flatten": true
+  },
+  "demo/components/structure/page": {
+    "childrenField": "items"
+  },
+  "demo/components/proxy/content/container": {
+    "childrenField": "items",
+    "flatten": true
+  }
+}

@@ -13,7 +13,7 @@ export async function writeMappingDocs(outputFile: string): Promise<void> {
 
 > Auto-generated from \`packages/aem-to-sanity-schema/src/mapping-table.ts\` on every \`pnpm migrate:schema\` run. Do not edit by hand — update the mapping table and re-run.
 
-Each AEM Granite UI \`sling:resourceType\` is mapped to a Sanity field kind. Unknown types become a string placeholder and are reported in \`output/migration-report.json\` so you can extend the table.
+Each AEM Granite UI \`sling:resourceType\` is mapped to a Sanity field kind. Unknown types become a string placeholder and are reported in \`output/cache/migration-report.json\` so you can extend the table.
 
 | AEM resource type | Sanity kind | Description |
 |---|---|---|
@@ -38,7 +38,7 @@ Resolution rules:
    - **Relative** (\`<namespace>/components/...\`) — AEM's lookup order is \`/apps/<rt>\` first, then \`/libs/<rt>\`.
 4. Recurse with the resolved path. Cycle guard + 10-hop cap prevent runaway walks.
 
-The resolved chain is recorded on each successful component's \`supertypeChain\` in \`migration-report.json\` (omitted for direct hits). The registry key (the AEM resource type used at content-ingest time) remains the **original proxy path's resource type** — authored content with \`sling:resourceType: <proxy>\` keeps matching its emitted Sanity type even though the dialog fields came from an ancestor. Two proxies sharing one supertype produce two distinct Sanity types with identical fields.
+The resolved chain is recorded on each successful component's \`supertypeChain\` in \`output/cache/migration-report.json\` (omitted for direct hits). The registry key (the AEM resource type used at content-ingest time) remains the **original proxy path's resource type** — authored content with \`sling:resourceType: <proxy>\` keeps matching its emitted Sanity type even though the dialog fields came from an ancestor. Two proxies sharing one supertype produce two distinct Sanity types with identical fields.
 
 A standalone probe (\`scripts/aem-probe.ts\`) uses the same resolver, useful for inspecting a single component's resolution before kicking off a full schema run.
 
@@ -55,9 +55,9 @@ When a dialog node has \`sling:resourceType\`: \`granite/ui/components/coral/fou
 
 Some AEM components embed a **single named child component** under a fixed JCR key — e.g. \`aem-integration/components/media-paragraph\` has a \`content\` child whose own \`sling:resourceType\` is \`aem-integration/components/content\`. That's not a dialog field, and it's not a \`cq:isContainer\` drop-zone either; it's a named slot. The dialog itself doesn't describe it, so the shape only shows up in authored content.
 
-\`migrate:schema\` runs a post-extract scan of \`output/cache/raw/*.json\` (the output of \`aem-extract\`) and records every \`parentResourceType → slotKey → childResourceType\` combo it sees. For each one it appends a \`defineField({ name: slotKey, type: childTypeName })\` to the parent schema so the Studio shows the slot as a first-class typed field rather than flagging it as an "Unknown field found".
+\`migrate:schema\` runs a post-extract scan of \`output/cache/aem/content/\` (the output of \`aem-extract\` and tag roots from \`aem-tags\`) and records every \`parentResourceType → slotKey → childResourceType\` combo it sees. For each one it appends a \`defineField({ name: slotKey, type: childTypeName })\` to the parent schema so the Studio shows the slot as a first-class typed field rather than flagging it as an "Unknown field found".
 
-- **First run has no raw content** → scan returns empty, no slot fields emitted. Run \`aem-extract\` then re-run \`migrate:schema\`; the second pass picks up every slot.
+- **First run has no extracted content** → scan returns empty, no slot fields emitted. Run \`aem-extract\` then re-run \`migrate:schema\`; the second pass picks up every slot.
 - **Dialog field with the same name** → dialog field wins; slot synthesis skipped.
 - **Container parents** (listed in \`aem-component-containers.json\`) skip slot synthesis entirely — their drop-zone children are already claimed by \`childrenField\`, and author-generated JCR keys like \`item_1657754806454\` would otherwise pollute the schema with one defineField per instance.
 - **Multiple child types** seen at the same slot → skipped + warned; the pipeline won't guess which type to reference. Transform still writes the nested block under the JCR key so data isn't lost; the Studio keeps flagging "Unknown field" until a human authors the field.
@@ -193,7 +193,7 @@ Declare each (page-shell, template) pairing in \`aem-page-components.json\` (ove
 }
 \`\`\`
 
-With \`discover: true\`, \`migrate:schema\` scans \`output/cache/raw/*.json\` (populated by \`aem-extract\`) for distinct \`cq:template\` values on \`jcr:content\` nodes whose \`sling:resourceType\` matches the declared page-shell, and emits one doc type per discovered template. First-ever schema run with no extracted content yet logs a hint to run \`extract\` first; the natural pipeline order (\`extract\` → \`migrate:schema\`, which the chained \`migrate\` script already enforces) makes this transparent on subsequent runs. Explicit templates and \`discover: true\` can be combined — discovered values are appended to the explicit list, deduplicated.
+With \`discover: true\`, \`migrate:schema\` scans \`output/cache/aem/content/\` (populated by \`aem-extract\`) for distinct \`cq:template\` values on \`jcr:content\` nodes whose \`sling:resourceType\` matches the declared page-shell, and emits one doc type per discovered template. First-ever schema run with no extracted content yet logs a hint to run \`extract\` first; the natural pipeline order (\`extract\` → \`migrate:schema\`, which the chained \`migrate\` script already enforces) makes this transparent on subsequent runs. Explicit templates and \`discover: true\` can be combined — discovered values are appended to the explicit list, deduplicated.
 
 The page-shell \`sling:resourceType\` must also appear in \`aem-component-paths\` so its dialog is fetched and emitted as a Sanity object type — that object becomes the inline \`pageProperties\` field on the document types described below.
 

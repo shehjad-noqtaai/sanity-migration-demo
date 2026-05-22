@@ -5,14 +5,17 @@
  * safe to refresh) vs operator-owned (do not touch, never compare) vs
  * ignored (caches, node_modules, output).
  */
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(here, "..", "..");
 export const TENANTS_DIR = join(REPO_ROOT, "tenants");
 export const TEMPLATE_DIR = join(TENANTS_DIR, "template");
+
+/** Committed tenants that are not created via migrate:init. */
+export const COMMITTED_TENANTS = new Set(["demo"]);
 
 /**
  * Files whose contents come from the template. Doctor compares these and
@@ -152,4 +155,113 @@ export function isMeaningfulValue(value: string | undefined): boolean {
   if (!value) return false;
   if (PLACEHOLDER_RE.test(value)) return false;
   return true;
+}
+
+/** Env keys tied to live AEM HTTP — not required when `AEM_FIXTURES_DIR` is set. */
+export const AEM_CONNECTIVITY_KEYS = new Set([
+  "AEM_ENV",
+  "AEM_AUTHOR_URL",
+  "AEM_AUTHOR_USERNAME",
+  "AEM_AUTHOR_PASSWORD",
+  "AEM_PUBLISH_URL",
+  "AEM_PUBLISH_USERNAME",
+  "AEM_PUBLISH_PASSWORD",
+  "AEM_TOKEN",
+  "AEM_SERVICE_CREDENTIALS_FILE",
+  "AEM_SERVICE_CREDENTIALS",
+]);
+
+export interface FixturesLayout {
+  fixturesRoot: string;
+  exists: boolean;
+  isDirectory: boolean;
+  /** Path-mirror or legacy `.infinity.json` bodies under `content/`. */
+  contentJsonCount: number;
+  /** Path-mirror or legacy `.infinity.json` bodies under `apps/`. */
+  componentsJsonCount: number;
+  /** Legacy flat `.infinity.json` files at the fixtures root. */
+  flatInfinityJsonCount: number;
+  assetCount: number;
+}
+
+function isInfinityBodyFile(name: string): boolean {
+  return name.endsWith(".infinity.json") && !name.endsWith(".infinity.json.meta.json");
+}
+
+function walkInfinityFixtures(
+  dir: string,
+  relPrefix: string,
+  layout: FixturesLayout,
+): void {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if ((entry.name === "assets" || entry.name === "images") && relPrefix === "") continue;
+    const relPath = relPrefix ? `${relPrefix}/${entry.name}` : entry.name;
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkInfinityFixtures(full, relPath, layout);
+      continue;
+    }
+    if (!isInfinityBodyFile(entry.name)) continue;
+    if (relPrefix === "" && entry.name.includes("__")) {
+      layout.flatInfinityJsonCount++;
+    }
+    const inLegacyContentBucket = relPrefix === "content" || relPath.startsWith("content/");
+    const inLegacyAppsBucket = relPrefix === "components" || relPath.startsWith("components/");
+    if (
+      relPath.startsWith("content/") ||
+      entry.name.startsWith("content__") ||
+      (inLegacyContentBucket && !entry.name.startsWith("apps__"))
+    ) {
+      layout.contentJsonCount++;
+    } else if (
+      relPath.startsWith("apps/") ||
+      entry.name.startsWith("apps__") ||
+      inLegacyAppsBucket
+    ) {
+      layout.componentsJsonCount++;
+    }
+  }
+}
+
+/** Resolve `AEM_FIXTURES_DIR` relative to the tenant folder. */
+export function resolveFixturesRoot(tenantDirPath: string, envValue: string): string {
+  const trimmed = envValue.trim();
+  return isAbsolute(trimmed) ? trimmed : resolve(tenantDirPath, trimmed);
+}
+
+/** Count `.infinity.json` fixture bodies (path-mirror or legacy layout). */
+export function inspectFixturesLayout(fixturesRoot: string): FixturesLayout {
+  const layout: FixturesLayout = {
+    fixturesRoot,
+    exists: existsSync(fixturesRoot),
+    isDirectory: false,
+    contentJsonCount: 0,
+    componentsJsonCount: 0,
+    flatInfinityJsonCount: 0,
+    assetCount: 0,
+  };
+  if (!layout.exists) return layout;
+  if (!statSync(fixturesRoot).isDirectory()) return layout;
+  layout.isDirectory = true;
+
+  walkInfinityFixtures(fixturesRoot, "", layout);
+
+  for (const subdir of ["assets", "images"] as const) {
+    const dir = join(fixturesRoot, subdir);
+    if (!existsSync(dir) || !statSync(dir).isDirectory()) continue;
+    for (const name of readdirSync(dir)) {
+      if (!name.startsWith(".")) layout.assetCount++;
+    }
+    break;
+  }
+
+  return layout;
+}
+
+export function hasFixturesContent(layout: FixturesLayout): boolean {
+  return (
+    layout.contentJsonCount > 0 ||
+    layout.componentsJsonCount > 0 ||
+    layout.flatInfinityJsonCount > 0
+  );
 }

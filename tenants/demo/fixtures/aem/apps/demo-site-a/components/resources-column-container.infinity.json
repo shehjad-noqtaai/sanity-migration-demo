@@ -1,0 +1,75 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Properties",
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "sling:hideChildren": [
+              "properties"
+            ],
+            "main": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "General",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "id": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./id",
+                          "fieldLabel": "Container id",
+                          "sling:orderBefore": "content",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "title": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./title",
+                          "value": "Add category name",
+                          "fieldLabel": "Container title",
+                          "sling:orderBefore": "content",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "showCategoryName": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "uncheckedValue": "false",
+                          "name": "./showCategoryName",
+                          "text": "Show category name",
+                          "value": "true",
+                          "checked": true,
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

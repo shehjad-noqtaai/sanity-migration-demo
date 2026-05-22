@@ -1,0 +1,8 @@
+{
+  "demo-site-a/components/page": {
+    "discover": true
+  },
+  "demo/components/structure/page": {
+    "discover": true
+  }
+}

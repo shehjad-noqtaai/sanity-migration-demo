@@ -17,8 +17,8 @@
  * `<cwd>/output/cache/fixtures/aem/` by default, overridable via
  * `FIXTURES_OUT_DIR`.
  *
- * For each target: performs the fetch, writes the JSON body as a file with a
- * filename derived from the URL (see `fixtureFilenameForUrl`), and — if the
+ * For each target: performs the fetch, writes the JSON body as a path-mirror
+ * file under the fixtures root (see `fixturePathForUrl`), and — if the
  * response is a successful JSON tree — recursively enqueues every
  * truncation marker discovered by `detectTruncations` up to
  * `MARKER_FOLLOW_BUDGET` rounds. This produces a self-contained fixture set
@@ -27,15 +27,27 @@
  * Safety: only reads from AEM; no mutations. Every request is GET.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import {
   AemFetchError,
   fetchInfinityJson,
   resolveConfig,
   type AmbiguousResolution,
 } from "../src/index.ts";
-import { fixtureFilenameForUrl } from "../src/aem/fetcher-fixtures.ts";
+import { fixturePathForUrl } from "../src/aem/fetcher-fixtures.ts";
 import { detectTruncations } from "../src/aem/infinity.ts";
+
+function writeFixtureBody(outDir: string, relUrl: string, body: string): void {
+  const filePath = fixturePathForUrl(outDir, relUrl);
+  mkdirSync(dirname(filePath), { recursive: true });
+  writeFileSync(filePath, body, "utf8");
+}
+
+function writeFixtureMeta(outDir: string, relUrl: string, meta: Record<string, unknown>): void {
+  const filePath = `${fixturePathForUrl(outDir, relUrl)}.meta.json`;
+  mkdirSync(dirname(filePath), { recursive: true });
+  writeFileSync(filePath, JSON.stringify(meta, null, 2) + "\n", "utf8");
+}
 
 const MARKER_FOLLOW_BUDGET = 3;
 // Dialog paths to capture. Defaults are empty so this script is tenant-agnostic
@@ -301,34 +313,20 @@ async function captureSingle(
     // same refetch flow). For the chosen .N.json and the 200s, store the body.
     for (const rec of records) {
       const relUrl = rec.url.slice(baseUrl.length);
-      const fname = fixtureFilenameForUrl(relUrl);
       if (rec.status === 200) {
-        const filePath = join(outDir, fname);
-        writeFileSync(filePath, rec.body, "utf8");
+        writeFixtureBody(outDir, relUrl, rec.body);
         stats.writtenBodies++;
         stats.bytes += Buffer.byteLength(rec.body, "utf8");
       } else if (rec.status === 300) {
-        // Save as meta sidecar; body contains the alternatives listing.
-        const metaPath = join(outDir, `${fname}.meta.json`);
-        writeFileSync(
-          metaPath,
-          JSON.stringify({ status: 300, body: rec.body }, null, 2) + "\n",
-          "utf8",
-        );
+        writeFixtureMeta(outDir, relUrl, { status: 300, body: rec.body });
         captured300.add(relUrl);
         stats.writtenMetas++;
         stats.bytes += Buffer.byteLength(rec.body, "utf8");
       } else {
-        const metaPath = join(outDir, `${fname}.meta.json`);
-        writeFileSync(
-          metaPath,
-          JSON.stringify(
-            { status: rec.status, body: rec.body.slice(0, 2000) },
-            null,
-            2,
-          ) + "\n",
-          "utf8",
-        );
+        writeFixtureMeta(outDir, relUrl, {
+          status: rec.status,
+          body: rec.body.slice(0, 2000),
+        });
         stats.writtenMetas++;
       }
     }
@@ -339,12 +337,7 @@ async function captureSingle(
     const message = e.message ?? String(err);
     // Expected 404: capture as meta so replay gets the same error.
     if (e instanceof AemFetchError && e.details?.status === 404) {
-      const fname = fixtureFilenameForUrl(relativePath);
-      writeFileSync(
-        join(outDir, `${fname}.meta.json`),
-        JSON.stringify({ status: 404 }, null, 2) + "\n",
-        "utf8",
-      );
+      writeFixtureMeta(outDir, relativePath, { status: 404 });
       stats.writtenMetas++;
       console.log(`  ✓ ${jcrPath}${selector}  (404 captured)`);
       return undefined;

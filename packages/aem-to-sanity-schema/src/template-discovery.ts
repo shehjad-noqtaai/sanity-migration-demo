@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { PageComponentConfig } from "aem-to-sanity-core";
+import { loadExtractedContentTrees } from "aem-to-sanity-core";
 
 type AemNode = Record<string, unknown>;
 
@@ -55,10 +56,21 @@ export function discoverTemplates(
 }
 
 /**
- * Disk-backed wrapper: reads every `*.json` under `rawDir` (shaped like an
- * `aem-extract` output file with `{ jcrPath, tree }`), feeds the trees into
- * {@link discoverTemplates}, and returns the resulting map. Missing dir
- * returns an empty map so the feature stays opt-in-by-content.
+ * Disk-backed wrapper: reads extract/tag cache under `output/cache/aem/content/`
+ * (falling back to legacy `cache/raw/`), feeds the trees into
+ * {@link discoverTemplates}, and returns the resulting map.
+ */
+export function scanTemplatesFromExtractCache(
+  outputDir: string,
+  config: PageComponentConfig,
+): DiscoveredTemplates {
+  const trees = loadExtractedContentTrees(outputDir) as AemNode[];
+  return discoverTemplates(trees, config);
+}
+
+/**
+ * @deprecated Pass `outputDir` to {@link scanTemplatesFromExtractCache} instead.
+ * Still accepts a legacy flat `cache/raw/` directory path for compatibility.
  */
 export function scanTemplatesFromRawDir(
   rawDir: string,

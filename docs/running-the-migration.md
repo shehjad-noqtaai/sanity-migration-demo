@@ -41,7 +41,33 @@ pnpm install                         # pnpm auto-discovers via the `tenants/*` g
 
 `<your-tenant>` is any short slug — `acme`, `tmobile`, `davids-bridal`. The new folder is gitignored — only `tenants/template/` is committed, so each operator's working copy (with real credentials, customer-specific component lists, and per-run pipeline output) stays local.
 
-Existing tenant folders may lag the template as new env vars, scripts, or pipeline stages get added. Run `pnpm -w migrate:doctor <your-tenant>` to detect drift and missing env, and `pnpm -w migrate:doctor <your-tenant> --fix` to auto-repair the `package.json` scripts block. Use `pnpm -w migrate:doctor --all` to scan every tenant under `tenants/` at once.
+Existing tenant folders may lag the template as new env vars, scripts, or pipeline stages get added. Run `pnpm -w migrate:doctor <your-tenant>` to detect drift and missing env, and `pnpm -w migrate:doctor <your-tenant> --fix` to auto-repair the `package.json` scripts block. Use `pnpm -w migrate:doctor --all` to scan every tenant under `tenants/` at once. When `AEM_FIXTURES_DIR` is set in `.env`, the doctor skips AEM auth checks and validates the fixtures layout instead.
+
+### 1-pre-bis. Demo tenant (no AEM)
+
+[`tenants/demo/`](../tenants/demo/) is a **committed** tenant with scrubbed AEM REST fixtures under `fixtures/aem/` — paths mirror AEM URLs (`content/...`, `apps/...`) plus `assets/` for DAM binaries. It runs the full pipeline without a live AEM instance — extract, tags, schema, transform, assets, and import all replay from disk via `AEM_FIXTURES_DIR`.
+
+**Operator flow:**
+
+```bash
+cd tenants/demo
+cp .env.example .env              # fill SANITY_* with your project
+pnpm migrate:demo               # full offline pipeline
+pnpm --filter studio dev        # verify in Studio
+```
+
+The demo `.env.example` ships dummy AEM auth (`AEM_AUTHOR_URL=http://demo.local`, `AEM_TOKEN=offline-fixtures`) plus `AEM_FIXTURES_DIR=./fixtures/aem`. No real AEM credentials are needed.
+
+**Maintainer flow** (regenerate fixtures from source tenant caches):
+
+```bash
+pnpm build:demo-fixtures --capture-tags   # needs gitignored source tenants + live AEM for tags once
+pnpm migrate:doctor demo
+```
+
+Use `--scratch` to write to `output/demo-scratch/` for review before promoting to `tenants/demo/`.
+
+**Assets:** `migrate:demo` runs `aem-assets` with `AEM_FIXTURES_DIR` set, which copies committed DAM binaries from `fixtures/aem/assets/` instead of downloading from AEM (see § 4c-quater).
 
 ### 1a. Pipeline `.env` — `tenants/<your-tenant>/.env`
 
@@ -72,6 +98,8 @@ cp tenants/<your-tenant>/.env.example tenants/<your-tenant>/.env
 | `CONCURRENCY` | optional | Parallel AEM fetches. Default: `4`. |
 | `MIGRATION_DRY_RUN` | optional | `aem-assets` and `aem-import` are dry-run unless this is explicitly set to `false`. Default (unset): dry-run. |
 | `MIGRATION_LINK_ONLY` | optional | `aem-assets` only. `true` ⇔ passing `--link-only`. Skips phases 1 + 2 (download + upload) and relies on phase 0 to find assets already in the Media Library. See § 4c. |
+| `MIGRATION_ASSETS_PLACEHOLDERS` | optional | `aem-assets` only. `true` ⇔ passing `--placeholders`. Skips AEM download; copies local SVG placeholders instead. See § 4c-ter. |
+| `AEM_FIXTURES_DIR` | optional | When set, all AEM fetch CLIs (`aem-extract`, `aem-tags`, `migrate:schema`) read captured responses from this directory instead of HTTP. Paths mirror AEM URLs (`content/foo/bar.infinity.json`, `apps/.../_cq_dialog.infinity.json`). `aem-assets` also reads `assets/` under this dir when set. Capture with `capture-fixtures.ts` or `pnpm build:demo-fixtures`. Legacy flat `__`-encoded files are still read. See § 1-pre-bis. |
 | `ASSET_CONCURRENCY` | optional | `aem-assets` only. Number of parallel workers used across phases 0 (ML dedup), 1 (AEM download), 2 (ML upload), 3 (dataset link). Default: `4`. Dedup in phase 0 guarantees each DAM path is processed by exactly one worker, so the shared manifest is never contended at the same key. |
 | `MIGRATION_DISCARD_DRAFTS` | optional | `aem-import` only. `true` ⇔ passing `--discard-drafts`. Deletes `drafts.{id}` alongside each published `createOrReplace` so the Studio shows the freshly-imported content instead of a stale draft from a prior run. Opt-in — destroys authored in-progress edits. |
 | `MIGRATION_RECREATE_ON_TYPE_CHANGE` | optional | `aem-import` only. `true` ⇔ passing `--recreate-on-type-change`. When an existing doc's `_type` differs from what the migration wants to write (e.g. a `page` doc becoming `planDetailsPage` after declaring it in `aem-page-components.json`), Sanity rejects the `createOrReplace` because `_type` is immutable. With this flag, `aem-import` pre-fetches the existing types and uses `delete + create` (within one transaction) for the affected ids. Opt-in — destroys the publish history and any draft of the affected docs. |
@@ -252,7 +280,7 @@ Declare those pairings here so each (page-component, template) combination becom
 }
 ```
 
-**Auto-discovery.** Listing every template by hand is tedious for tenants with many of them. Set `"discover": true` instead, and `migrate:schema` scans `output/cache/raw/` (extracted content) to enumerate every `cq:template` value found on `jcr:content` nodes matching the declared page-shell resource type:
+**Auto-discovery.** Listing every template by hand is tedious for tenants with many of them. Set `"discover": true` instead, and `migrate:schema` scans `output/cache/aem/content/` (extracted content) to enumerate every `cq:template` value found on `jcr:content` nodes matching the declared page-shell resource type:
 
 ```json
 {
@@ -262,7 +290,7 @@ Declare those pairings here so each (page-component, template) combination becom
 }
 ```
 
-Because discovery reads from already-extracted content, the natural order is `extract` → `migrate:schema` (the chained `migrate` script already runs them in this order). On a brand-new tenant the first `migrate:schema` finds no raw content and logs a hint to run `extract` first — re-running schema picks up everything on the second pass.
+Because discovery reads from already-extracted content, the natural order is `extract` → `migrate:schema` (the chained `migrate` script already runs them in this order). On a brand-new tenant the first `migrate:schema` finds no extracted content yet and logs a hint to run `extract` first — re-running schema picks up everything on the second pass.
 
 Both forms can coexist: explicit `templates` pin known names, `discover: true` auto-adds new ones as they appear in content:
 
@@ -306,7 +334,7 @@ Only what's listed here is migrated. There is no canonical "always skip" set in 
 
 Missing file → `aem-tags` exits 2 with an instruction to create one. Migrations that don't use AEM taxonomy can skip the `tags` stage entirely (the rest of the pipeline doesn't depend on it; `aem-transform` runs without tag resolution and content with `cq:tags` surfaces as unresolved findings instead).
 
-### 1d. Resource-type registry — `output/content-type-registry.json`
+### 1d. Resource-type registry — `output/cache/content-type-registry.json`
 
 **Generated** by `migrate:schema`; you don't hand-author it. Maps AEM `sling:resourceType` values to the Sanity type names that stage 1 emitted, plus each field's name + Sanity type (used by the drift auditor and by `aem-transform` for type-aware coercion — e.g. HTML → Portable Text on `array-of-blocks` fields):
 
@@ -337,6 +365,32 @@ Legacy `fields: string[]` registry files are still accepted. The transform falls
 
 Anything outside this registry is still extracted but tagged `_type: "aemUnmapped"` and flagged in the audit.
 
+### 1e. Local cache layout — `output/cache/`
+
+Every pipeline stage reads and writes under `tenants/<your-tenant>/output/cache/` (override root via `OUTPUT_DIR`). Paths mirror AEM JCR URLs where possible so fixtures (`fixtures/aem/content/...`) and operator caches share the same mental model:
+
+```
+output/
+├── cache/
+│   ├── aem/
+│   │   ├── content/.../*.json     ← aem-extract + aem-tags (mirrors /content/...)
+│   │   └── apps/.../*.json        ← migrate:schema dialog snapshots (mirrors /apps/...)
+│   ├── clean/.../*.json           ← aem-transform (mirrors page paths under /content/...)
+│   ├── categories/*.json          ← Sanity category docs from aem-tags (+ manifest.json)
+│   ├── assets/                    ← local DAM cache + manifest.json (aem-assets)
+│   ├── content-type-registry.json ← sling:resourceType → Sanity type (migrate:schema)
+│   ├── migration-report.json      ← per-component schema pass/fail
+│   ├── page-templates.json        ← cq:template routing manifest (migrate:schema)
+│   ├── extract-report.json        ← aem-extract summary
+│   ├── transform-report.json      ← aem-transform drift findings
+│   ├── tags-report.json           ← aem-tags summary
+│   ├── assets-report.json         ← aem-assets summary
+│   └── audit/unmapped-examples.json
+└── execution-*.log                ← combined migrate log (when using run-with-log.ts)
+```
+
+**Legacy fallbacks.** Downstream stages still read older layouts when present: flat `output/cache/raw/*.json` (pre-path-mirror extract) and `output/cache/aem/components/apps/...` (pre-unification dialog cache). New runs write only the canonical paths above.
+
 ---
 
 ## 2. Stage 1 — emit Sanity schemas
@@ -363,16 +417,16 @@ Schema files are written to `apps/studio/schemas/generated/` (relative to the re
 | `apps/studio/schemas/generated/pageBuilder.ts` | Array type with every emitted block in `of: [...]`. Each member is emitted as `defineArrayMember({ type, title })` so the "+ Add" menu and row previews carry friendly labels. Regenerated each run. |
 | `apps/studio/schemas/generated/page.ts` | Minimal document type (`title`, `slug`, `tags`, `pageBuilder`). Preserved if you hand-author it. |
 | `apps/studio/schemas/generated/index.ts` | Barrel exporting `allSchemaTypes` — re-exported by `apps/studio/schemas/index.ts` (which also adds the hand-authored `category` type) and plugged into `defineConfig`. |
-| `output/content-type-registry.json` (under the tenant folder) | AEM `sling:resourceType` → Sanity type + field names, consumed by stage 3. Preserved if you hand-edit. |
-| `output/aem/components/**/*.json` | Raw dialog snapshots — audit trail. |
-| `output/migration-report.json` | Pass/fail per component (including the resolved `sanityTypeName` and friendly `schemaTitle`) + unmapped props inventory. |
-| `output/audit/unmapped-examples.json` | Real-world examples per unmapped AEM type. Feed these back into `mapping-table.ts` when adding new mappings. |
+| `output/cache/content-type-registry.json` (under the tenant folder) | AEM `sling:resourceType` → Sanity type + field names, consumed by stage 3. Preserved if you hand-edit. |
+| `output/cache/aem/apps/**/*.json` | Raw dialog snapshots — audit trail (path mirrors `/apps/...`). Legacy `output/cache/aem/components/apps/...` is still read. |
+| `output/cache/migration-report.json` | Pass/fail per component (including the resolved `sanityTypeName` and friendly `schemaTitle`) + unmapped props inventory. |
+| `output/cache/audit/unmapped-examples.json` | Real-world examples per unmapped AEM type. Feed these back into `mapping-table.ts` when adding new mappings. |
 
 **Source-controlling the generated schemas (opt-in).** The default — schemas gitignored, regenerated per-operator — keeps multi-tenant clones clean. Single-tenant projects that want the emitted vocabulary checked in (so it doubles as documentation, or to review schema drift in PRs) should comment out the `apps/studio/schemas/generated/` line in `.gitignore` and `git add` the regenerated files after each `migrate:schema` run. Don't do this on a repo that's shared across tenant migrations — one tenant's component vocabulary will conflict with another's on every push.
 
 Re-run any time — output is deterministic, so `git diff` shows only real changes. Each CLI appends an `Elapsed:` line to its summary (and `aem-assets` prints a `Per phase:` breakdown) so you can see where time is going across runs.
 
-**Slot discovery runs automatically on every schema pass.** `migrate:schema` scans `output/cache/raw/*.json` — the output of `aem-extract` — for AEM components that nest other AEM components under a fixed JCR key (e.g. `media-paragraph`'s `content` child is itself an `aem-integration/components/content` block). Each discovered slot gets a synthetic `defineField({ name: slotKey, type: childTypeName })` on the parent schema so the Studio shows it as a typed inline field rather than flagging it as "Unknown field found". First-ever run has no `raw/` to scan yet (scan returns empty, no slot fields emitted); run `aem-extract` once and the next `migrate:schema` picks every slot up. The content transform always emits nested components under their JCR key regardless, so data never gets dropped on the first pass — the schema upgrade only clears Studio warnings. Skipped cases: dialog-field name collisions (dialog wins), container parents (their drop-zone logic claims all resourceType-carrying children already), multi-type slots (logged, hand-author if you need the field), and slots whose child type isn't yet in `aem-component-paths` (add it, re-run).
+**Slot discovery runs automatically on every schema pass.** `migrate:schema` scans `output/cache/aem/content/` — the output of `aem-extract` and tag roots from `aem-tags` — for AEM components that nest other AEM components under a fixed JCR key (e.g. `media-paragraph`'s `content` child is itself an `aem-integration/components/content` block). Each discovered slot gets a synthetic `defineField({ name: slotKey, type: childTypeName })` on the parent schema so the Studio shows it as a typed inline field rather than flagging it as "Unknown field found". First-ever run has no content cache to scan yet (scan returns empty, no slot fields emitted); run `aem-extract` once and the next `migrate:schema` picks every slot up. The content transform always emits nested components under their JCR key regardless, so data never gets dropped on the first pass — the schema upgrade only clears Studio warnings. Skipped cases: dialog-field name collisions (dialog wins), container parents (their drop-zone logic claims all resourceType-carrying children already), multi-type slots (logged, hand-author if you need the field), and slots whose child type isn't yet in `aem-component-paths` (add it, re-run).
 
 ### Type-name resolution (reserved-name handling)
 
@@ -460,23 +514,23 @@ pnpm --filter tenant-<your-tenant> import
 
 **All writes to Sanity are dry-run unless `MIGRATION_DRY_RUN=false` is set.** The `extract`, `tags`, and `transform` stages are read/local-only regardless; only `assets` and `import` touch Sanity.
 
-### 4a. `aem-extract` — AEM `.infinity.json` → `output/raw/`
+### 4a. `aem-extract` — AEM `.infinity.json` → `output/cache/aem/content/`
 
-Reads every entry in `aem-content-roots`, fetches `{root}.infinity.json` from AEM, and writes one JSON file per page to `output/raw/`. Transparently follows depth-5 truncation markers (AEM returns a string marker like `"...section_0": "...section_0"` at the depth boundary; the fetcher detects these plus suspiciously-empty nodes, issues follow-up fetches in parallel, and splices resolved subtrees back in).
+Reads every entry in `aem-content-roots`, fetches `{root}.infinity.json` from AEM, and writes one JSON file per page under `output/cache/aem/content/` (path mirrors the JCR path, e.g. `/content/demo/us/en/home` → `cache/aem/content/content/demo/us/en/home.json`). Transparently follows depth-5 truncation markers (AEM returns a string marker like `"...section_0": "...section_0"` at the depth boundary; the fetcher detects these plus suspiciously-empty nodes, issues follow-up fetches in parallel, and splices resolved subtrees back in).
 
 | Flag / env | Effect |
 | --- | --- |
-| `--overwrite` | Re-fetch pages that already have a cached raw file. Default: skip. |
+| `--overwrite` | Re-fetch pages that already have a cached extract file. Default: skip. |
 | `AEM_CONTENT_ROOTS_FILE` | Path to roots file. Default: `./aem-content-roots`. |
 | `AEM_MAX_RESPONSE_MB` | Per-fetch payload cap. Oversized responses are recorded as `tooLarge` failures. |
 | `AEM_MAX_DEPTH_EXPANSIONS` | How many rounds of depth-5 follow-up fetches to run per root. Default: 3. Raise only if a page is pathologically deep; leftover markers after the budget are replaced with `{__truncated: "maxDepth", jcrPath}` sentinels and the transform stage treats them as opaque. |
 | `AEM_FIXTURES_DIR` | If set, reads captured AEM responses from this directory instead of issuing HTTP calls. Capture fixtures with `packages/aem-to-sanity-core/scripts/capture-fixtures.ts` — default output is `<cwd>/output/cache/fixtures/aem/`. Used by unit tests and CI; leave unset for live migrations. |
 
-**Outputs:** `output/raw/*.json`, `output/extract-report.json` (counts, categorized failures, ambiguous-path resolutions, and a `depthExpansions` array with per-root `markersFound`/`markersResolved`/`markersTruncated`/`markersFailed`/`expansionsUsed` stats), and `output/extract-404.log` if any roots weren't found.
+**Outputs:** `output/cache/aem/content/**/*.json`, `output/cache/extract-report.json` (counts, categorized failures, ambiguous-path resolutions, and a `depthExpansions` array with per-root `markersFound`/`markersResolved`/`markersTruncated`/`markersFailed`/`expansionsUsed` stats), and `output/cache/extract-404.log` if any roots weren't found. Legacy flat `output/cache/raw/*.json` is still read by downstream stages when present.
 
 ### 4a-bis. `aem-tags` — AEM `/content/cq:tags` → `output/cache/categories/`
 
-Walks every namespace (or subtree) listed in `aem-tag-roots`, fetching each via `fetchInfinityTree` (same depth-5 follow-up splicing the page extractor uses), and emits one Sanity `category` document per `cq:Tag` node — implementing Sanity's [parent-child taxonomy pattern](https://www.sanity.io/docs/developer-guides/parent-child-taxonomy). The hand-authored `category` document type lives at `apps/studio/schemas/category.ts`.
+Walks every namespace (or subtree) listed in `aem-tag-roots`, fetching each via `fetchInfinityTree` (same depth-5 follow-up splicing the page extractor uses). Each fetch is cached under `output/cache/aem/content/cq:tags/...` (same path-mirror layout as pages). The walker then emits one Sanity `category` document per `cq:Tag` node — implementing Sanity's [parent-child taxonomy pattern](https://www.sanity.io/docs/developer-guides/parent-child-taxonomy). The hand-authored `category` document type lives at `apps/studio/schemas/category.ts`.
 
 ID derivation is deterministic on both sides — `aem-tags` and `aem-transform` compute the same Sanity `_id` from the same AEM tag id, without sharing state:
 
@@ -504,13 +558,14 @@ Long ids (>80 chars) fall back to `{first-60-chars}-{sha1-10}` so they stay unde
 | `AEM_MAX_RESPONSE_MB` / `AEM_MAX_DEPTH_EXPANSIONS` | Shared with `aem-extract` — same response cap and depth-splice budget. |
 
 **Outputs:**
+- `output/cache/aem/content/cq:tags/**/*.json` — cached AEM tag trees (path-mirror).
 - `output/cache/categories/<sanityCategoryId>.json` — one Sanity category doc per `cq:Tag` node. Shape `{ jcrPath, docs: [categoryDoc] }` so `aem-import` ingests them via the same loader as pages.
 - `output/cache/categories/manifest.json` — keyed by AEM tag id (`namespace:parent/child` or `parent/child` for default-namespace tags). Value: `{ sanityCategoryId, title, slug, parentTagId, isNamespace, movedTo? }`. Consumed by `aem-transform` to resolve `cq:tags` strings on pages and components.
 - `output/cache/tags-report.json` — counts, failures, depth-splice stats, `aliases`, and `danglingParents` (tags whose parent namespace wasn't included in the listed roots).
 
-### 4b. `aem-transform` — `output/raw/` → `output/clean/`
+### 4b. `aem-transform` — `output/cache/aem/content/` → `output/cache/clean/`
 
-Walks each raw JCR tree, maps `sling:resourceType` values via `content-type-registry.json`, and emits one `page` doc per input file with a `pageBuilder` array of typed blocks. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key` (from `jcr:uuid` or path SHA1). Unknown resource types and nodes listed in `aem-component-exceptions` are skipped but noted in the audit.
+Walks each cached page tree under `cache/aem/content/` (skipping `/content/cq:tags` entries), maps `sling:resourceType` values via `content-type-registry.json`, and emits one `page` doc per input file with a `pageBuilder` array of typed blocks. Clean output mirrors the same relative paths under `cache/clean/`. Each doc gets a deterministic `_id` (from JCR path) and each block a stable `_key` (from `jcr:uuid` or path SHA1). Unknown resource types and nodes listed in `aem-component-exceptions` are skipped but noted in the audit.
 
 **Type-aware coercion.** AEM's JCR is schemaless on dialog inputs — every authored value lands in `.infinity.json` as a JSON string regardless of what the dialog widget was. The emitted Sanity schemas declare proper types (`number`, `boolean`, `array-of-blocks`), so without coercion the Studio rejects ingested values with "Expected type X, got String". Transform reads the registry's tree-shaped `fields` (`Array<{name, type, itemFields?}>`) and coerces at every depth — top-level fields *and* members inside nested `array-of-object` multifields (e.g. `variableColumn.columnContents[].columnText`):
 
@@ -528,7 +583,7 @@ Legacy `content-type-registry.json` files without `fields[].type` skip every coe
 | `--include type1,type2` | Restrict to a comma-separated allow-list of `sling:resourceType` values. |
 | `AEM_COMPONENT_EXCEPTIONS_FILE` | Path to exceptions file. Default: `./aem-component-exceptions`. |
 
-**Outputs:** `output/clean/*.json` (one per page, containing the transformed doc) and `output/transform-report.json` (unknown resource types with hit counts, unknown props per component, transform bails — with first-N example paths per finding).
+**Outputs:** `output/cache/clean/**/*.json` (one Sanity doc per page, path-mirror layout) and `output/cache/transform-report.json` (unknown resource types with hit counts, unknown props per component, transform bails — with first-N example paths per finding).
 
 **Unmapped components, surfaced in the console.** At the end of each `aem-transform` run, any `sling:resourceType` that doesn't resolve to a Sanity type is printed directly to stderr as a ranked list — `<hits>× <resourceType>  /apps/<resourceType>`, plus one example JCR path per type. Those `/apps/...` lines are paste-ready for `aem-component-paths`; add them, re-run `migrate:schema` to emit schemas, then rerun `transform` + `import` to pick up the content that was dropped. The page root (`aem-integration/components/page`) and `wcm/foundation/components/responsivegrid` wrapper are hidden from this list — they're structural passthroughs the walker recurses through, not missing schemas. (They still appear in `transform-report.json` for completeness.)
 
@@ -546,17 +601,17 @@ pnpm --filter studio exec sanity media deploy-aspect aemSource
 
 If this step is skipped, uploads still succeed — the stamp mutations fail gracefully (logged, not fatal) and the dedup pre-check in phase 0 returns no hits. Once deployed, running `aem-assets` once backfills the aspect on any prior-uploaded assets whose ids are still in the local manifest.
 
-Scans `output/clean/` for `/content/dam/...` references, downloads each asset from AEM, and runs five phases:
+Scans `output/cache/clean/` for `/content/dam/...` references, downloads each asset from AEM, and runs five phases:
 
 0. **Dedup lookup + manifest staleness check** — GROQ `*[_type=="sanity.asset" && aspects.aemSource.damPath == $damPath][0]` against the Media Library. A hit populates the manifest with both ids so phases 1+2 skip that asset entirely — no re-download from AEM, no re-upload to ML. Same content reused across pages/runs links to the same ML asset. When the lookup misses but the manifest already claims an `mediaLibraryAssetId`, phase 0 verifies the asset doc still exists in the ML (separate ID-based query). If the ML says the doc is gone (e.g. `sanity media delete`, `wipe-media-library`), the stale `mediaLibraryAssetId` / `linkedAssetInstanceId` / `linkedRef` / `sanityRef` / `mediaRef` are cleared from the manifest, preserving only the local download cache. Phases 2-3 then re-upload + re-link for real instead of silently skipping on a dead id. Transport errors during the check (`unknown`) are treated conservatively — manifest state is preserved and the next healthy-network run re-verifies.
-1. **Download** from AEM DAM → `output/assets/<flattened-path>` (on-disk cache, resumable).
+1. **Download** from AEM DAM → `output/cache/assets/<flattened-path>` (on-disk cache, resumable).
 2. **Upload** to Media Library — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload` returns `{asset: {_id}, assetInstance: {_id}}`. The parent `asset._id` is recorded as `mediaLibraryAssetId`; the versioned `assetInstance._id` as `linkedAssetInstanceId`. Immediately after a successful upload (or when skipping an already-uploaded entry whose aspect isn't set yet), the pipeline patches `aspects.aemSource = {damPath, assetInstanceId}` onto the parent via `POST /media-libraries/{mlId}/mutate`.
 3. **Link** to dataset — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Returns `{document: {_id, media: {_ref}, ...}}`. `document._id` is the dataset-local `_ref` that goes into content docs (Pattern A: `{_type:'image', asset:{_ref:'<linked-ref>'}}` — Studio-compatible).
 4. **Rewrite** clean docs in place so every `/content/dam/...` string becomes the linked asset ref object.
 
 Phases 0, 1, 2, and 3 all run with a work-stealing pool sized by `ASSET_CONCURRENCY` (default `4`). Phase 0's ML dedup pre-pass guarantees each DAM path is only handled by one worker in phases 1–3, so the shared `manifest` is never contended at the same key. The manifest file is written via synchronous `writeFileSync` + `JSON.stringify`, which are atomic relative to the single-threaded event loop — no lock needed as long as this stays sync. Output is logged in completion order (`{done}/{total}`) rather than start order, so progress tracks actual throughput.
 
-Maintains `output/assets/manifest.json` — per-DAM-path record with `damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef`. Re-runs skip each phase that's already complete. Entry shape:
+Maintains `output/cache/assets/manifest.json` — per-DAM-path record with `damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef`. Re-runs skip each phase that's already complete. Entry shape:
 
 ```ts
 interface ManifestEntry {
@@ -584,7 +639,9 @@ interface ManifestEntry {
   - `SANITY_API_VERSION` — defaults to `2025-02-19`, which is when Media Library support landed.
 - **Flags:**
   - `--upload-only` — skip phase 1 (download). Assumes the local cache already exists.
-  - `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup resolves existing assets by `aemSource.damPath`; phases 3 + 4 run as normal. Dry-run + `--link-only` = preview of which DAM paths would be linked vs. missing from the ML. Mutually exclusive with `--upload-only`. Intended for re-runs against an ML that already holds the binaries (either from a prior pipeline run or stamped out-of-band). Any DAM path that phase 0 can't resolve stays in `/content/dam/*` form in clean docs and is listed in `output/assets-report.json → rewrite.unresolved`. Caveat: phase 0 keys on the `aemSource` aspect stamped by this pipeline on upload, so assets uploaded through the Studio UI without that aspect will not be found by DAM path.
+  - `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup resolves existing assets by `aemSource.damPath`; phases 3 + 4 run as normal. Dry-run + `--link-only` = preview of which DAM paths would be linked vs. missing from the ML. Mutually exclusive with `--upload-only`. Intended for re-runs against an ML that already holds the binaries (either from a prior pipeline run or stamped out-of-band). Any DAM path that phase 0 can't resolve stays in `/content/dam/*` form in clean docs and is listed in `output/cache/assets-report.json → rewrite.unresolved`. Caveat: phase 0 keys on the `aemSource` aspect stamped by this pipeline on upload, so assets uploaded through the Studio UI without that aspect will not be found by DAM path.
+  - When `AEM_FIXTURES_DIR` is set, phase 1 copies DAM binaries from `{AEM_FIXTURES_DIR}/assets/` instead of downloading from AEM. Used by the offline demo tenant. See § 4c-quater.
+  - `--placeholders` (or `MIGRATION_ASSETS_PLACEHOLDERS=true`) — legacy: skip AEM download (phase 1). Copies SVG files from `./placeholders/` into the local asset cache instead, hashing each DAM path to one of 12 slots. Mutually exclusive with `--link-only`, `--upload-only`, and `AEM_FIXTURES_DIR`. See § 4c-ter.
   - `--no-rewrite` — skip phase 4 (in-place rewrite of `clean/*.json`).
 
 Ordering contract: the link phase must complete before `aem-import` runs, because the clean docs only contain the linked `_ref` after phase 4. The `migrate:content` chain (`extract → transform → assets → import`) already enforces this.
@@ -639,9 +696,25 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 
 After updating the token, re-run `pnpm assets`. Phase 0 picks up where you left off — already-uploaded assets in the manifest are reconciled against the ML by id, so no duplicate uploads.
 
-### 4d. `aem-import` — `output/cache/categories/` + `output/clean/` → Sanity
+### 4c-quater. Fixture assets mode (offline demo)
 
-Reads every file under `output/cache/categories/` (if present) and `output/clean/` and commits the docs via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Because `_id` values are derived from JCR paths (pages) and AEM tag ids (categories), re-runs upsert rather than duplicate.
+When `AEM_FIXTURES_DIR` is set, `aem-assets` phase 1 copies DAM binaries from `{AEM_FIXTURES_DIR}/assets/` into the local asset cache instead of downloading from AEM. The demo tenant uses twelve procedural animated GIFs under `/content/dam/demo/_generated/{layout}.gif` — content references are rewritten to these canonical paths at fixture build time. Phases 2–4 run unchanged.
+
+- **Trigger:** `AEM_FIXTURES_DIR=./fixtures/aem` (no extra flag)
+- **Mutually exclusive with:** `--placeholders`
+- **Requires:** committed files under `fixtures/aem/assets/` (12 animated GIFs generated by `pnpm build:demo-fixtures`)
+
+### 4c-ter. `--placeholders` mode (legacy)
+
+`aem-assets --placeholders` skips AEM DAM download and copies SVG files from `./placeholders/` into the local asset cache — each unique DAM path hashes to one of 12 slots. Prefer fixture images (§ 4c-quater) for the demo tenant.
+
+- **Flag:** `--placeholders` or `MIGRATION_ASSETS_PLACEHOLDERS=true`
+- **Mutually exclusive with:** `--link-only`, `--upload-only`, `AEM_FIXTURES_DIR`
+- **Requires:** `placeholders/` directory in the tenant cwd
+
+### 4d. `aem-import` — `output/cache/categories/` + `output/cache/clean/` → Sanity
+
+Reads every file under `output/cache/categories/` (if present) and `output/cache/clean/` and commits the docs via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Because `_id` values are derived from JCR paths (pages) and AEM tag ids (categories), re-runs upsert rather than duplicate.
 
 **Categories commit first**, batched 50 docs per transaction. That ordering matters: pages may reference categories via `tags` or via tagfield-mapped component fields, and Sanity's strong-ref validation would reject those refs if the target docs didn't yet exist when the page commit lands. Batching of 50 keeps each transaction well under Sanity's payload cap on tenants with thousands of tags.
 
@@ -715,8 +788,8 @@ The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `tenants/<your-
 | `aem-assets` phase 3 → `401 Invalid non-global session for user id g-...` | The `/assets/media-library-link` endpoint rejected your `SANITY_TOKEN`. It requires a *personal* auth token, not a project robot token. Set `SANITY_ML_LINK_TOKEN` to a personal token with read/write on both the Media Library and the project. See § 4c-bis. |
 | `aem-assets` phase 2 → `409 asset already exists` | Informational, not an error. The binary was already uploaded to the Media Library. The code recovers both IDs via a GROQ lookup and continues. |
 | `aem-assets` → `Missing env var: SANITY_MEDIA_LIBRARY_ID` | Set it to the org-level ML id that the project belongs to. `sanity media library list` on the org shows available ids. |
-| `aem-extract` fails with `HTTP 300` on a root | AEM returned an ambiguous-path response (the path may point at a folder). Check `output/extract-report.json` → `ambiguous[]` for the resolution suggestion. |
-| `aem-transform` → `No raw files in output/raw` | Run `aem-extract` first. The transform stage only reads from disk — it never hits AEM. |
+| `aem-extract` fails with `HTTP 300` on a root | AEM returned an ambiguous-path response (the path may point at a folder). Check `output/cache/extract-report.json` → `ambiguous[]` for the resolution suggestion. |
+| `aem-transform` → `No extracted content in output/cache/aem/content` | Run `aem-extract` first. The transform stage only reads from disk — it never hits AEM. |
 | Studio boots but shows no schemas (only `category`) | `apps/studio/schemas/generated/index.ts` is the bare-clone stub (exports `[]`). Run `pnpm --filter tenant-<your-tenant> migrate:schema` to regenerate the real barrel locally. |
 | `sanity schema validate` → `Type has property "fields", but is not an object/document type` | The sanitizer is injecting placeholder fields into a non-object type. Confirm you're on the latest schema package (this is fixed). |
 | `ERR_PACKAGE_PATH_NOT_EXPORTED` when running sanity CLI | Rebuild: `pnpm build`. The bundled CJS loader the Sanity CLI uses needs the `default` export condition that `dist/` ships. |

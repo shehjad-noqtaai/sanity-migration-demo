@@ -1,0 +1,107 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Buttons",
+  "margin": true,
+  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+  "items": {
+    "jcr:primaryType": "nt:unstructured",
+    "columns": {
+      "jcr:primaryType": "nt:unstructured",
+      "margin": true,
+      "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "column": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:resourceType": "granite/ui/components/coral/foundation/container",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "images": {
+              "jcr:primaryType": "nt:unstructured",
+              "composite": "true",
+              "fieldLabel": "Buttons",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+              "field": {
+                "jcr:primaryType": "nt:unstructured",
+                "jcr:title": "Button options",
+                "name": "./buttons",
+                "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "buttonLabel": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "required": true,
+                    "name": "text",
+                    "fieldLabel": "Button text",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                  },
+                  "buttonLinkTo": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "required": true,
+                    "rootPath": "/content",
+                    "name": "link",
+                    "fieldLabel": "Button link",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                  },
+                  "buttonHexColor": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "name": "buttonHexColor",
+                    "fieldLabel": "Button color",
+                    "emptyOption": true,
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/colorfield"
+                  },
+                  "buttonType": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "name": "type",
+                    "fieldLabel": "Button type",
+                    "emptyOption": true,
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "ghost": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "Ghost",
+                        "value": "ghost"
+                      },
+                      "filled": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "Filled",
+                        "value": "filled"
+                      },
+                      "link": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "link",
+                        "value": "link"
+                      }
+                    }
+                  },
+                  "ctaTextColor": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "name": "ctaTextHexColor",
+                    "fieldLabel": "CTA Text Color",
+                    "emptyOption": true,
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/colorfield"
+                  }
+                }
+              }
+            },
+            "buttonHeightMobile": {
+              "jcr:primaryType": "nt:unstructured",
+              "min": 0,
+              "name": "./buttonHeightMobile",
+              "fieldLabel": "Button Blocks Height Mobile",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            },
+            "buttonHeightDesktop": {
+              "jcr:primaryType": "nt:unstructured",
+              "min": 0,
+              "name": "./buttonHeightDesktop",
+              "fieldLabel": "Button Blocks Height Desktop",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            }
+          }
+        }
+      }
+    }
+  }
+}

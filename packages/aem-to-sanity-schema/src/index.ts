@@ -42,7 +42,7 @@ export {
   scanSchemaTypeNames,
   rewriteBarrelFromDisk,
 } from "./pagebuilder.ts";
-export { discoverSlots, scanSlotsFromRawDir } from "./slots.ts";
+export { discoverSlots, scanSlotsFromExtractCache, scanSlotsFromRawDir } from "./slots.ts";
 export type { DiscoveredSlots, ScanOptions as SlotScanOptions, SlotMapEntry } from "./slots.ts";
 export { writeContentRegistry } from "./content-registry.ts";
 export type {
@@ -69,6 +69,7 @@ export type {
 } from "./template-pages.ts";
 export {
   discoverTemplates,
+  scanTemplatesFromExtractCache,
   scanTemplatesFromRawDir,
   mergeDiscoveredTemplates,
 } from "./template-discovery.ts";

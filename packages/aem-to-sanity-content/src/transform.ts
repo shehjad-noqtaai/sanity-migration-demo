@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import "dotenv/config";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import {
   AEM_AUTHORING_HINTS,
+  aemCacheContentRoot,
   createColors,
+  listExtractedContentFiles,
   loadAuthoringHintConfig,
   loadContainerConfig,
   startTimer,
@@ -1463,7 +1465,7 @@ function main(): void {
   const authoringHints = loadAuthoringHintConfig({ file: hintsFile });
 
   const registry = loadRegistry(registryFile);
-  const rawDir = join(outputDir, "cache", "raw");
+  const contentDir = aemCacheContentRoot(outputDir);
   const cleanDir = join(outputDir, "cache", "clean");
   mkdirSync(cleanDir, { recursive: true });
 
@@ -1495,13 +1497,13 @@ function main(): void {
     );
   }
 
-  const rawFiles = readdirSync(rawDir).filter((f) => f.endsWith(".json")).sort();
+  const rawFiles = listExtractedContentFiles(outputDir);
   if (rawFiles.length === 0) {
-    console.error(`No raw files in ${rawDir}. Run \`aem-extract\` first.`);
+    console.error(`No extract cache in ${contentDir}. Run \`aem-extract\` first.`);
     process.exit(2);
   }
 
-  console.error(`[transform] ${rawFiles.length} raw file(s) → ${cleanDir}`);
+  console.error(`[transform] ${rawFiles.length} extract file(s) → ${cleanDir}`);
   if (exceptions.size > 0) {
     console.error(
       `[transform] applying ${exceptions.size} exception(s) from ${exceptionsFile}`,
@@ -1537,16 +1539,19 @@ function main(): void {
   let pagesWritten = 0;
   let blocksEmitted = 0;
 
-  for (const file of rawFiles) {
+  for (const { absPath, relPath } of rawFiles) {
     let raw: RawFile;
     try {
-      raw = JSON.parse(readFileSync(join(rawDir, file), "utf8")) as RawFile;
+      raw = JSON.parse(readFileSync(absPath, "utf8")) as RawFile;
     } catch (err) {
-      console.error(`[transform] skip ${file}: ${(err as Error).message}`);
+      console.error(`[transform] skip ${relPath}: ${(err as Error).message}`);
       continue;
     }
 
     const { jcrPath, slug, tree } = raw;
+    if (jcrPath.startsWith("/content/cq:tags")) {
+      continue;
+    }
     const currentSlug = slug ?? jcrPath.split("/").filter(Boolean).pop() ?? jcrPath;
 
     const ctx: TransformContext = {
@@ -1621,7 +1626,8 @@ function main(): void {
       pageDoc.cqTemplate = templateMatch.cqTemplate;
     }
 
-    const outFile = join(cleanDir, file);
+    const outFile = join(cleanDir, relPath);
+    mkdirSync(dirname(outFile), { recursive: true });
     writeFileSync(
       outFile,
       JSON.stringify({ jcrPath, slug: currentSlug, docs: [pageDoc] }, null, 2) + "\n",

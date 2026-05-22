@@ -1,0 +1,160 @@
+{
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Image",
+  "trackingFeature": "core-components:image:v3",
+  "helpPath": "https://www.adobe.com/go/aem_cmp_image_v3",
+  "extraClientlibs": [
+    "jquery ",
+    "Demo Heading B",
+    "demo.components.dialog.editor.image",
+    "Demo Heading C"
+  ],
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "granite:class": "cmp-image__editor",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "asset": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Asset",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "file": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "allowUpload": false,
+                        "sling:resourceType": "cq/gui/components/authoring/dialog/fileupload"
+                      },
+                      "imageFromPageImage": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": "false",
+                        "name": "./imageFromPageImage",
+                        "text": "Inherit featured image from page",
+                        "value": true,
+                        "checked": "${false}",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                        "fieldDescription": "Vestibulum auctor dapibus neque, vivamus vel nulla eget eros elementum."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "metadata": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Metadata",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "captionGroup": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/well",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "titleValueFromDAM": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "forceIgnoreFreshness": "true",
+                            "uncheckedValue": "false",
+                            "name": "./titleValueFromDAM",
+                            "text": "Get caption from DAM description",
+                            "value": true,
+                            "checked": "Demo Heading E",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                            "fieldDescription": "Temporibus autem quibusdam et aut officiis debitis aut rerum."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "tabDisplay": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Display",
+            "margin": true,
+            "sling:orderBefore": "properties",
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "wellImageIsDisabledOnViewport": {
+                "jcr:primaryType": "nt:unstructured",
+                "sling:resourceType": "granite/ui/components/coral/foundation/well",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "disableImageOnViewport": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "name": "./disableImageOnViewport",
+                    "fieldLabel": "Disable image on viewport:",
+                    "selectionMode": "multiple",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/buttongroup",
+                    "fieldDescription": "Demo Heading A",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "mobile": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "Mobile",
+                        "value": "mobile"
+                      },
+                      "tablet": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "Tablet",
+                        "value": "tablet"
+                      },
+                      "desktop": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "Desktop",
+                        "value": "desktop"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "styletab": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Styles",
+            "path": "/mnt/overlay/demo/components/commons/margins/styles/cq:dialog/styles",
+            "sling:orderBefore": "content-toggle",
+            "sling:resourceType": "granite/ui/components/coral/foundation/include"
+          }
+        }
+      }
+    }
+  }
+}

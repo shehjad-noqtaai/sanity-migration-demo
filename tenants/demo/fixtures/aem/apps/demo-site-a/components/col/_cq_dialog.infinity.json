@@ -1,0 +1,123 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Properties",
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:hideChildren": [
+            "properties"
+          ],
+          "main": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "General",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "col": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./col",
+                        "value": "12",
+                        "fieldLabel": "Col",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                      },
+                      "offset": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./offset",
+                        "fieldLabel": "Offset",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                      },
+                      "auto": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": "false",
+                        "name": "./auto",
+                        "text": "Auto",
+                        "value": "true",
+                        "checked": true,
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox"
+                      },
+                      "alignSelf": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./alignSelf",
+                        "fieldLabel": "Column align self type",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "datasource": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceType": "demo-site-a/components/datasources/gridaligndatasource"
+                        }
+                      },
+                      "order": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./order",
+                        "fieldLabel": "Order",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                      },
+                      "noGutter": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": "false",
+                        "name": "./noGutter",
+                        "text": "noGutter",
+                        "value": "true",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox"
+                      },
+                      "xs": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./xs",
+                        "fieldLabel": "xs",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                      },
+                      "sm": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./sm",
+                        "fieldLabel": "sm",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                      },
+                      "md": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./md",
+                        "fieldLabel": "md",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                      },
+                      "lg": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./lg",
+                        "fieldLabel": "lg",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                      },
+                      "xl": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./xl",
+                        "fieldLabel": "xl",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

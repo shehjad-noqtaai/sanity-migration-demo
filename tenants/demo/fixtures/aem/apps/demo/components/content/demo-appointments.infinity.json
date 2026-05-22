@@ -1,0 +1,201 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Header",
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "appointmentTypes": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Appointment Types",
+              "composite": true,
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "navigationItems": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "composite": true,
+                      "fieldLabel": "Appointment Types",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                      "fieldDescription": "Add Appointment Type",
+                      "field": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./appointmentTypes",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "column": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "appointmentType": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "./appointmentType",
+                                "fieldLabel": "Appointment Type",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Appointment Type"
+                              },
+                              "appointmentDuration": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "./appointmentDuration",
+                                "fieldLabel": "Appointment Duration",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Appointment Duration (in minutes)"
+                              },
+                              "appointmentIcon": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "rootPath": "/content/dam/demo/_generated/content.gif",
+                                "name": "./appointmentIcon",
+                                "fieldLabel": "Appointment Icon",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                                "fieldDescription": "Path of the appointment icon"
+                              },
+                              "appointmentTitle": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "./appointmentTitle",
+                                "fieldLabel": "Appointment Title",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Appointment Title"
+                              },
+                              "appointmentCTA": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "./appointmentCTA",
+                                "fieldLabel": "Appointment CTA",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Appointment Call To Action text"
+                              },
+                              "appointmentDetails": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "./appointmentDetails",
+                                "fieldLabel": "Appointment Details",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Appointment details"
+                              },
+                              "storeLocatorUrl": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": false,
+                                "rootPath": "/content",
+                                "name": "./storeLocatorUrl",
+                                "fieldLabel": "Store locator page",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                                "fieldDescription": "Demo Heading C"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "appointmentLinks": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Appointment Links",
+              "composite": true,
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "timeTradeUrl": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "rootPath": "/content",
+                      "name": "./timeTradeUrl",
+                      "fieldLabel": "Time Trade Details",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                      "fieldDescription": "Please provide time trade url"
+                    }
+                  }
+                }
+              }
+            },
+            "calendarIconImages": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Appointment Calendar ICon Image URLs",
+              "composite": true,
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "googleIcon": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": true,
+                      "rootPath": "/content/dam/demo/_generated/content.gif",
+                      "name": "./googleIcon",
+                      "fieldLabel": "Google Icon",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                      "fieldDescription": "Path of the google icon"
+                    },
+                    "yahooIcon": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": true,
+                      "rootPath": "/content/dam/demo/_generated/content.gif",
+                      "name": "./yahooIcon",
+                      "fieldLabel": "Yahoo Icon",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                      "fieldDescription": "Path of the yahoo icon"
+                    },
+                    "outlookIcon": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": true,
+                      "rootPath": "/content/dam/demo/_generated/content.gif",
+                      "name": "./outlookIcon",
+                      "fieldLabel": "Outlook Icon",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                      "fieldDescription": "Path of the outlook icon"
+                    },
+                    "calendarIcon": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": true,
+                      "rootPath": "/content/dam/demo/_generated/content.gif",
+                      "name": "./calendarIcon",
+                      "fieldLabel": "Calendar Icon",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                      "fieldDescription": "Path of the calendar icon"
+                    },
+                    "officeIcon": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": true,
+                      "rootPath": "/content/dam/demo/_generated/content.gif",
+                      "name": "./officeIcon",
+                      "fieldLabel": "Office Icon",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                      "fieldDescription": "Path of the office icon"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

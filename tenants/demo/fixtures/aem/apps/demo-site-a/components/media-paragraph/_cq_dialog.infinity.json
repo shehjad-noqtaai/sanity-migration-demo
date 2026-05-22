@@ -1,0 +1,145 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Properties",
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "section": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/apps/demo-site-a/components/dialog/abstract-padding/cq:dialog/content/items/tabs/items/section",
+            "sling:resourceType": "granite/ui/components/foundation/include"
+          },
+          "properties": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "General",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:hideChildren": [
+                        "id"
+                      ],
+                      "layout": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./layout",
+                        "fieldLabel": "Layout",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:hideChildren": [
+                            "default",
+                            "simple",
+                            "responsive"
+                          ],
+                          "medium": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "medium",
+                            "value": "medium"
+                          },
+                          "large": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "large",
+                            "value": "large"
+                          },
+                          "full": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "full",
+                            "value": "full"
+                          }
+                        }
+                      },
+                      "theme": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./theme",
+                        "fieldLabel": "Theme",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "white": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "White",
+                            "value": "white"
+                          },
+                          "seashell": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Seashell",
+                            "value": "seashell"
+                          },
+                          "seashell-block": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Seashell-block",
+                            "value": "seashell-block"
+                          },
+                          "mocassin": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Mocassin",
+                            "value": "mocassin"
+                          },
+                          "mocassin-block": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Mocassin-block",
+                            "value": "mocassin-block"
+                          },
+                          "claret": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Claret",
+                            "value": "claret"
+                          },
+                          "claret-block": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Claret-block",
+                            "value": "claret-block"
+                          },
+                          "black": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Black",
+                            "value": "black"
+                          },
+                          "black-block": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Black-block",
+                            "value": "black-block"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "buttonsTab": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/apps/demo-site-a/components/dialog/buttons-tab/cq:dialog/content/items/tabs/items/buttonsTab",
+            "sling:resourceType": "granite/ui/components/foundation/include"
+          },
+          "id-tab": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/apps/demo-site-a/components/dialog/id-tab/cq:dialog/content/items/tabs/items/id-tab",
+            "sling:resourceType": "granite/ui/components/foundation/include"
+          }
+        }
+      }
+    }
+  }
+}

@@ -45,9 +45,9 @@ pnpm -w migrate:doctor <your-tenant>
 
 # 5. Run the pipeline
 pnpm -F tenant-<your-tenant> migrate:schema   # AEM dialogs → Sanity schemas
-pnpm -F tenant-<your-tenant> extract          # AEM pages → output/cache/raw/
+pnpm -F tenant-<your-tenant> extract          # AEM pages → output/cache/aem/content/
 pnpm -F tenant-<your-tenant> tags             # cq:Tag nodes → output/cache/categories/
-pnpm -F tenant-<your-tenant> transform        # raw → output/cache/clean/
+pnpm -F tenant-<your-tenant> transform        # extract cache → output/cache/clean/
 pnpm -F tenant-<your-tenant> assets           # DAM → Media Library + link
 pnpm -F tenant-<your-tenant> import           # clean docs → Sanity dataset
 
@@ -70,7 +70,8 @@ pnpm -w migrate:doctor --all                  # check every tenant under tenants
 Doctor checks:
 - `package.json` scripts block matches the template (auto-fixable)
 - `.env` contains every required var from `.env.example` with no leftover placeholder values
-- At least one AEM authentication flow is configured (service credentials, developer token, or basic auth)
+- At least one AEM authentication flow is configured (service credentials, developer token, or basic auth) — **skipped when `AEM_FIXTURES_DIR` is set** (offline fixture replay)
+- When `AEM_FIXTURES_DIR` is set, validates the fixtures directory has path-mirror `content/` and `apps/` `.infinity.json` trees (warns if `assets/` is empty unless you use `--link-only`)
 - `MIGRATION_DRY_RUN=false` runs have `SANITY_MEDIA_LIBRARY_ID` set
 - Template files (`README.md`, `.env.example`, `aem-content-roots.example`) are not silently out of date
 

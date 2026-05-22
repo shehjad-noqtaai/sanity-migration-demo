@@ -1,0 +1,55 @@
+{
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Heading",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "display": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Display",
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "textColor": {
+                "jcr:primaryType": "nt:unstructured",
+                "path": "/apps/demo/components/commons/textstyle/v1/dialogs/wellColorText",
+                "sling:resourceType": "granite/ui/components/coral/foundation/include"
+              },
+              "textStyle": {
+                "jcr:primaryType": "nt:unstructured",
+                "path": "/apps/demo/components/commons/textstyle/v1/dialogs/textStyleTDDS",
+                "sling:resourceType": "granite/ui/components/coral/foundation/include"
+              },
+              "textAlignment": {
+                "jcr:primaryType": "nt:unstructured",
+                "path": "/apps/demo/components/commons/textstyle/v1/dialogs/textAlignment",
+                "sling:resourceType": "granite/ui/components/coral/foundation/include"
+              }
+            }
+          },
+          "tabStyle": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Styles",
+            "path": "/mnt/overlay/demo/components/commons/margins/styles/cq:dialog/styles",
+            "sling:orderBefore": "cq:include",
+            "sling:resourceType": "granite/ui/components/coral/foundation/include"
+          },
+          "cq:include": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/mnt/overlay/demo/components/commons/permission/permission/cq:dialog/permission",
+            "sling:resourceType": "granite/ui/components/coral/foundation/include"
+          }
+        }
+      }
+    }
+  }
+}

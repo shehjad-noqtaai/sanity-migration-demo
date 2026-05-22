@@ -3,6 +3,7 @@ import { readFile, readdir, unlink } from "node:fs/promises";
 import {
   AEM_AUTHORING_HINTS,
   AemFetchError,
+  aemCacheAppsFile,
   resolveDialogViaSuperType,
   writeJson,
   writeTextFile,
@@ -42,7 +43,7 @@ export interface MigrateSchemasOptions {
   outputDir: string;
   concurrency?: number;
   logger?: Logger;
-  /** Persist each component's raw dialog JSON to `{outputDir}/cache/aem/components/`. Defaults to true. */
+  /** Persist each component's raw dialog JSON to `{outputDir}/cache/aem/apps/...`. Defaults to true. */
   writeAemSnapshot?: boolean;
   /** Run the unmapped-type audit after the main pass. Defaults to true. */
   runAudit?: boolean;
@@ -776,8 +777,7 @@ async function saveDialogJson(
   dialog: DialogNode,
   logger?: Logger,
 ): Promise<void> {
-  const rel = componentPath.replace(/^\/+/, "");
-  const file = join(outputDir, "cache", "aem", "components", `${rel}.json`);
+  const file = aemCacheAppsFile(outputDir, componentPath);
   try {
     await writeJson(file, dialog, { pretty: true });
   } catch (err) {

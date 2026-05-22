@@ -1,0 +1,274 @@
+{
+  "jcr:primaryType": "cq:Page",
+  "jcr:createdBy": "maeschliman",
+  "jcr:created": "Wed Apr 17 2024 20:08:38 GMT+0000",
+  "jcr:content": {
+    "jcr:primaryType": "cq:PageContent",
+    "jcr:mixinTypes": [
+      "mix:versionable"
+    ],
+    "jcr:createdBy": "maeschliman",
+    "jcr:title": "Demo Heading A",
+    "cq:lastReplicationAction": "Activate",
+    "jcr:versionHistory": "d233c053-ca73-49cb-affc-8463b8e517ad",
+    "cq:template": "/conf/demo-site-a/settings/wcm/templates/spa-page-template",
+    "cq:lastReplicatedBy": "v.Anuj",
+    "jcr:predecessors": [
+      "f32440a5-3a23-4203-b881-67f503b129ca"
+    ],
+    "jcr:created": "Wed Apr 17 2024 20:08:38 GMT+0000",
+    "cq:lastReplicated": "Thu Mar 06 2025 14:17:54 GMT+0000",
+    "cq:lastModified": "Fri Sep 05 2025 17:52:26 GMT+0000",
+    "jcr:description": "Demo Heading D",
+    "jcr:baseVersion": "f32440a5-3a23-4203-b881-67f503b129ca",
+    "jcr:isCheckedOut": true,
+    "pageTitle": "Demo Heading A",
+    "jcr:uuid": "a5d453ad-d0a1-4acb-828f-b4513f8e8d86",
+    "sling:resourceType": "demo-site-a/components/page",
+    "cq:lastModifiedBy": "ckelly",
+    "navTitle": "promises",
+    "root": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "wcm/foundation/components/responsivegrid",
+      "responsivegrid": {
+        "jcr:primaryType": "nt:unstructured",
+        "sling:resourceType": "wcm/foundation/components/responsivegrid",
+        "properties": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "hero_slide_copy_1422": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "scotton",
+          "jcr:lastModifiedBy": "ckelly",
+          "contentPosition": "right",
+          "textAlign": "center",
+          "textColor": "gray800",
+          "textType": "type_text",
+          "textBackgroundColor": "transparent",
+          "jcr:created": "Mon Jan 20 2025 19:07:17 GMT+0000",
+          "type": "type_d",
+          "jcr:lastModified": "Fri Sep 05 2025 17:52:26 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/hero-slide",
+          "bgImages": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-desktop.gif",
+              "imageLink": "/loyalty/sign-in/",
+              "visible": "desktop",
+              "alignment": "middle-center"
+            },
+            "item1": {
+              "jcr:primaryType": "nt:unstructured",
+              "fileReference": "/content/dam/demo/_generated/hero-mobile.gif",
+              "imageLink": "/loyalty/sign-in/",
+              "imageServerUrl": "https://example.com",
+              "visible": "mobile",
+              "alignment": "middle-center"
+            }
+          }
+        },
+        "properties_736686329": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "ckelly",
+          "jcr:lastModifiedBy": "ckelly",
+          "jcr:created": "Fri Jun 20 2025 16:14:12 GMT+0000",
+          "jcr:lastModified": "Fri Jun 20 2025 16:14:12 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "properties_895075790": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "ckelly",
+          "jcr:lastModifiedBy": "ckelly",
+          "jcr:created": "Fri Jun 20 2025 16:14:15 GMT+0000",
+          "jcr:lastModified": "Fri Jun 20 2025 16:14:15 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "photo_layout": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "false",
+          "jcr:createdBy": "maeschliman",
+          "fileReference1": "/content/dam/demo/_generated/event.gif",
+          "fileReference2": "/content/dam/demo/_generated/event.gif",
+          "fileReference3": "/content/dam/demo/_generated/event.gif",
+          "fileReference4": "/content/dam/demo/_generated/event.gif",
+          "fileReference5": "/content/dam/demo/_generated/event.gif",
+          "description": "<p>Celebrate your happily ever after all over again with a vow renewal vacay <br />\r\nat Sandals—choose from Jamaica, Curaçao, or The Bahamas!</p>\r\n",
+          "imageText2": "<p>The winner gets roundtrip airfare for two, 3-night stay at Sandals, vow renewal package, little white dress from David’s, and diamond studs from Ritani. What are you waiting for?! Enter May 9-24, 2025.</p>\r\n",
+          "jcr:lastModifiedBy": "scotton",
+          "removeTopPadding": "false",
+          "jcr:created": "Tue Apr 30 2024 19:18:28 GMT+0000",
+          "headline2": "Win a Vow Renewal at Sandals",
+          "theme": "seashell-alt",
+          "jcr:lastModified": "Thu May 08 2025 20:17:02 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/photo-layout",
+          "textIsRich": [
+            "true",
+            "true"
+          ],
+          "mobileLayout": "scroll",
+          "sansSerifHeadline": "Demo Heading A"
+        },
+        "media_paragraph": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "true",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "scotton",
+          "layout": "full",
+          "removeTopPadding": "true",
+          "jcr:created": "Tue Apr 30 2024 19:25:33 GMT+0000",
+          "theme": "white",
+          "jcr:lastModified": "Thu May 08 2025 18:20:54 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/media-paragraph",
+          "content": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "maeschliman",
+            "fontFamily": "primary",
+            "jcr:lastModifiedBy": "scotton",
+            "fontWeight": "thin",
+            "jcr:created": "Tue Apr 30 2024 20:06:50 GMT+0000",
+            "as": "p",
+            "pb": "25",
+            "text": "<p>*No purchase necessary. A purchase will not improve your chances of winning. Sweepstakes ends at 11:59pm ET on May 24, 2025. Open to residents in all 50 United States (void where prohibited). Must be 18 years of age to enter. for details and alternative methods of entry, see Official Rules.</p>\n",
+            "align": "center",
+            "color": "gray800",
+            "uppercase": "false",
+            "measure": "xs",
+            "jcr:lastModified": "Thu May 08 2025 16:18:15 GMT+0000",
+            "sling:resourceType": "demo-site-a/components/content",
+            "textIsRich": "true",
+            "display": "block"
+          }
+        },
+        "photo_layout_copy": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "false",
+          "jcr:createdBy": "maeschliman",
+          "fileReference1": "/content/dam/demo/_generated/event.gif",
+          "fileReference2": "/content/dam/demo/_generated/event.gif",
+          "fileReference3": "/content/dam/demo/_generated/event.gif",
+          "fileReference4": "/content/dam/demo/_generated/event.gif",
+          "fileReference5": "/content/dam/demo/_generated/event.gif",
+          "description": "<p>Say “I do” times two with a vow renewal vacay at Paradisus Los Cabos. We’re giving one lucky winner a trip for two!</p>\r\n",
+          "imageLink3": "/dresses/little-white-dresses",
+          "imageText2": "<p>The winner gets roundtrip airfare for two, 4-night stay at Paradisus Los Cabos, vow renewal package, little white dress from David’s, and diamond studs from Ritani. Enter May 25-June 8, 2025. </p>\r\n",
+          "jcr:lastModifiedBy": "scotton",
+          "removeTopPadding": "false",
+          "jcr:created": "Tue Apr 30 2024 19:18:28 GMT+0000",
+          "headline2": "Demo Heading E",
+          "link3": "/dresses/little-white-dresses",
+          "theme": "seashell-alt",
+          "linkTitle3": "Shop little white dresses",
+          "jcr:lastModified": "Thu May 08 2025 20:18:58 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/photo-layout",
+          "textIsRich": [
+            "true",
+            "true"
+          ],
+          "mobileLayout": "scroll",
+          "sansSerifHeadline": "Demo Heading D"
+        },
+        "media_paragraph_copy": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "true",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "scotton",
+          "layout": "full",
+          "removeTopPadding": "true",
+          "jcr:created": "Tue Apr 30 2024 19:25:33 GMT+0000",
+          "theme": "white",
+          "jcr:lastModified": "Thu May 08 2025 18:21:14 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/media-paragraph",
+          "content": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:createdBy": "maeschliman",
+            "fontFamily": "primary",
+            "jcr:lastModifiedBy": "scotton",
+            "fontWeight": "thin",
+            "jcr:created": "Tue Apr 30 2024 20:06:50 GMT+0000",
+            "as": "p",
+            "pb": "25",
+            "text": "<p>*No purchase necessary. A purchase will not improve your chances of winning. Sweepstakes ends at 11:59pm ET on June 8, 2025. Open to residents in all 50 United States (void where prohibited). Must be 18 years of age to enter. for details and alternative methods of entry, see Official Rules.</p>\n",
+            "align": "center",
+            "color": "gray800",
+            "uppercase": "false",
+            "measure": "xs",
+            "jcr:lastModified": "Thu May 08 2025 16:23:13 GMT+0000",
+            "sling:resourceType": "demo-site-a/components/content",
+            "textIsRich": "true",
+            "display": "block"
+          }
+        },
+        "product_carousel": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "false",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "scotton",
+          "linkTo": "/dresses/little-white-dresses",
+          "removeTopPadding": "false",
+          "jcr:created": "Tue Apr 30 2024 19:28:41 GMT+0000",
+          "headline2": "Vow Renewal-Worthy LWDs",
+          "theme": "white",
+          "columns": "5",
+          "jcr:lastModified": "Thu May 08 2025 16:25:52 GMT+0000",
+          "linkText": "Shop All little white dresses",
+          "sling:resourceType": "demo-site-a/components/product-carousel",
+          "categoryId": "733",
+          "textIsRich": "true",
+          "mobileLayout": "carousel",
+          "layoutWidth": "full-width"
+        },
+        "gallery_copy": {
+          "jcr:primaryType": "nt:unstructured",
+          "removeBottomPadding": "false",
+          "jcr:createdBy": "dcarnegie",
+          "jcr:lastModifiedBy": "maeschliman",
+          "removeTopPadding": "false",
+          "jcr:created": "Wed Jun 16 2021 16:12:55 GMT+0000",
+          "headline2": "They Said \"I Do\" All Over Again",
+          "theme": "seashell-cropped",
+          "jcr:lastModified": "Tue Apr 30 2024 19:30:42 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/gallery",
+          "galleryTag": "<div data-crl8-container-id=\"gallery-JJv620AF\" data-crl8-filter=\"tag:vowrenewal\"></div>",
+          "textIsRich": "true",
+          "buttons": {
+            "jcr:primaryType": "nt:unstructured",
+            "item0": {
+              "jcr:primaryType": "nt:unstructured",
+              "link": "/photos",
+              "text": "see the gallery"
+            }
+          }
+        },
+        "properties_1745154879": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "maeschliman",
+          "jcr:lastModifiedBy": "maeschliman",
+          "jcr:created": "Tue Apr 30 2024 21:27:12 GMT+0000",
+          "jcr:lastModified": "Tue Apr 30 2024 21:27:12 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "properties_1813567198": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "ckelly",
+          "jcr:lastModifiedBy": "ckelly",
+          "jcr:created": "Fri Jun 20 2025 16:14:21 GMT+0000",
+          "jcr:lastModified": "Fri Jun 20 2025 16:14:21 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/properties"
+        },
+        "container": {
+          "jcr:primaryType": "nt:unstructured",
+          "jcr:createdBy": "ckelly",
+          "jcr:lastModifiedBy": "ckelly",
+          "jcr:created": "Fri Jun 20 2025 16:11:03 GMT+0000",
+          "jcr:lastModified": "Fri Jun 20 2025 16:11:03 GMT+0000",
+          "sling:resourceType": "demo-site-a/components/container",
+          "hero_slide_copy_1422": {
+            "jcr:primaryType": "nt:unstructured"
+          }
+        }
+      }
+    }
+  }
+}

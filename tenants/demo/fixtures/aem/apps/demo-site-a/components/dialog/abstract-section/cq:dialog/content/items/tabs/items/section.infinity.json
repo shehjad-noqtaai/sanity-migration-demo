@@ -1,0 +1,127 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Section",
+  "margin": true,
+  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+  "items": {
+    "jcr:primaryType": "nt:unstructured",
+    "columns": {
+      "jcr:primaryType": "nt:unstructured",
+      "margin": true,
+      "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "column": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:resourceType": "granite/ui/components/coral/foundation/container",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "section-heading": {
+              "jcr:primaryType": "nt:unstructured",
+              "text": "Section options",
+              "level": "3",
+              "sling:resourceType": "granite/ui/components/foundation/heading"
+            },
+            "headlineFieldSet": {
+              "jcr:primaryType": "nt:unstructured",
+              "sling:resourceType": "granite/ui/components/coral/foundation/well",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "tagLevel": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "required": false,
+                  "name": "./tagLevel",
+                  "fieldLabel": "Headlines tag level",
+                  "emptyOption": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "h1": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "text": "h1",
+                      "value": "h1"
+                    },
+                    "h2": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "text": "h2",
+                      "value": "h2"
+                    },
+                    "h3": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "text": "h3",
+                      "value": "h3"
+                    },
+                    "h4": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "text": "h4",
+                      "value": "h4"
+                    },
+                    "h5": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "text": "h5",
+                      "value": "h5"
+                    },
+                    "h6": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "text": "h6",
+                      "value": "h6"
+                    }
+                  }
+                },
+                "headline1": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "name": "./headline1",
+                  "fieldLabel": "Headline 1 (script)",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                },
+                "headline2": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "name": "./headline2",
+                  "fieldLabel": "Headline 2 (sans serif)",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                },
+                "description": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "name": "./description",
+                  "fieldLabel": "Description",
+                  "sling:resourceType": "cq/gui/components/authoring/dialog/richtext",
+                  "useFixedInlineToolbar": true,
+                  "rtePlugins": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "format": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "features": "*"
+                    },
+                    "justify": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "features": "*"
+                    },
+                    "lists": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "features": "*"
+                    },
+                    "links": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "features": "*"
+                    },
+                    "misctools": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "features": "*"
+                    }
+                  },
+                  "htmlRules": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "links": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "ensureInternalLinkExt": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

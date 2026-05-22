@@ -18,7 +18,11 @@ export type {
 export {
   applyFixturesFromEnv,
   buildFixturesFetch,
+  decodeLegacyFixtureFilename,
   fixtureFilenameForUrl,
+  fixtureLegacyFilenameForUrl,
+  fixturePathForUrl,
+  fixtureRelativePathForUrl,
   lookupFixture,
   maybeApplyFixturesMode,
 } from "./fetcher-fixtures.ts";

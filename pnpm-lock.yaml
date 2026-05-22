@@ -14,6 +14,9 @@ importers:
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
+      gifenc:
+        specifier: ^1.0.3
+        version: 1.0.3
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -144,6 +147,21 @@ importers:
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
+
+  tenants/demo:
+    devDependencies:
+      aem-to-sanity-content:
+        specifier: workspace:*
+        version: link:../../packages/aem-to-sanity-content
+      aem-to-sanity-schema:
+        specifier: workspace:*
+        version: link:../../packages/aem-to-sanity-schema
+      sanity:
+        specifier: ^5.26.0
+        version: 5.26.0(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.3)(@sanity/cli-core@1.3.2(@noble/hashes@2.2.0)(@types/node@25.6.0)(lightningcss@1.32.0)(yaml@2.9.0))(@types/node@25.6.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@10.2.0)(jiti@2.7.0)(lightningcss@1.32.0)(prismjs@1.27.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(styled-components@6.4.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.22.3
 
   tenants/t-mobile:
     devDependencies:
@@ -3568,6 +3586,9 @@ packages:
 
   get-tsconfig@4.14.0:
     resolution: {integrity: sha512-yTb+8DXzDREzgvYmh6s9vHsSVCHeC0G3PI5bEXNBHtmshPnO+S5O7qgLEOn0I5QvMy6kpZN8K1NKGyilLb93wA==}
+
+  gifenc@1.0.3:
+    resolution: {integrity: sha512-xdr6AdrfGBcfzncONUOlXMBuc5wJDtOueE3c5rdG0oNgtINLD+f2iFZltrBRZYzACRbKr+mSVU/x98zv2u3jmw==}
 
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -7818,7 +7839,7 @@ snapshots:
       tinyglobby: 0.2.16
       tsx: 4.22.3
       typeid-js: 1.2.0
-      vite: 7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
+      vite: 7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0)
       which: 6.0.1
       yaml: 2.9.0
       zod: 4.4.3
@@ -8421,7 +8442,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-rc.3
       '@types/babel__core': 7.20.5
       react-refresh: 0.18.0
-      vite: 7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
+      vite: 7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -9298,6 +9319,8 @@ snapshots:
   get-tsconfig@4.14.0:
     dependencies:
       resolve-pkg-maps: 1.0.0
+
+  gifenc@1.0.3: {}
 
   glob-parent@5.1.2:
     dependencies:
@@ -11216,7 +11239,7 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       globrex: 0.1.2
       tsconfck: 3.1.6(typescript@5.9.3)
-      vite: 7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
+      vite: 7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -11230,6 +11253,22 @@ snapshots:
       '@types/node': 25.6.0
       fsevents: 2.3.3
       lightningcss: 1.32.0
+
+  vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.9.0):
+    dependencies:
+      esbuild: 0.27.7
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
+      postcss: 8.5.15
+      rollup: 4.60.4
+      tinyglobby: 0.2.16
+    optionalDependencies:
+      '@types/node': 25.6.0
+      fsevents: 2.3.3
+      jiti: 2.7.0
+      lightningcss: 1.32.0
+      tsx: 4.21.0
+      yaml: 2.9.0
 
   vite@7.3.3(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0):
     dependencies:

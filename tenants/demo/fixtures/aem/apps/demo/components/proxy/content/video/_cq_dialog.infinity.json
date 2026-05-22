@@ -1,0 +1,384 @@
+{
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Video",
+  "extraClientlibs": [
+    "demo.components.dialog.editor.video",
+    "core.wcm.components.image.v3.editor"
+  ],
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "granite:class": "cmp-image__editor",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "granite:class": "custom-tabs",
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:hideChildren": [
+            "cq:include",
+            "metadata",
+            "styletab",
+            "tabDisplay"
+          ],
+          "tabContent": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Content",
+            "margin": true,
+            "sling:orderBefore": "asset",
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "videoSource": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "granite:class": "Demo Heading G",
+                        "name": "./videoSource",
+                        "fieldLabel": "Video source",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "fieldDescription": "Quis autem vel eum iure reprehenderit qui in ea voluptate velit.",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "youTube": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "YouTube",
+                            "value": "youtube"
+                          },
+                          "vimeo": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Vimeo",
+                            "value": "vimeo"
+                          },
+                          "asset": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Asset",
+                            "value": "asset"
+                          },
+                          "clips": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "Clips",
+                            "value": "clips"
+                          }
+                        },
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-dialog-dropdown-showhide-target": ".video-type-show-hide"
+                        }
+                      },
+                      "titleDisplayed": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": false,
+                        "name": "./titleDisplayed",
+                        "value": true,
+                        "fieldLabel": "Visually display title?",
+                        "checked": false,
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+                        "fieldDescription": "Not applicable for Clips"
+                      },
+                      "title": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "required": true,
+                        "name": "./title",
+                        "fieldLabel": "Video title:",
+                        "digx.shouldTranslate": true,
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                        "fieldDescription": "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium."
+                      },
+                      "optionsYouTubeID": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "granite:class": "hide video-type-show-hide",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "youTubeID": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./youTubeID",
+                            "fieldLabel": "YouTube ID:",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                            "fieldDescription": "Demo Heading B"
+                          },
+                          "timeStamp": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "min": "0",
+                            "name": "./youtubeTimeStamp",
+                            "fieldLabel": "TimeStamp",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield",
+                            "fieldDescription": "Demo Heading B"
+                          },
+                          "disableSuggestedVideo": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "uncheckedValue": false,
+                            "name": "./youtubeDisableSuggestedVideo",
+                            "value": true,
+                            "fieldLabel": "Disable Suggested Video",
+                            "checked": true,
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+                            "fieldDescription": "Demo Heading H"
+                          }
+                        },
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "showhidetargetvalue": "youtube"
+                        }
+                      },
+                      "optionsVimeoID": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "granite:class": "hide video-type-show-hide",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "vimeoID": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./vimeoID",
+                            "fieldLabel": "Vimeo ID:",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                            "fieldDescription": "Demo Heading B"
+                          }
+                        },
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "showhidetargetvalue": "vimeo"
+                        }
+                      },
+                      "optionsVideoAsset": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "granite:class": "hide video-type-show-hide",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "videoAsset": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "rootPath": "/content/dam",
+                            "name": "./videoAsset",
+                            "fieldLabel": "Video asset:",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                            "fieldDescription": "Demo Heading B"
+                          }
+                        },
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "showhidetargetvalue": "asset"
+                        }
+                      },
+                      "optionsClipsID": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "granite:class": "hide video-type-show-hide",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "clipsID": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./clipsID",
+                            "fieldLabel": "Clips URL Parameter",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                            "fieldDescription": "Temporibus autem quibusdam et aut officiis debitis aut rerum."
+                          },
+                          "clipsCaption": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./clipsCaption",
+                            "fieldLabel": "Clips Caption",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                            "fieldDescription": "Enter Clips Caption"
+                          }
+                        },
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "showhidetargetvalue": "clips"
+                        }
+                      },
+                      "ariaLabelForPlayButton": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./ariaLabelForPlayButton",
+                        "fieldLabel": "Aria Label For Play Button",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                        "fieldDescription": "Not applicable for Clips"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "tabVideoDisplay": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Display",
+            "margin": true,
+            "sling:orderBefore": "asset",
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "onlyTriggerButton": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": false,
+                        "name": "./showVideoTriggerOnly",
+                        "value": true,
+                        "fieldLabel": "Video Trigger Only?",
+                        "checked": false,
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+                        "fieldDescription": "Quis autem vel eum iure reprehenderit qui in ea voluptate velit."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "tabTranscript": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Transcript",
+            "margin": true,
+            "sling:orderBefore": "asset",
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "fieldShowHideSwitch": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": false,
+                        "name": "./fieldShowHideSwitch",
+                        "value": true,
+                        "fieldLabel": "Enable transcript?",
+                        "checked": false,
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+                        "fieldDescription": "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit."
+                      },
+                      "transcriptLabel": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./transcriptLabel",
+                        "fieldLabel": "Transcript Label:",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                        "fieldDescription": "Demo Heading G"
+                      },
+                      "transcriptText": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "showBreadcrumb": true,
+                        "name": "./transcriptText",
+                        "fieldLabel": "Transcript",
+                        "digx.shouldTranslate": true,
+                        "sling:resourceType": "cq/gui/components/authoring/dialog/richtext",
+                        "useFixedInlineToolbar": true,
+                        "rtePlugins": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceSuperType": "/apps/demo/components/commons/plugins/v1/dialogs/rtePlugins"
+                        },
+                        "uiSettings": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceSuperType": "/apps/demo/components/commons/plugins/v1/dialogs/uiSettings"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "asset": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Background",
+            "margin": true,
+            "granite:class": "backgroundtab",
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "wellImageIsDisabledOnViewportP": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "sling:orderBefore": "imageFromPageImage",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/well",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "settingsLabel": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "fieldLabel": "Settings",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/buttongroup"
+                          },
+                          "wellImageIsDisabledOnViewport": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/well",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "disableImageOnViewport": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "name": "./disableImageOnViewport",
+                                "fieldLabel": "Disable background image on viewport:",
+                                "selectionMode": "multiple",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/buttongroup",
+                                "fieldDescription": "Demo Heading B",
+                                "items": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "mobile": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": "Mobile",
+                                    "value": "mobile"
+                                  },
+                                  "tablet": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": "Tablet",
+                                    "value": "tablet"
+                                  },
+                                  "desktop": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": "Desktop",
+                                    "value": "desktop"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

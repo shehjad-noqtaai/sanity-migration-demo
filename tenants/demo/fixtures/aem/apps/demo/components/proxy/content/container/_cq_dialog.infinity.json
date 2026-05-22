@@ -1,0 +1,31 @@
+{
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Container",
+  "trackingFeature": "core-components:container:v1",
+  "helpPath": "https://www.adobe.com/go/aem_cmp_container_v1",
+  "extraClientlibs": [
+    "core.wcm.components.container.v1.editor"
+  ],
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "granite:class": "cmp-container__editor",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "cq:include": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/mnt/overlay/demo/components/commons/permission/permission/cq:dialog/permission",
+            "sling:resourceType": "granite/ui/components/coral/foundation/include"
+          }
+        }
+      }
+    }
+  }
+}

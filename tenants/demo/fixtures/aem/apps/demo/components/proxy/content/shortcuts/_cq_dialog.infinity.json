@@ -1,0 +1,300 @@
+{
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Shortcuts",
+  "extraClientlibs": [
+    "demo.components.dialog.editor.shortcuts",
+    "Demo Heading C"
+  ],
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "tabDisplay": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Display",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "type": {
+                "jcr:primaryType": "nt:unstructured",
+                "granite:class": "cq-dialog-dropdown-showhide",
+                "name": "./type",
+                "fieldLabel": "Shortcut Type",
+                "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                "granite:data": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "cq-dialog-dropdown-showhide-target": ".shortcuts-type-show-hide"
+                },
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "navigation": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "text": "Navigation",
+                    "value": "navigation"
+                  },
+                  "tab": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "text": "Tab",
+                    "value": "tab"
+                  },
+                  "grid": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "text": "Grid",
+                    "value": "grid"
+                  },
+                  "resource": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "text": "Resource",
+                    "value": "resource"
+                  }
+                }
+              },
+              "optionsNavigation": {
+                "jcr:primaryType": "nt:unstructured",
+                "granite:class": "hide shortcuts-type-show-hide",
+                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                "granite:data": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "showhidetargetvalue": "navigation"
+                },
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "navisSticky": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "uncheckedValue": false,
+                    "name": "./navisSticky",
+                    "value": true,
+                    "fieldLabel": "Navigation is Sticky",
+                    "checked": true,
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+                    "fieldDescription": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                  }
+                }
+              },
+              "optionsTab": {
+                "jcr:primaryType": "nt:unstructured",
+                "granite:class": "hide shortcuts-type-show-hide",
+                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                "granite:data": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "showhidetargetvalue": "tab"
+                },
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "isInverse": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "uncheckedValue": false,
+                    "name": "./isInverse",
+                    "value": true,
+                    "fieldLabel": "Inverse Text Styles (dark mode)",
+                    "checked": false,
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+                    "fieldDescription": "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium."
+                  },
+                  "tabisSticky": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "uncheckedValue": false,
+                    "name": "./tabisSticky",
+                    "value": true,
+                    "fieldLabel": "Navigation is Sticky",
+                    "checked": false,
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+                    "fieldDescription": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                  }
+                }
+              },
+              "optionsGrid": {
+                "jcr:primaryType": "nt:unstructured",
+                "granite:class": "hide shortcuts-type-show-hide",
+                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                "granite:data": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "showhidetargetvalue": "grid"
+                },
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "gridMobile": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "max": "99",
+                    "min": "1",
+                    "name": "./gridMobile",
+                    "step": "1",
+                    "value": "2",
+                    "fieldLabel": "Mobile columns:",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield",
+                    "fieldDescription": "Demo Heading H"
+                  },
+                  "gridTablet": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "max": "99",
+                    "min": "0",
+                    "name": "./gridTablet",
+                    "step": "1",
+                    "value": "4",
+                    "fieldLabel": "Tablet columns:",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield",
+                    "fieldDescription": "Demo Heading H"
+                  },
+                  "gridDesktop": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "max": "99",
+                    "min": "0",
+                    "name": "./gridDesktop",
+                    "step": "1",
+                    "fieldLabel": "Desktop columns:",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield",
+                    "fieldDescription": "Temporibus autem quibusdam et aut officiis debitis aut rerum."
+                  }
+                }
+              },
+              "optionsResource": {
+                "jcr:primaryType": "nt:unstructured",
+                "granite:class": "hide shortcuts-type-show-hide",
+                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                "granite:data": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "showhidetargetvalue": "resource"
+                },
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "resNavigationRoot": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "rootPath": "/content",
+                    "name": "./path",
+                    "fieldLabel": "Navigation Root",
+                    "sling:resourceType": "cq/gui/components/coral/common/form/pagefield",
+                    "fieldDescription": "Demo Heading G"
+                  },
+                  "resChildDepth": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "max": "100",
+                    "min": "0",
+                    "name": "./depth",
+                    "step": "1",
+                    "fieldLabel": "Child Depth:",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield",
+                    "fieldDescription": "Demo Heading H"
+                  },
+                  "visibilityToggleTextOpen": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "name": "./visibilityToggleTextOpen",
+                    "fieldLabel": "Visibility Toggle Text to Open",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                    "fieldDescription": "Temporibus autem quibusdam et aut officiis debitis aut rerum."
+                  },
+                  "visibilityToggleTextClose": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "name": "./visibilityToggleTextClose",
+                    "fieldLabel": "Visibility Toggle Text to Close",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                    "fieldDescription": "Curabitur pretium tincidunt lacus, nulla gravida orci a odio."
+                  },
+                  "resisSticky": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "uncheckedValue": false,
+                    "name": "./resisSticky",
+                    "value": true,
+                    "fieldLabel": "Navigation is Sticky",
+                    "checked": false,
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+                    "fieldDescription": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                  }
+                }
+              }
+            }
+          },
+          "tabContent": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Content",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "gridcontainer": {
+                "jcr:primaryType": "nt:unstructured",
+                "granite:class": "hide shortcuts-type-show-hide",
+                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                "granite:data": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "showhidetargetvalue": "navigation,tab,grid"
+                },
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "linkTargetMultifield": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "composite": true,
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                    "field": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "name": "./links",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "wellText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "required": true,
+                              "name": "./text",
+                              "fieldLabel": "Text",
+                              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                              "fieldDescription": "The text to display."
+                            },
+                            "link": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "name": "./link",
+                              "fieldLabel": "Link",
+                              "sling:resourceType": "cq/gui/components/coral/common/form/pagefield",
+                              "fieldDescription": "Link to a content page or external URL."
+                            },
+                            "anchor": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "name": "./anchor",
+                              "fieldLabel": "Anchor ID",
+                              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                              "fieldDescription": "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet."
+                            },
+                            "icon": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "svgPath": "Demo Heading H",
+                              "name": "./icon",
+                              "value": "no-icon",
+                              "fieldLabel": "Icon",
+                              "sling:resourceType": "/apps/demo/components/commons/authoring/iconSelect/v1/iconSelect",
+                              "fieldDescription": "Select an icon to display."
+                            },
+                            "target": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "uncheckedValue": "_self",
+                              "name": "./linkTarget",
+                              "text": "Open link in new tab",
+                              "value": "_blank",
+                              "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                              "fieldDescription": "Demo Heading H"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

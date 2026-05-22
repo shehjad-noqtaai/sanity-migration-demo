@@ -1,0 +1,432 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Hero Banner",
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "metadata": {
+              "jcr:primaryType": "nt:unstructured",
+              "sling:hideResource": "true"
+            },
+            "image": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Image",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "include": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "path": "/apps/demo/components/common/demo-image/cq:dialog/content/items/tabs/items/image/items/columns/items/column",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/include"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "properties": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Properties",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "header": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./header",
+                          "fieldLabel": "Header",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "content": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceType": "granite/ui/components/foundation/container",
+                          "layout": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "type": "nav",
+                            "sling:resourceType": "granite/ui/components/foundation/layouts/tabs"
+                          },
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "tab3": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "jcr:title": "RTE Text Copy",
+                              "sling:resourceType": "granite/ui/components/foundation/section",
+                              "layout": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "margin": false,
+                                "sling:resourceType": "granite/ui/components/foundation/layouts/fixedcolumns"
+                              },
+                              "items": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "column": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "sling:resourceType": "granite/ui/components/foundation/container",
+                                  "items": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "text": {
+                                      "jcr:primaryType": "nt:unstructured",
+                                      "name": "./text",
+                                      "sling:resourceType": "cq/gui/components/authoring/dialog/richtext",
+                                      "useFixedInlineToolbar": true,
+                                      "rtePlugins": {
+                                        "jcr:primaryType": "nt:unstructured",
+                                        "format": {
+                                          "jcr:primaryType": "nt:unstructured",
+                                          "features": "*"
+                                        },
+                                        "links": {
+                                          "jcr:primaryType": "nt:unstructured",
+                                          "features": "*"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "ctaLabel": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./ctaLabel",
+                          "fieldLabel": "Cta Label",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "ctaCategoryPath": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./ctaCategoryPath",
+                          "selectionId": "path",
+                          "fieldLabel": "PLP Path",
+                          "eaem-show-on-collapse": "EAEM.showProductName",
+                          "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+                          "fieldDescription": "Choose the PLP Page Path"
+                        },
+                        "ctaProductPath": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./ctaProductPath",
+                          "selectionId": "slug",
+                          "fieldLabel": "Product Path",
+                          "eaem-show-on-collapse": "EAEM.showProductName",
+                          "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+                          "fieldDescription": "Choose the PDP Page Path"
+                        },
+                        "ctaLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "rootPath": "/content/demo",
+                          "name": "./ctaLink",
+                          "fieldLabel": "Cta Link ",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                        },
+                        "linkTitleTag": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./linkTitleTag",
+                          "fieldLabel": "Link Title Tag",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "ctaType": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./ctaType",
+                          "value": "link",
+                          "fieldLabel": "Cta Type",
+                          "sling:resourceType": "granite/ui/components/foundation/form/select",
+                          "fieldDescription": "Demo Heading F",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "link": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Link",
+                              "value": "link"
+                            },
+                            "button": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Button",
+                              "value": "button"
+                            }
+                          }
+                        },
+                        "secondCtaLabel": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./secondCtaLabel",
+                          "fieldLabel": "Second Cta Label",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "secondCtaCategoryPath": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./secondCtaCategoryPath",
+                          "selectionId": "path",
+                          "fieldLabel": "PLP Path",
+                          "eaem-show-on-collapse": "EAEM.showProductName",
+                          "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+                          "fieldDescription": "Choose the PLP Page Path"
+                        },
+                        "secondCtaProductPath": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./secondCtaProductPath",
+                          "selectionId": "slug",
+                          "fieldLabel": "Product Path",
+                          "eaem-show-on-collapse": "EAEM.showProductName",
+                          "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+                          "fieldDescription": "Choose the PDP Page Path"
+                        },
+                        "secondCtaLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "rootPath": "/content/demo",
+                          "name": "./secondCtaLink",
+                          "fieldLabel": "Second Cta Link ",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                        },
+                        "secondLinkTitleTag": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./secondLinkTitleTag",
+                          "fieldLabel": "Second Link Title Tag",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                        },
+                        "secondCtaType": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./secondCtaType",
+                          "value": "link",
+                          "fieldLabel": "Second Cta Type",
+                          "sling:resourceType": "granite/ui/components/foundation/form/select",
+                          "fieldDescription": "Demo Heading F",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "link": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Link",
+                              "value": "link"
+                            },
+                            "button": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Button",
+                              "value": "button"
+                            }
+                          }
+                        },
+                        "captionBoxPosition": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./captionBoxPosition",
+                          "value": "right",
+                          "fieldLabel": "Caption Box Position",
+                          "sling:resourceType": "granite/ui/components/foundation/form/select",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "fixRight": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Fix Right",
+                              "value": "right"
+                            },
+                            "fixLeft": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Fix Left",
+                              "value": "left"
+                            },
+                            "bottomLeft": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Bottom Left",
+                              "value": "bottomLeft"
+                            },
+                            "bottomRight": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Bottom Right",
+                              "value": "bottomRight"
+                            }
+                          }
+                        },
+                        "imageLocationControl": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./imageLocationControl",
+                          "value": "right",
+                          "fieldLabel": "Image Location Control",
+                          "sling:resourceType": "granite/ui/components/foundation/form/select",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "flushLeft": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Flush Left",
+                              "value": "left"
+                            },
+                            "flushRight": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Flush Right",
+                              "value": "right"
+                            },
+                            "fullWidth": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Full Width",
+                              "value": "width"
+                            }
+                          }
+                        },
+                        "backdrop": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./backdropSelection",
+                          "fieldLabel": "Backdrop",
+                          "sling:resourceType": "granite/ui/components/foundation/form/select",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "noBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "No Backdrop",
+                              "value": ""
+                            },
+                            "fullBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Full Backdrop",
+                              "value": "component-backdrop--full"
+                            },
+                            "halfBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Half Backdrop",
+                              "value": "component-backdrop--half"
+                            },
+                            "offsetBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Offset Backdrop",
+                              "value": "component-backdrop--offset"
+                            },
+                            "overlapBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Overlap Backdrop",
+                              "value": "component-backdrop--overlap"
+                            },
+                            "offsetTopRightBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Offset Top Right Backdrop",
+                              "value": "component-backdrop__offset--top-right"
+                            },
+                            "offsetTopLeftBackdrop": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Offset Top Left Backdrop",
+                              "value": "component-backdrop__offset--top-left"
+                            }
+                          }
+                        },
+                        "themeColor": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./themeColor",
+                          "fieldLabel": "Theme Color",
+                          "showDefaultColors": false,
+                          "showProperties": false,
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/colorfield",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "claret": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "value": "#691C35"
+                            },
+                            "moccasin": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "value": "#F5E9DF"
+                            },
+                            "seashell": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "value": "#F9F4EE"
+                            },
+                            "gray20": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "value": "#CFD0D0"
+                            },
+                            "gray10": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "value": "#E1E3E3"
+                            },
+                            "white": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "value": "#FFFFFF"
+                            }
+                          }
+                        },
+                        "textColor": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./textColor",
+                          "fieldLabel": "Text Color",
+                          "showDefaultColors": false,
+                          "showProperties": false,
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/colorfield",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "white": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "value": "#FFFFFF"
+                            },
+                            "dark": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "value": "#132122"
+                            }
+                          }
+                        },
+                        "headerTypeSize": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./headerTypeSize",
+                          "fieldLabel": "Header Type Size",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "peta": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "peta - 56pt",
+                              "value": "text-size-fluid--tera-peta"
+                            },
+                            "giga": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "giga - 40pt",
+                              "value": "text-size-fluid--mega-giga"
+                            },
+                            "mega": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "mega - 32pt",
+                              "value": "text-size-fluid--kilo-mega"
+                            },
+                            "kilo": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "kilo - 24pt",
+                              "value": "text-size-fluid--base-kilo"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

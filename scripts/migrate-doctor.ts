@@ -13,22 +13,28 @@ import { join, relative } from "node:path";
 
 import {
   AEM_AUTH_FLOWS,
+  AEM_CONNECTIVITY_KEYS,
+  COMMITTED_TENANTS,
   OPERATOR_FILES,
   TEMPLATE_DIR,
   TEMPLATE_FILES,
   TENANTS_DIR,
+  hasFixturesContent,
+  inspectFixturesLayout,
   isMeaningfulValue,
   parseEnv,
   parseEnvExample,
   readFileIfExists,
+  resolveFixturesRoot,
   tenantDir,
+  type FixturesLayout,
 } from "./lib/tenant-template.ts";
 
 type Severity = "error" | "warn" | "info";
 
 interface Finding {
   severity: Severity;
-  area: "package.json" | "template-file" | "env" | "structure";
+  area: "package.json" | "template-file" | "env" | "structure" | "fixtures";
   message: string;
 }
 
@@ -42,11 +48,15 @@ function fail(msg: string): never {
   process.exit(2);
 }
 
-function checkPackageJson(dir: string, fix: boolean): void {
+function checkPackageJson(dir: string, fix: boolean, slug: string): void {
   const templatePkgPath = join(TEMPLATE_DIR, "package.json");
   const tenantPkgPath = join(dir, "package.json");
   if (!existsSync(tenantPkgPath)) {
     record("error", "structure", "package.json is missing");
+    return;
+  }
+  if (COMMITTED_TENANTS.has(slug)) {
+    record("info", "package.json", "committed tenant — scripts block not compared to template");
     return;
   }
   const templatePkg = JSON.parse(readFileSync(templatePkgPath, "utf8")) as Record<string, any>;
@@ -81,7 +91,11 @@ function checkPackageJson(dir: string, fix: boolean): void {
   }
 }
 
-function checkTemplateFiles(dir: string): void {
+function checkTemplateFiles(dir: string, slug: string): void {
+  if (COMMITTED_TENANTS.has(slug)) {
+    record("info", "template-file", "committed tenant — template file drift not checked");
+    return;
+  }
   for (const name of TEMPLATE_FILES) {
     const templatePath = join(TEMPLATE_DIR, name);
     const tenantPath = join(dir, name);
@@ -102,25 +116,70 @@ function checkTemplateFiles(dir: string): void {
   }
 }
 
-function checkEnv(dir: string): void {
-  const envExamplePath = join(dir, ".env.example");
-  const envPath = join(dir, ".env");
-  const envExampleContent = readFileIfExists(envExamplePath);
-  if (envExampleContent === null) {
-    record("error", "env", ".env.example missing");
+function recordFixturesLayoutFindings(
+  layout: FixturesLayout,
+  opts: { strictImages: boolean; buildHint?: string },
+): void {
+  if (!layout.exists) {
+    record("error", "fixtures", `fixtures directory not found: ${layout.fixturesRoot}`);
     return;
   }
-  const envContent = readFileIfExists(envPath);
-  if (envContent === null) {
-    record("error", "env", ".env missing — copy .env.example to .env and fill in values");
+  if (!layout.isDirectory) {
+    record("error", "fixtures", `AEM_FIXTURES_DIR is not a directory: ${layout.fixturesRoot}`);
     return;
   }
 
-  const declared = parseEnvExample(envExampleContent);
-  const tenantEnv = parseEnv(envContent);
+  const hasContent = layout.contentJsonCount > 0;
+  const hasComponents = layout.componentsJsonCount > 0;
+  const hasFlat = layout.flatInfinityJsonCount > 0;
+  const hint = opts.buildHint ? ` — ${opts.buildHint}` : "";
 
+  if (!hasContent) {
+    record(
+      "error",
+      "fixtures",
+      `fixtures missing /content/ .infinity.json trees${hint}`,
+    );
+  }
+  if (!hasComponents) {
+    record(
+      "error",
+      "fixtures",
+      `fixtures missing /apps/ .infinity.json trees${hint}`,
+    );
+  }
+  if (hasFlat && !hasContent && !hasComponents) {
+    record(
+      "info",
+      "fixtures",
+      `flat fixture layout (${layout.flatInfinityJsonCount} .infinity.json at root)`,
+    );
+  }
+
+  if (layout.assetCount === 0) {
+    const msg =
+      "fixtures assets/ missing or empty — run assets with --link-only or set MIGRATION_LINK_ONLY=true";
+    record(opts.strictImages ? "error" : "warn", "fixtures", msg);
+  } else {
+    record("info", "fixtures", `${layout.assetCount} fixture asset(s) under assets/`);
+  }
+
+  if (hasFixturesContent(layout)) {
+    record(
+      "info",
+      "fixtures",
+      `${layout.contentJsonCount} content + ${layout.componentsJsonCount} component fixture(s)`,
+    );
+  }
+}
+
+function validateTenantEnvRequired(
+  declared: ReturnType<typeof parseEnvExample>,
+  tenantEnv: Map<string, string>,
+  skipKeys: Set<string>,
+): void {
   for (const entry of declared) {
-    if (!entry.required) continue;
+    if (!entry.required || skipKeys.has(entry.key)) continue;
     const value = tenantEnv.get(entry.key);
     if (value === undefined) {
       record("error", "env", `${entry.key} is required but missing in .env`);
@@ -130,22 +189,111 @@ function checkEnv(dir: string): void {
       record("error", "env", `${entry.key}="${value}" still looks like a template placeholder`);
     }
   }
+}
 
-  const aemEnv = tenantEnv.get("AEM_ENV");
-  if (aemEnv === "author" || aemEnv === undefined) {
-    const matched = AEM_AUTH_FLOWS.some((flow) => {
-      if (flow.mode === "any-of") {
-        return flow.keys.some((k) => isMeaningfulValue(tenantEnv.get(k)));
-      }
-      return flow.keys.every((k) => isMeaningfulValue(tenantEnv.get(k)));
-    });
-    if (!matched) {
-      const options = AEM_AUTH_FLOWS.map((f) => `${f.name} (${f.keys.join(" + ")})`).join(" | ");
+function checkEnv(dir: string, slug: string): void {
+  const envExamplePath = join(dir, ".env.example");
+  const envPath = join(dir, ".env");
+  const envExampleContent = readFileIfExists(envExamplePath);
+  if (envExampleContent === null) {
+    record("error", "env", ".env.example missing");
+    return;
+  }
+
+  const declared = parseEnvExample(envExampleContent);
+  const isCommittedDemo = slug === "demo" && COMMITTED_TENANTS.has(slug);
+
+  if (isCommittedDemo) {
+    const fixturesVar = declared.find((d) => d.key === "AEM_FIXTURES_DIR");
+    if (!fixturesVar || !fixturesVar.required) {
+      record("error", "env", "demo tenant .env.example must declare AEM_FIXTURES_DIR");
+    }
+    record("info", "env", "committed tenant — offline fixtures; AEM auth not required in .env.example");
+
+    const envContent = readFileIfExists(envPath);
+    if (envContent === null) {
+      record("warn", "env", ".env missing — copy .env.example to .env and fill Sanity vars before migrate");
+      const fixturesRoot = resolveFixturesRoot(dir, "./fixtures/aem");
+      recordFixturesLayoutFindings(inspectFixturesLayout(fixturesRoot), {
+        strictImages: true,
+        buildHint: "run pnpm build:demo-fixtures",
+      });
+      return;
+    }
+
+    const tenantEnv = parseEnv(envContent);
+    validateTenantEnvRequired(declared, tenantEnv, AEM_CONNECTIVITY_KEYS);
+
+    const fixturesDirRaw = tenantEnv.get("AEM_FIXTURES_DIR");
+    if (!isMeaningfulValue(fixturesDirRaw)) {
       record(
-        "error",
+        "warn",
         "env",
-        `no AEM author authentication configured — pick one: ${options}`,
+        "AEM_FIXTURES_DIR unset in .env — offline replay requires ./fixtures/aem",
       );
+    }
+
+    const fixturesRoot = resolveFixturesRoot(
+      dir,
+      isMeaningfulValue(fixturesDirRaw) ? fixturesDirRaw! : "./fixtures/aem",
+    );
+    record("info", "env", "fixture replay mode — AEM HTTP disabled; auth not required");
+    recordFixturesLayoutFindings(inspectFixturesLayout(fixturesRoot), {
+      strictImages: true,
+      buildHint: "run pnpm build:demo-fixtures",
+    });
+
+    if (tenantEnv.get("MIGRATION_DRY_RUN") === "false") {
+      if (!isMeaningfulValue(tenantEnv.get("SANITY_MEDIA_LIBRARY_ID"))) {
+        record(
+          "error",
+          "env",
+          "MIGRATION_DRY_RUN=false but SANITY_MEDIA_LIBRARY_ID is unset — aem-assets will fail",
+        );
+      }
+    }
+    return;
+  }
+
+  const envContent = readFileIfExists(envPath);
+  if (envContent === null) {
+    record("error", "env", ".env missing — copy .env.example to .env and fill in values");
+    return;
+  }
+
+  const tenantEnv = parseEnv(envContent);
+  const fixturesDirRaw = tenantEnv.get("AEM_FIXTURES_DIR");
+  const fixtureMode = isMeaningfulValue(fixturesDirRaw);
+
+  validateTenantEnvRequired(
+    declared,
+    tenantEnv,
+    fixtureMode ? AEM_CONNECTIVITY_KEYS : new Set(),
+  );
+
+  if (fixtureMode) {
+    record("info", "env", "fixture replay mode — AEM HTTP disabled; auth not required");
+    const fixturesRoot = resolveFixturesRoot(dir, fixturesDirRaw!);
+    recordFixturesLayoutFindings(inspectFixturesLayout(fixturesRoot), {
+      strictImages: false,
+    });
+  } else {
+    const aemEnv = tenantEnv.get("AEM_ENV");
+    if (aemEnv === "author" || aemEnv === undefined) {
+      const matched = AEM_AUTH_FLOWS.some((flow) => {
+        if (flow.mode === "any-of") {
+          return flow.keys.some((k) => isMeaningfulValue(tenantEnv.get(k)));
+        }
+        return flow.keys.every((k) => isMeaningfulValue(tenantEnv.get(k)));
+      });
+      if (!matched) {
+        const options = AEM_AUTH_FLOWS.map((f) => `${f.name} (${f.keys.join(" + ")})`).join(" | ");
+        record(
+          "error",
+          "env",
+          `no AEM author authentication configured — pick one: ${options} (or set AEM_FIXTURES_DIR for offline replay)`,
+        );
+      }
     }
   }
 
@@ -237,10 +385,10 @@ function main(): void {
       exitCode = Math.max(exitCode, 2);
       continue;
     }
-    checkPackageJson(dir, fix);
-    checkTemplateFiles(dir);
+    checkPackageJson(dir, fix, slug);
+    checkTemplateFiles(dir, slug);
     ensureNotIgnoringOperatorFiles(dir);
-    checkEnv(dir);
+    checkEnv(dir, slug);
     exitCode = Math.max(exitCode, render(slug));
   }
   process.exit(exitCode);

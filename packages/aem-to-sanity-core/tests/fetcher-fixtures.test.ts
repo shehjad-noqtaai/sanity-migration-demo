@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -6,8 +6,10 @@ import {
   AemFetchError,
   applyFixturesFromEnv,
   buildFixturesFetch,
+  decodeLegacyFixtureFilename,
   fetchInfinityJson,
-  fixtureFilenameForUrl,
+  fixtureLegacyFilenameForUrl,
+  fixtureRelativePathForUrl,
   lookupFixture,
   maybeApplyFixturesMode,
   type FetchDeps,
@@ -39,23 +41,43 @@ describe("fetcher-fixtures", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("fixtureFilenameForUrl encodes slashes to __", () => {
-    expect(fixtureFilenameForUrl("/content/dbi.infinity.json")).toBe(
-      "content__dbi.infinity.json",
+  it("fixtureRelativePathForUrl mirrors URL paths", () => {
+    expect(fixtureRelativePathForUrl("/content/dbi.infinity.json")).toBe(
+      "content/dbi.infinity.json",
     );
     expect(
-      fixtureFilenameForUrl(
+      fixtureRelativePathForUrl(
         "/apps/dbi/components/content/about/_cq_dialog.infinity.json",
       ),
-    ).toBe(
-      "apps__dbi__components__content__about___cq_dialog.infinity.json",
-    );
-    expect(fixtureFilenameForUrl("/content/dbi.4.json")).toBe(
-      "content__dbi.4.json",
+    ).toBe("apps/dbi/components/content/about/_cq_dialog.infinity.json");
+  });
+
+  it("fixtureLegacyFilenameForUrl encodes slashes to __", () => {
+    expect(fixtureLegacyFilenameForUrl("/content/dbi.infinity.json")).toBe(
+      "content__dbi.infinity.json",
     );
   });
 
-  it("returns the JSON body for a 200 fixture", async () => {
+  it("decodeLegacyFixtureFilename reverses legacy encoding", () => {
+    expect(
+      decodeLegacyFixtureFilename(
+        "apps__dbi__components__content__about___cq_dialog.infinity.json",
+      ),
+    ).toBe("apps/dbi/components/content/about/_cq_dialog.infinity.json");
+  });
+
+  it("returns the JSON body for a path-mirror 200 fixture", async () => {
+    mkdirSync(join(dir, "content"), { recursive: true });
+    writeFileSync(
+      join(dir, "content", "a.infinity.json"),
+      JSON.stringify({ hello: "world" }),
+    );
+    const fetchImpl = buildFixturesFetch(dir, baseUrl);
+    const tree = await fetchInfinityJson(deps(fetchImpl), "/content/a");
+    expect(tree).toEqual({ hello: "world" });
+  });
+
+  it("returns the JSON body for a legacy 200 fixture", async () => {
     writeFileSync(
       join(dir, "content__a.infinity.json"),
       JSON.stringify({ hello: "world" }),
@@ -162,6 +184,39 @@ describe("fetcher-fixtures", () => {
     expect(() => lookupFixture(dir, "/content/x.infinity.json")).toThrow(
       /both a body file and a meta sidecar exist/,
     );
+  });
+
+  it("lookupFixture prefers path-mirror over legacy flat files", async () => {
+    writeFileSync(
+      join(dir, "content__page.infinity.json"),
+      JSON.stringify({ legacy: true }),
+    );
+    mkdirSync(join(dir, "content"), { recursive: true });
+    writeFileSync(
+      join(dir, "content", "page.infinity.json"),
+      JSON.stringify({ mirrored: true }),
+    );
+    const fetchImpl = buildFixturesFetch(dir, baseUrl);
+    const tree = await fetchInfinityJson(deps(fetchImpl), "/content/page");
+    expect(tree).toEqual({ mirrored: true });
+  });
+
+  it("lookupFixture resolves legacy bucket subdirs", async () => {
+    mkdirSync(join(dir, "content"), { recursive: true });
+    mkdirSync(join(dir, "components"), { recursive: true });
+    writeFileSync(
+      join(dir, "content", "content__page.infinity.json"),
+      JSON.stringify({ page: true }),
+    );
+    writeFileSync(
+      join(dir, "components", "apps__foo__bar.infinity.json"),
+      JSON.stringify({ dialog: true }),
+    );
+    const fetchImpl = buildFixturesFetch(dir, baseUrl);
+    const page = await fetchInfinityJson(deps(fetchImpl), "/content/page");
+    expect(page).toEqual({ page: true });
+    const dialog = await fetchInfinityJson(deps(fetchImpl), "/apps/foo/bar");
+    expect(dialog).toEqual({ dialog: true });
   });
 
   it("maybeApplyFixturesMode only fires when deps.fixturesDir is set (env is ignored)", async () => {

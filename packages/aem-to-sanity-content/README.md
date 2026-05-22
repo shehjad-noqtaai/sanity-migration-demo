@@ -3,10 +3,10 @@
 AEM → Sanity content migration as five flat scripts. Each step is inspectable on disk, so you can stop between phases and re-run just one.
 
 ```
-aem-extract    AEM  → output/raw/*.json                       + output/extract-report.json
+aem-extract    AEM  → output/cache/aem/content/**/*.json          + output/cache/extract-report.json
 aem-tags       AEM  → output/cache/categories/*.json + manifest.json + output/cache/tags-report.json   (optional)
-aem-transform  raw + categories manifest → output/clean/*.json + output/transform-report.json
-aem-assets     DAM  → output/assets/* + Sanity                + output/assets/manifest.json           (resumable)
+aem-transform  cache/aem/content + categories manifest → output/cache/clean/**/*.json + output/cache/transform-report.json
+aem-assets     DAM  → output/cache/assets/* + Sanity                + output/cache/assets/manifest.json           (resumable)
 aem-import     clean + categories → Sanity (dry-run by default)
 ```
 
@@ -86,6 +86,8 @@ MIGRATION_DRY_RUN=false pnpm aem-import                  # commit docs (categori
 
 - `--upload-only` — skip phase 1 (download from AEM); assumes local cache is populated.
 - `--link-only` (or `MIGRATION_LINK_ONLY=true`) — skip phases 1 + 2 entirely. Phase 0's ML lookup finds assets already in the Media Library and links them into the dataset. Useful for re-runs, for iterating on link/rewrite logic without re-hitting AEM, or when assets were pushed out-of-band. Mutually exclusive with `--upload-only`. See § *aem-assets — Media Library flow* below for the caveat about the `aemSource` aspect.
+- When `AEM_FIXTURES_DIR` is set, phase 1 copies DAM binaries from `{AEM_FIXTURES_DIR}/assets/` (offline demo tenant). See § *Fixture assets mode*.
+- `--placeholders` (or `MIGRATION_ASSETS_PLACEHOLDERS=true`) — legacy: skip AEM download; copy SVG files from `./placeholders/` into the local cache (hashed to 12 slots). Mutually exclusive with `--link-only`, `--upload-only`, and `AEM_FIXTURES_DIR`. See § *`--placeholders` mode*.
 - `--no-rewrite` — skip the in-place rewrite of `clean/*.json`.
 
 `aem-import` flags:
@@ -173,7 +175,7 @@ Or, instead of listing every template by hand, let the schema pass discover them
 }
 ```
 
-With `discover: true`, `migrate:schema` walks `output/cache/raw/*.json` to enumerate every `cq:template` value on matching `jcr:content` nodes — so the doc-type list grows automatically as new templates appear in your AEM content. Explicit `templates` and `discover: true` can coexist (discovered values append to the explicit list, deduplicated).
+With `discover: true`, `migrate:schema` walks `output/cache/aem/content/` (populated by `aem-extract`) to enumerate every `cq:template` value on matching `jcr:content` nodes — so the doc-type list grows automatically as new templates appear in your AEM content. Explicit `templates` and `discover: true` can coexist (discovered values append to the explicit list, deduplicated).
 
 `migrate:schema` emits one Sanity document type per (resourceType, template) pair (`planDetailsPage`, `newsArticlePage`, …) and writes an `output/cache/page-templates.json` manifest. `aem-transform` reads that manifest and, for each raw page whose `jcr:content` matches a declared pair, emits a document with:
 
@@ -193,7 +195,7 @@ Missing / empty file → every page uses the generic `page` doc (today's behavio
 A different AEM pattern shows up on components like `media-paragraph`: a single nested child under a **fixed** JCR key (e.g. `content`) whose value is itself a full component with its own `sling:resourceType`. Not a dialog field, not a drop-zone container — just a named slot.
 
 - **Transform** always emits these as single nested blocks under the slot key (`mediaParagraph.content = {_type: 'content', text: [{_type:'block', ...}], ...}`). Detection is structural: any direct child with `sling:resourceType` that isn't already claimed by container logic is a slot. Works on the first run with no config.
-- **Schema** catches up on the next `migrate:schema`: that pass scans `output/cache/raw/` (extracted content) and appends a typed `defineField({ name: slotKey, type: childTypeName })` to the parent schema. Until then the Studio shows a yellow "Unknown fields found" warning on the nested data but the data itself is preserved.
+- **Schema** catches up on the next `migrate:schema`: that pass scans `output/cache/aem/content/` (extracted content) and appends a typed `defineField({ name: slotKey, type: childTypeName })` to the parent schema. Until then the Studio shows a yellow "Unknown fields found" warning on the nested data but the data itself is preserved.
 
 There's no config for named slots — the shape is inferred from content. Container parents (listed in `aem-component-containers.json`) skip slot synthesis so their drop-zone children stay on the container-items path.
 
@@ -207,18 +209,18 @@ Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (de
 
 ## Reports
 
-- `output/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.
-- `output/extract-404.log` — one `<jcrPath>\t<fullUrl>` per 404 (only written when 404s occur).
-- `output/transform-report.json` — unknown `sling:resourceType`s (with hit counts and example paths), unknown properties per mapped component, transform bails (max-depth or cycle). `aem-transform` also echoes unmapped types to the console at the end of the run as a paste-ready `/apps/...` list (the page root and `responsivegrid` wrapper are hidden — they're always passthroughs, never missing schemas). Add the listed paths to `aem-component-paths`, then re-run `migrate:schema` → `transform` → `import` so the new component's content stops being dropped.
-- `output/assets-report.json` — asset download/upload/link counts, failures.
-- `output/assets/manifest.json` — per-asset state (damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef + sanityRef). Drives resumability for all four phases: download, upload to Media Library, GDR link to dataset, doc rewrite.
+- `output/cache/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.
+- `output/cache/extract-404.log` — one `<jcrPath>\t<fullUrl>` per 404 (only written when 404s occur).
+- `output/cache/transform-report.json` — unknown `sling:resourceType`s (with hit counts and example paths), unknown properties per mapped component, transform bails (max-depth or cycle). `aem-transform` also echoes unmapped types to the console at the end of the run as a paste-ready `/apps/...` list (the page root and `responsivegrid` wrapper are hidden — they're always passthroughs, never missing schemas). Add the listed paths to `aem-component-paths`, then re-run `migrate:schema` → `transform` → `import` so the new component's content stops being dropped.
+- `output/cache/assets-report.json` — asset download/upload/link counts, failures.
+- `output/cache/assets/manifest.json` — per-asset state (damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef + sanityRef). Drives resumability for all four phases: download, upload to Media Library, GDR link to dataset, doc rewrite.
 
 ## aem-assets — Media Library flow (@shehjadkhan 2026-04-22)
 
 `aem-assets` runs five phases. Dry-run default stops after phase 1 (local download).
 
 0. **Dedup against the Media Library + manifest staleness check** — GROQ on `aspects.aemSource.damPath`. A hit populates the manifest with both ids so phases 1+2 skip entirely for that asset. When the lookup misses but the manifest claims an `mediaLibraryAssetId`, phase 0 verifies the doc still exists in the ML by id; if it's been deleted (e.g. ML wipe), the stale linkage is cleared so phases 2-3 re-upload + re-link for real. Transport errors are treated conservatively — manifest state is preserved and the next healthy-network run re-verifies. Requires the `aemSource` aspect to be deployed once per ML. Skipped on dry-run by default; `--link-only` forces it to run (safe, read-only).
-1. **Download** AEM DAM binary → local cache in `output/assets/`.
+1. **Download** AEM DAM binary → local cache in `output/cache/assets/`.
 2. **Upload to Media Library** — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload`. Response `{asset: {_id}, assetInstance: {_id}}` captures the parent asset id and the versioned instance id (both needed for step 3). Uses `SANITY_TOKEN`. A project robot token historically worked here, but newer Media Library API versions reject project-scoped sessions with `401 SIO-401-ANF "Session not found"` — when that happens, swap in a **personal auth token** (see `docs/running-the-migration.md` § 4c-bis for how to mint one).
 3. **Link to dataset** — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Response `{document: {_id, media: {_ref}, ...}}` — `document._id` is the dataset-local asset ref that goes into docs. **Requires a personal auth token** (`SANITY_ML_LINK_TOKEN`) because the endpoint rejects project robot tokens with `401 Invalid non-global session`. See `docs/running-the-migration.md` § 4c-bis.
 4. **Rewrite clean docs** in place — every `/content/dam/...` string becomes `{_type:'image'|'file', asset:{_ref:'<linked-ref>'}}`. Pattern A (Studio-compatible), matches existing doc shape.
@@ -227,12 +229,20 @@ Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (de
 
 Runs phase 0, skips phases 1 + 2, runs phases 3 + 4. Use when assets are already in the ML (from an earlier run or pushed out-of-band). Any DAM path that phase 0 can't find in the ML is reported up front and ends up in the phase-4 `unresolved` summary. Phase 0's lookup only finds assets that this pipeline previously stamped — assets uploaded through the Studio UI without the `aemSource` aspect won't resolve by DAM path.
 
-Manifest entry shape (`output/assets/manifest.json`):
+### Fixture assets mode
+
+When `AEM_FIXTURES_DIR` is set, phase 1 copies committed DAM binaries from `{AEM_FIXTURES_DIR}/assets/` into the local asset cache (same flatten naming as the asset cache: `/content/dam/foo/bar.jpg` → `foo--bar.jpg`). Phases 2–4 run unchanged. Used by the offline [`tenants/demo/`](../../tenants/demo/) tenant. Mutually exclusive with `--placeholders`.
+
+### `--placeholders` mode (legacy)
+
+Skips AEM download (phase 1). Copies SVG files from `./placeholders/` into the local asset cache — each DAM path hashes to one of 12 slots (`placeholder-slot-00.svg` … `placeholder-slot-11.svg`). Prefer fixture images for the demo tenant. Mutually exclusive with `--link-only`, `--upload-only`, and `AEM_FIXTURES_DIR`.
+
+Manifest entry shape (`output/cache/assets/manifest.json`):
 
 ```ts
 {
   damPath: "/content/dam/dbi/m1.png",
-  cachedFile: "/path/to/output/assets/dbi--m1.png",
+  cachedFile: "/path/to/output/cache/assets/dbi--m1.png",
   mimeType: "image/png", fileSize: 4049,
   mediaLibraryAssetId: "3CjO...",                // asset._id in ML
   linkedAssetInstanceId: "image-<sha1>-WxH-png", // assetInstance._id in ML

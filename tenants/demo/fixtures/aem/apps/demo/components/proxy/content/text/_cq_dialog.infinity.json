@@ -1,0 +1,170 @@
+{
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Text",
+  "trackingFeature": "core-components:text:v2",
+  "helpPath": "https://www.adobe.com/go/aem_cmp_text_v2",
+  "extraClientlibs": [
+    "demo.components.dialog.editor.text"
+  ],
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "properties": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Properties",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "text": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./text",
+                        "sling:resourceType": "cq/gui/components/authoring/dialog/richtext",
+                        "useFixedInlineToolbar": true,
+                        "rtePlugins": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceSuperType": "demo/components/commons/plugins/v1/dialogs/rtePlugins"
+                        },
+                        "htmlRules": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceSuperType": "demo/components/commons/plugins/v1/dialogs/htmlRules"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "tabStyle": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Styles",
+            "path": "/mnt/overlay/demo/components/commons/margins/styles/cq:dialog/styles",
+            "sling:orderBefore": "content-toggle",
+            "sling:resourceType": "granite/ui/components/coral/foundation/include"
+          },
+          "cq:include": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/mnt/overlay/demo/components/commons/permission/permission/cq:dialog/permission",
+            "sling:resourceType": "granite/ui/components/coral/foundation/include"
+          },
+          "content-toggle": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Display",
+            "margin": true,
+            "sling:orderBefore": "properties",
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "contentToggle": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": false,
+                        "name": "./contentToggle",
+                        "value": true,
+                        "fieldLabel": "Enable Content Toggle",
+                        "checked": false,
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/switch",
+                        "fieldDescription": "Demo Heading E"
+                      },
+                      "switchcontents": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./switchContents",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "show-less": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./showLess",
+                            "fieldLabel": "Label for Show Less",
+                            "sling:orderBefore": "activeItem",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                          },
+                          "show-more": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./showMore",
+                            "fieldLabel": "Label for Show More",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                          },
+                          "preview-content": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./previewcontent",
+                            "fieldLabel": "Preview Content",
+                            "sling:resourceType": "cq/gui/components/authoring/dialog/richtext",
+                            "useFixedInlineToolbar": true,
+                            "rtePlugins": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "sling:resourceSuperType": "demo/components/commons/plugins/v1/dialogs/rtePlugins"
+                            },
+                            "htmlRules": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "sling:resourceSuperType": "demo/components/commons/plugins/v1/dialogs/htmlRules"
+                            }
+                          }
+                        }
+                      },
+                      "textStyle": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "path": "/apps/demo/components/commons/textstyle/v1/dialogs/textStyleTDDS",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/include"
+                      },
+                      "textAlignment": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "path": "/apps/demo/components/commons/textstyle/v1/dialogs/textAlignment",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/include"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "tabColor": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Color",
+            "sling:orderBefore": "cq:include",
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "textColor": {
+                "jcr:primaryType": "nt:unstructured",
+                "path": "/apps/demo/components/commons/textstyle/v1/dialogs/wellColorText",
+                "sling:resourceType": "granite/ui/components/coral/foundation/include"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

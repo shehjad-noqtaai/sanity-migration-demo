@@ -1,0 +1,139 @@
+{
+  "jcr:primaryType": "cq:Tag",
+  "jcr:mixinTypes": [
+    "cq:ReplicationStatus",
+    "cq:ReplicationStatus2"
+  ],
+  "jcr:createdBy": "David.Parker105@Site B.com",
+  "jcr:title": "Promotion",
+  "cq:lastReplicatedBy_publish": "Nikhil.Patel100@Site B.com",
+  "cq:isDelivered": false,
+  "cq:lastReplicationAction": "Activate",
+  "cq:lastReplicatedBy": "Nikhil.Patel100@Site B.com",
+  "cq:lastReplicationAction_publish": "Activate",
+  "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+  "cq:lastReplicated": "Thu Nov 14 2024 20:27:23 GMT+0000",
+  "sling:resourceType": "cq/tagging/components/tag",
+  "cq:lastReplicated_publish": "Thu Nov 14 2024 20:27:23 GMT+0000",
+  "status": {
+    "jcr:primaryType": "cq:Tag",
+    "jcr:createdBy": "David.Parker105@Site B.com",
+    "jcr:title": "Status",
+    "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+    "sling:resourceType": "cq/tagging/components/tag",
+    "expired": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:mixinTypes": [
+        "cq:ReplicationStatus",
+        "cq:ReplicationStatus2"
+      ],
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Expired",
+      "cq:lastReplicatedBy_publish": "Nikhil.Patel100@Site B.com",
+      "cq:isDelivered": false,
+      "cq:lastReplicationAction": "Activate",
+      "cq:lastReplicatedBy": "Nikhil.Patel100@Site B.com",
+      "cq:lastReplicationAction_publish": "Activate",
+      "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+      "cq:lastReplicated": "Thu Nov 14 2024 20:27:23 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag",
+      "cq:lastReplicated_publish": "Thu Nov 14 2024 20:27:23 GMT+0000"
+    },
+    "in-market": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:mixinTypes": [
+        "cq:ReplicationStatus",
+        "cq:ReplicationStatus2"
+      ],
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "In market",
+      "cq:lastReplicatedBy_publish": "John.Kinder1@Site B.com",
+      "cq:isDelivered": false,
+      "cq:lastReplicationAction": "Activate",
+      "cq:lastReplicatedBy": "John.Kinder1@Site B.com",
+      "cq:lastReplicationAction_publish": "Activate",
+      "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+      "cq:lastReplicated": "Tue Oct 15 2024 21:14:43 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag",
+      "cq:lastReplicated_publish": "Tue Oct 15 2024 21:14:43 GMT+0000"
+    },
+    "coming-soon": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Coming soon",
+      "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag"
+    }
+  },
+  "payout": {
+    "jcr:primaryType": "cq:Tag",
+    "jcr:createdBy": "David.Parker105@Site B.com",
+    "jcr:title": "Payout",
+    "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+    "sling:resourceType": "cq/tagging/components/tag",
+    "claim-code": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Claim Code",
+      "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag"
+    },
+    "promotional-bill-credits": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:mixinTypes": [
+        "cq:ReplicationStatus",
+        "cq:ReplicationStatus2"
+      ],
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Promotional Bill Credits",
+      "cq:lastReplicatedBy_publish": "dhanashree.botre1@Site B.com",
+      "cq:isDelivered": false,
+      "cq:lastReplicationAction_scene7": "Activate",
+      "cq:lastReplicationAction": "Activate",
+      "cq:lastReplicatedBy": "dhanashree.botre1@Site B.com",
+      "cq:lastReplicationAction_publish": "Activate",
+      "cq:lastReplicatedBy_scene7": "dhanashree.botre1@Site B.com",
+      "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+      "cq:lastReplicated": "Mon Apr 14 2025 12:44:30 GMT+0000",
+      "cq:lastReplicated_scene7": "Mon Apr 14 2025 12:44:30 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag",
+      "cq:lastReplicated_publish": "Mon Apr 14 2025 12:44:30 GMT+0000"
+    },
+    "recurring-device-credits": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:mixinTypes": [
+        "cq:ReplicationStatus",
+        "cq:ReplicationStatus2"
+      ],
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Recurring Device Credits",
+      "cq:lastReplicatedBy_publish": "Nikhil.Patel100@Site B.com",
+      "cq:isDelivered": false,
+      "cq:lastReplicationAction": "Activate",
+      "cq:lastReplicatedBy": "Nikhil.Patel100@Site B.com",
+      "cq:lastReplicationAction_publish": "Activate",
+      "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+      "cq:lastReplicated": "Thu Nov 14 2024 20:27:23 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag",
+      "cq:lastReplicated_publish": "Thu Nov 14 2024 20:27:23 GMT+0000"
+    },
+    "rebates": {
+      "jcr:primaryType": "cq:Tag",
+      "jcr:mixinTypes": [
+        "cq:ReplicationStatus",
+        "cq:ReplicationStatus2"
+      ],
+      "jcr:createdBy": "David.Parker105@Site B.com",
+      "jcr:title": "Rebates",
+      "cq:lastReplicatedBy_publish": "roy.moujabber1@Site B.com",
+      "cq:isDelivered": false,
+      "cq:lastReplicationAction": "Activate",
+      "cq:lastReplicatedBy": "roy.moujabber1@Site B.com",
+      "cq:lastReplicationAction_publish": "Activate",
+      "jcr:created": "Tue Oct 08 2024 17:41:45 GMT+0000",
+      "cq:lastReplicated": "Fri Jan 02 2026 23:19:32 GMT+0000",
+      "sling:resourceType": "cq/tagging/components/tag",
+      "cq:lastReplicated_publish": "Fri Jan 02 2026 23:19:32 GMT+0000"
+    }
+  }
+}

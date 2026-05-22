@@ -1,0 +1,113 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Properties",
+    "height": 600,
+    "width": 630,
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "section": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/abstract-section/cq:dialog/content/items/tabs/items/section",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            },
+            "theme": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Theme",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "theme": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./theme",
+                          "fieldLabel": "Theme",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "white": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "White",
+                              "value": "white"
+                            },
+                            "seashell": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Seashell",
+                              "value": "seashell"
+                            },
+                            "seashell-alt": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Seashell-alt",
+                              "value": "seashell-alt"
+                            },
+                            "mocassin": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Mocassin",
+                              "value": "mocassin"
+                            },
+                            "mocassin-alt": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Mocassin-alt",
+                              "value": "mocassin-alt"
+                            },
+                            "claret": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Claret",
+                              "value": "claret"
+                            },
+                            "claret-alt": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Claret-alt",
+                              "value": "claret-alt"
+                            },
+                            "black": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Black",
+                              "value": "black"
+                            },
+                            "black-alt": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "text": "Black-alt",
+                              "value": "black-alt"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "buttonsTab": {
+              "jcr:primaryType": "nt:unstructured",
+              "path": "/apps/demo-site-a/components/dialog/buttons-tab/cq:dialog/content/items/tabs/items/buttonsTab",
+              "sling:resourceType": "granite/ui/components/foundation/include"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "SEO Sitemap",
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "properties": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Select the Sitemap Links",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "linkMulti": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "composite": true,
+                          "fieldLabel": "Select Links",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                          "field": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./multiLinks",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "column": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                                "items": {
+                                  "jcr:primaryType": "nt:unstructured",
+                                  "ctaLabel": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./ctaLabel",
+                                    "fieldLabel": "Cta Label",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                                  },
+                                  "ctaCategoryPath": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./ctaCategoryPath",
+                                    "selectionId": "path",
+                                    "fieldLabel": "PLP Path",
+                                    "eaem-show-on-collapse": "EAEM.showProductName",
+                                    "sling:resourceType": "/libs/commerce/gui/components/common/cifcategoryfield",
+                                    "fieldDescription": "Choose the PLP Page Path"
+                                  },
+                                  "ctaProductPath": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "name": "./ctaProductPath",
+                                    "selectionId": "slug",
+                                    "fieldLabel": "Product Path",
+                                    "eaem-show-on-collapse": "EAEM.showProductName",
+                                    "sling:resourceType": "/libs/commerce/gui/components/common/cifproductfield",
+                                    "fieldDescription": "Choose the PDP Page Path"
+                                  },
+                                  "ctaLink": {
+                                    "jcr:primaryType": "nt:unstructured",
+                                    "rootPath": "/content/demo",
+                                    "name": "./ctaLink",
+                                    "fieldLabel": "Cta Link ",
+                                    "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

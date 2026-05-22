@@ -1,0 +1,811 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Page",
+  "extraClientlibs": [
+    "Demo Heading E",
+    "Demo Heading C",
+    "core.wcm.components.image.v3.editor"
+  ],
+  "mode": "edit",
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "granite:class": "cq-dialog-content-page",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "granite:class": "cq-siteadmin-admin-properties-tabs",
+        "size": "L",
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "advanced": {
+            "jcr:primaryType": "nt:unstructured",
+            "cq:showOnCreate": true,
+            "jcr:title": "Advanced",
+            "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "column": {
+                "jcr:primaryType": "nt:unstructured",
+                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "section1": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "jcr:title": "Settings",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "language": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "emptyText": "Select",
+                        "granite:class": "language",
+                        "name": "./jcr:language",
+                        "fieldLabel": "Language",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "renderReadOnly": true,
+                        "translateOptions": true,
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "jcr:language"
+                        },
+                        "datasource": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "addNone": true,
+                          "sling:resourceType": "cq/gui/components/common/datasources/languages"
+                        },
+                        "granite:rendercondition": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceType": "utils/granite/rendercondition/simple/sites-apps"
+                        }
+                      },
+                      "isLanguageRoot": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./cq:isLanguageRoot",
+                        "text": "Language Root",
+                        "value": "true",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                        "renderReadOnly": true,
+                        "fieldDescription": "Demo Heading G",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "cq:isLanguageRoot"
+                        },
+                        "granite:rendercondition": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceType": "utils/granite/rendercondition/simple/sites-apps"
+                        }
+                      },
+                      "redirect": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "cq:showOnCreate": true,
+                        "rootPath": "/content",
+                        "name": "./cq:redirectTarget",
+                        "nodeTypes": "cq:Page",
+                        "fieldLabel": "Redirect",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "cq:redirectTarget"
+                        }
+                      },
+                      "redirectPermanent": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "cq:showOnCreate": true,
+                        "name": "./cq:redirectPermanent",
+                        "text": "Permanent Redirect",
+                        "value": "true",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                        "fieldDescription": "Demo Heading C",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "cq:redirectPermanent"
+                        }
+                      },
+                      "designs": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./cq:designPath",
+                        "fieldLabel": "Design",
+                        "sling:resourceType": "wcm/designer/gui/components/designfield",
+                        "renderReadOnly": true,
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "cq:designPath"
+                        }
+                      },
+                      "alias": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "cq:showOnCreate": true,
+                        "name": "./sling:alias",
+                        "fieldLabel": "Alias",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                        "renderReadOnly": true,
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "sling:alias"
+                        }
+                      }
+                    }
+                  },
+                  "configuration": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "jcr:title": "Configuration",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "cqConf": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "emptyText": "Select Configuration Path",
+                        "fieldLabel": "Cloud Configuration",
+                        "sling:resourceType": "cq/cloudconfig/components/admin/configpathbrowser",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "cq:conf"
+                        }
+                      }
+                    }
+                  },
+                  "spa": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "spa": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "jcr:title": "SPA configuration",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "alias": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "name": "./remoteURL",
+                            "fieldLabel": "Remote APP URL",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                          }
+                        }
+                      }
+                    },
+                    "granite:rendercondition": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "toggleName": "ft-cq-4303977",
+                      "sling:resourceType": "granite/ui/components/renderconditions/featuretoggle"
+                    }
+                  },
+                  "templates": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "cq:showOnCreate": false,
+                    "jcr:title": "Templates Settings",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "allowedtemplates": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "granite:class": "foundation-layout-util-maximized-alt",
+                        "fieldLabel": "Allowed Templates",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                        "renderReadOnly": true,
+                        "fieldDescription": "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium.",
+                        "field": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./cq:allowedTemplates",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "renderReadOnly": true
+                        }
+                      }
+                    },
+                    "granite:rendercondition": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "utils/granite/rendercondition/simple/sites-apps"
+                    }
+                  },
+                  "dr_number": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "cq:showOnCreate": false,
+                    "jcr:title": "Add DR Number",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "add_dr": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "granite:class": "foundation-layout-util-maximized-alt",
+                        "fieldLabel": "ADD DR Number",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                        "renderReadOnly": true,
+                        "fieldDescription": "Click 'Add DR' to add DR Number",
+                        "field": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./drNumber",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "renderReadOnly": true
+                        }
+                      }
+                    },
+                    "granite:rendercondition": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "toggleName": "FT_SITES-14389",
+                      "sling:resourceType": "granite/ui/components/renderconditions/featuretoggle"
+                    }
+                  },
+                  "authenticationrequirement": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "cq:showOnCreate": false,
+                    "jcr:title": "Authentication Requirement",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "cugconfigwarning": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "warning": "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia.",
+                        "sling:resourceType": "cq/gui/components/siteadmin/admin/properties/cugconfigwarning"
+                      },
+                      "enable": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "Enable",
+                        "sling:resourceType": "cq/gui/components/siteadmin/admin/properties/authrequirement",
+                        "fieldDescription": "Demo Heading F"
+                      },
+                      "loginpath": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "rootPath": "/content",
+                        "name": "./cq:loginPath",
+                        "fieldLabel": "Login Page",
+                        "sling:resourceType": "cq/gui/components/siteadmin/admin/properties/loginpath",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "cq:loginPath"
+                        }
+                      }
+                    }
+                  },
+                  "export": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "cq:showOnCreate": false,
+                    "jcr:title": "Export",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "exConfig": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "rootPath": "/etc/contentsync/templates",
+                        "name": "./cq:exportTemplate",
+                        "nodeTypes": "nt:unstructured",
+                        "fieldLabel": "Export Configuration",
+                        "optionLoader": "cq.exportTemplate",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                        "renderReadOnly": true,
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "cq:exportTemplate"
+                        }
+                      }
+                    }
+                  },
+                  "seo": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "jcr:title": "SEO",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "canonicalUrl": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "rootPath": "/content",
+                        "name": "./cq:canonicalUrl",
+                        "nodeTypes": "cq:Page",
+                        "fieldLabel": "Canonical Url",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                        "fieldDescription": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate.",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "cq:canonicalUrl"
+                        }
+                      },
+                      "robotsTags": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./cq:robotsTags",
+                        "fieldLabel": "Robots Tags",
+                        "multiple": true,
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "fieldDescription": "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia.",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "index": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "index",
+                            "value": "index"
+                          },
+                          "noindex": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "noindex",
+                            "value": "noindex"
+                          },
+                          "follow": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "follow",
+                            "value": "follow"
+                          },
+                          "nofollow": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "nofollow",
+                            "value": "nofollow"
+                          },
+                          "noarchive": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "noarchive",
+                            "value": "noarchive"
+                          },
+                          "nosnippet": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "nosnippet",
+                            "value": "nosnippet"
+                          },
+                          "noimageindex": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "noimageindex",
+                            "value": "noimageindex"
+                          },
+                          "notranslate": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "notranslate",
+                            "value": "notranslate"
+                          }
+                        },
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "./cq:robotsTags"
+                        }
+                      },
+                      "sitemapRoot": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./sling:sitemapRoot",
+                        "text": "Generate Sitemap",
+                        "value": "true",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                        "renderReadOnly": true,
+                        "fieldDescription": "Demo Heading C",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "./sling:sitemapRoot"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "thumbnail": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Images",
+            "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "column": {
+                "jcr:primaryType": "nt:unstructured",
+                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "featuredimage": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "jcr:title": "Featured Image",
+                    "granite:class": "cmp-image__editor asset-editor",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "fileNew": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "fileReferenceParameter": "./cq:featuredimage/fileReference",
+                        "rootPath": "/content/dam/demo/_generated/site-b.gif",
+                        "fileNameParameter": "./cq:featuredimage/fileName",
+                        "name": "./cq:featuredimage/fileReference",
+                        "nodeTypes": "dam:Asset",
+                        "fieldLabel": "Image",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "/cq:featuredimage"
+                        }
+                      },
+                      "file": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "fileReferenceParameter": "./cq:featuredimage/fileReference",
+                        "granite:class": "Demo Heading C",
+                        "mimeTypes": [
+                          "image/gif",
+                          "image/jpeg",
+                          "image/png",
+                          "image/tiff",
+                          "image/svg+xml"
+                        ],
+                        "fileNameParameter": "./cq:featuredimage/fileName",
+                        "name": "./cq:featuredimage/file",
+                        "class": "cq-droptarget",
+                        "disabled": true,
+                        "allowDrop": false,
+                        "fieldLabel": "Image Preview",
+                        "allowUpload": false,
+                        "sling:resourceType": "cq/gui/components/authoring/dialog/fileupload",
+                        "fieldDescription": "Demo Heading C",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq-msm-lockable": "/cq:featuredimage"
+                        }
+                      },
+                      "type": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./cq:featuredimage/sling:resourceType",
+                        "value": "core/wcm/components/image/v3/image",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/hidden"
+                      },
+                      "alternativeGroup": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "granite:class": "cmp-image__editor-alt",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/well",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "alt": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "granite:class": "cmp-image__editor-alt-text",
+                            "name": "./cq:featuredimage/alt",
+                            "fieldLabel": "Alternative Text",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                            "fieldDescription": "Temporibus autem quibusdam et aut officiis debitis aut rerum.",
+                            "granite:data": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "cq-msm-lockable": "/cq:featuredimage"
+                            }
+                          },
+                          "altValueFromDAM": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "uncheckedValue": "false",
+                            "name": "./cq:featuredimage/altValueFromDAM",
+                            "text": "Demo Heading H",
+                            "value": true,
+                            "checked": "true",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                            "fieldDescription": "Quis autem vel eum iure reprehenderit qui in ea voluptate velit.",
+                            "granite:data": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "cq-msm-lockable": "/cq:featuredimage"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "thumbnail": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "jcr:title": "Thumbnail",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "thumbnail": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "page": "Demo Heading E",
+                        "quiet": true,
+                        "sling:resourceType": "cq/gui/components/common/wcm/pagethumbnail",
+                        "upload": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "granite:class": "cq-wcm-fileupload",
+                          "name": "./image/file.sftmp",
+                          "text": "Upload Image",
+                          "async": true,
+                          "sizeLimit": "100000000",
+                          "multiple": false,
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/fileupload",
+                          "uploadUrl": "will_be_replaced",
+                          "autoStart": false,
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "cq-msm-lockable": "/image"
+                          }
+                        },
+                        "assetpicker": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "granite:class": "js-browse-activator",
+                          "text": "Select Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/button",
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "cq-msm-lockable": "/image"
+                          }
+                        },
+                        "preview": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceType": "cq/gui/components/siteadmin/admin/pagepreview"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "custompageproperties": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Custom Page Properties",
+            "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "column": {
+                "jcr:primaryType": "nt:unstructured",
+                "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "permissionforusergroup": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "jcr:title": "Page Permissions for User Group",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "pageId": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./pageId",
+                        "disabled": true,
+                        "fieldLabel": "Page Id",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                        "fieldDescription": "Page Id for the current page."
+                      },
+                      "pagepermission": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "cq:showOnCreate": "true",
+                        "granite:class": "demo-pagepermission-selector",
+                        "name": "./pagePermission",
+                        "fieldLabel": "Set Permission for Page",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "fieldDescription": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate.",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "false": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "False",
+                            "value": "False",
+                            "selected": "true"
+                          },
+                          "true": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "True",
+                            "value": "True"
+                          }
+                        }
+                      },
+                      "componentpermission": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "cq:showOnCreate": "true",
+                        "granite:class": "demo-componentpermission-selector",
+                        "name": "./componentPermission",
+                        "fieldLabel": "Demo Heading C",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/select",
+                        "fieldDescription": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate.",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "false": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "False",
+                            "value": "False"
+                          },
+                          "true": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "text": "True",
+                            "value": "True"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "pageinfogroup": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "jcr:title": "Page Information Details",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "pageType": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./pageType",
+                        "fieldLabel": "Page Type",
+                        "multiple": true,
+                        "sling:resourceType": "cq/gui/components/coral/common/form/tagfield"
+                      },
+                      "author": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./authorName",
+                        "fieldLabel": "Author Name",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                      },
+                      "contentOwnersEmail": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "validation": "emailValidation",
+                        "name": "./contentOwnersEmail",
+                        "fieldLabel": "Content Owners Email Address",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                        "fieldDescription": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate."
+                      },
+                      "make-publishedDate-string": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./publishedDate@TypeHint",
+                        "about": "Demo Heading E",
+                        "value": "String",
+                        "sling:resourceType": "/libs/granite/ui/components/coral/foundation/form/hidden"
+                      },
+                      "datepicker": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "displayedFormat": "MMM DD, yyyy",
+                        "name": "./publishedDate",
+                        "type": "datetime",
+                        "fieldLabel": "Published Date",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/datepicker"
+                      },
+                      "pinPage": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": "false",
+                        "name": "./pinPage",
+                        "text": "Pin the page",
+                        "value": true,
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                        "fieldDescription": "Curabitur pretium tincidunt lacus, nulla gravida orci a odio.",
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "acs-cq-dialog-dropdown-checkbox-showhide-target": ".rank-showhide-target",
+                          "acs-cq-dialog-dropdown-checkbox-showhide": ""
+                        }
+                      },
+                      "rankContainer": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "granite:class": "rank-showhide-target",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "uepNews": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "jcr:title": "UEP News",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "rankSeller": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "min": "1",
+                                "name": "./rankSeller",
+                                "fieldLabel": "Rank for Seller",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                              },
+                              "rankServicer": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "min": "1",
+                                "name": "./rankServicer",
+                                "fieldLabel": "Rank for Servicer",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                              },
+                              "rankCorporate": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "min": "1",
+                                "name": "./rankCorporate",
+                                "fieldLabel": "Rank for Corporate",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                              }
+                            }
+                          },
+                          "customerReady": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "jcr:title": "Customer Ready",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "rankSeller": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "min": "1",
+                                "name": "./rankSellerCR",
+                                "fieldLabel": "Rank for Seller",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                              },
+                              "rankServicer": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "min": "1",
+                                "name": "./rankServicerCR",
+                                "fieldLabel": "Rank for Servicer",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+                              }
+                            }
+                          }
+                        },
+                        "granite:data": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "acs-checkboxshowhidetargetvalue": "true"
+                        }
+                      },
+                      "iconId": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "svgPath": "Demo Heading H",
+                        "emptyText": "Select an Icon",
+                        "name": "./iconId",
+                        "value": "no-icon",
+                        "fieldLabel": "Icons",
+                        "sling:resourceType": "/apps/demo/components/commons/authoring/iconSelect/v1/iconSelect",
+                        "fieldDescription": "The icon to render on the quick links."
+                      },
+                      "disableCache": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": "false",
+                        "name": "./disableCache",
+                        "text": "Disable Cache?",
+                        "value": "true",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox"
+                      },
+                      "expirationDate": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "cq:showOnCreate": "true",
+                        "valueFormat": "MM-DD-YYYY",
+                        "allowBlank": "true",
+                        "typeHint": "String",
+                        "displayedFormat": "MM-DD-YYYY",
+                        "validation": "expiration-date",
+                        "name": "./expirationDate",
+                        "type": "date",
+                        "fieldLabel": "Expiration Date",
+                        "minDate": "today",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/datepicker"
+                      },
+                      "notificationList": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "composite": true,
+                        "validation": "notification-list",
+                        "fieldLabel": "Archive Notification List *",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                        "field": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "description": "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit.",
+                          "name": "./notificationList",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "email": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "allowBlank": "false",
+                              "required": true,
+                              "validation": "emailValidation",
+                              "name": "./email",
+                              "fieldLabel": "Email Address",
+                              "placeholder": "Enter Email Address",
+                              "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield"
+                            }
+                          }
+                        }
+                      },
+                      "triggerNotification": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "uncheckedValue": "false",
+                        "name": "./triggerNotification",
+                        "text": "Trigger Notification to subscriber",
+                        "value": "true",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                        "fieldDescription": "Demo Heading G"
+                      },
+                      "pageBlurb": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./pageBlurb",
+                        "fieldLabel": "Page Blurb",
+                        "sling:resourceType": "cq/gui/components/authoring/dialog/richtext",
+                        "useFixedInlineToolbar": true,
+                        "fieldDescription": "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia.",
+                        "rtePlugins": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "sling:resourceSuperType": "/apps/demo/components/commons/plugins/v1/dialogs/rtePlugins"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "cq:include": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/mnt/overlay/demo/components/commons/platformgovernanceproperties/platformgovernanceproperties/cq:dialog/platformgovernanceproperties",
+            "sling:resourceType": "granite/ui/components/coral/foundation/include"
+          }
+        }
+      }
+    }
+  }
+}

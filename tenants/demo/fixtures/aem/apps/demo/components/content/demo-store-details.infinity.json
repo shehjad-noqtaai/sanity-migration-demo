@@ -1,0 +1,314 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Store Details",
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "mainInfo": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Main Info",
+              "composite": true,
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "googleMapsKey": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": true,
+                      "name": "./googleMapsKey",
+                      "fieldLabel": "google maps key",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                      "fieldDescription": "Google Maps Key"
+                    },
+                    "aboutUsImage": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": true,
+                      "rootPath": "/content/dam/demo/_generated/content.gif",
+                      "name": "./aboutUsImage",
+                      "fieldLabel": "About Us Image",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                      "fieldDescription": "Path of the about us image"
+                    },
+                    "storeTimings": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": true,
+                      "name": "./storeTimings",
+                      "fieldLabel": "Store timings",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                      "fieldDescription": "store timings"
+                    },
+                    "appointmentsURL": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "required": true,
+                      "rootPath": "/content",
+                      "name": "./appointmentsURL",
+                      "fieldLabel": "Appointments Page",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                      "fieldDescription": "Demo Heading C"
+                    }
+                  }
+                }
+              }
+            },
+            "storeDesigners": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Store Designers",
+              "composite": true,
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "navigationItems": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "composite": true,
+                      "fieldLabel": "Store Designers",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                      "fieldDescription": "Add Designer Information",
+                      "field": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./storeDesigners",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "column": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "designersImage": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "rootPath": "/content/dam/demo/_generated/content.gif",
+                                "name": "./designerImage",
+                                "fieldLabel": "Designers Image",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                                "fieldDescription": "Path of the designer image"
+                              },
+                              "designersTitle": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "name": "./designerTitle",
+                                "fieldLabel": "Designers Title",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Designer Title"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "storeServices": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Store Services",
+              "composite": true,
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "navigationItems": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "composite": true,
+                      "fieldLabel": "Store Services",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                      "fieldDescription": "Add Store Service",
+                      "field": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./storeServices",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "column": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "serviceIcon": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "rootPath": "/content/dam/demo/_generated/content.gif",
+                                "name": "./serviceIcon",
+                                "fieldLabel": "Service Icon",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                                "fieldDescription": "Path of the service icon"
+                              },
+                              "serviceTitle": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "name": "./serviceTitle",
+                                "fieldLabel": "Service Title",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Service Title"
+                              },
+                              "serviceDescription": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "name": "./serviceDescription",
+                                "fieldLabel": "Service Description",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Service Description"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "storeSizes": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Store Sizes",
+              "composite": true,
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "navigationItems": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "composite": true,
+                      "fieldLabel": "Store Sizes",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                      "fieldDescription": "Add Size",
+                      "field": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./storeSizes",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "column": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "sizeImage": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "rootPath": "/content/dam/demo/_generated/content.gif",
+                                "name": "./sizeImage",
+                                "fieldLabel": "Size Image",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                                "fieldDescription": "Path of the size image"
+                              },
+                              "sizeTitle": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "name": "./sizeTitle",
+                                "fieldLabel": "Size Title",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Size Title"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "storeStylists": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Store Stylists",
+              "composite": true,
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "navigationItems": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "composite": true,
+                      "fieldLabel": "Store Stylists",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                      "fieldDescription": "Add Store Stylists",
+                      "field": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "name": "./storeStylists",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                        "items": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "column": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                            "items": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "stylistImage": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "rootPath": "/content/dam/demo/_generated/content.gif",
+                                "name": "./stylistImage",
+                                "fieldLabel": "Stylist Image",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                                "fieldDescription": "Path of the service icon"
+                              },
+                              "stylistName": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "name": "./stylistName",
+                                "fieldLabel": "Stylist Name",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Service Title"
+                              },
+                              "stylistDescription": {
+                                "jcr:primaryType": "nt:unstructured",
+                                "required": true,
+                                "name": "./stylistDescription",
+                                "fieldLabel": "Stylist Description",
+                                "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                                "fieldDescription": "Stylist Description"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

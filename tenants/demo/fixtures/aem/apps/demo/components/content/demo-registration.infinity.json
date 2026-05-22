@@ -1,0 +1,1226 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Registration Component",
+    "sling:resourceType": "cq/gui/components/authoring/dialog",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "granite:class": "cmp-teaser__editor",
+      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "maximized": true,
+          "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "step1": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Step 1",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "registrationImage": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./registrationImage",
+                          "fieldLabel": "Hero Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "regMethod": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./regMethod",
+                          "fieldLabel": "Registration Method",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "titleHeader": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./titleHeader",
+                          "fieldLabel": "Title Header",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "titleText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./titleText",
+                          "fieldLabel": "Title Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "A title to display as paragraph text"
+                        },
+                        "bprTACtext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./bprTACtext",
+                          "fieldLabel": "BPR Terms and Conditions Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading F"
+                        },
+                        "bprTAClink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./bprTAClink",
+                          "fieldLabel": "BPR Terms and Conditions Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "bprPPtext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./bprPPtext",
+                          "fieldLabel": "BPR Privacy Policy Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Blueprint Registry Privacy Policy text"
+                        },
+                        "bprPPlink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./bprPPlink",
+                          "fieldLabel": "BPR Privacy Policy Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Blueprint Registry Privacy Policy link"
+                        },
+                        "demoTACtext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./demoTACtext",
+                          "fieldLabel": "DEMO Terms and Conditions Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Site A Terms and Conditions text"
+                        },
+                        "demoTAClink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./demoTAClink",
+                          "fieldLabel": "DEMO Terms and Conditions Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Site A Terms and Conditions link"
+                        },
+                        "demoPPtext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./demoPPtext",
+                          "fieldLabel": "DEMO Privacy Policy Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Site A Privacy Policy text"
+                        },
+                        "demoPPlink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./demoPPlink",
+                          "fieldLabel": "DEMO Privacy Policy Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Site A Privacy Policy link"
+                        },
+                        "winAGowntext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./winAGowntext",
+                          "fieldLabel": "Win a Gown Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Win a Gown text"
+                        },
+                        "winAGownlink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./winAGownlink",
+                          "fieldLabel": "Win a Gown Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Win a Gown link"
+                        },
+                        "caPPtext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./caPPtext",
+                          "fieldLabel": "CA Privacy Policy Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "California Privacy Policy text"
+                        },
+                        "caPPlink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./caPPlink",
+                          "fieldLabel": "CA Privacy Policy Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "California Privacy Policy link"
+                        },
+                        "phoneNumberHelp": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./phoneNumberHelp",
+                          "fieldLabel": "Phone Number Help/Tip",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Phone Number Help text"
+                        },
+                        "demoTextAlert": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./demoTextAlert",
+                          "fieldLabel": "Phone Number Text Message note",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Phone Number mobile text alert"
+                        },
+                        "noDatetext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./noDatetext",
+                          "fieldLabel": "No event date message",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "requiredField": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./requiredField",
+                          "fieldLabel": "Required Field text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "text used for required field"
+                        },
+                        "demoOptIntext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./demoOptIntext",
+                          "fieldLabel": "DEMO optIn text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "demo optIn text"
+                        },
+                        "bprOptIntext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./bprOptIntext",
+                          "fieldLabel": "BPR optIn text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Blueprint Registry optIn text"
+                        },
+                        "submitText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./submitText",
+                          "fieldLabel": "Submit button text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "text for submit button"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "step2": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Step 2",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "registrationStep2Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./registrationStep2Image",
+                          "fieldLabel": "Hero Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Demo Heading F"
+                        },
+                        "registrationStep2ImageOverlay": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./registrationStep2ImageOverlay",
+                          "fieldLabel": "Hero Image overlay",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "registrationStep2Heading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./registrationStep2Heading",
+                          "fieldLabel": "Step2 heading image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step2 heading image"
+                        },
+                        "step2HeadingMWHLogo": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./step2HeadingMWHLogo",
+                          "fieldLabel": "Men's Wearhouse logo",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step2 Men's Wearhouse logo"
+                        },
+                        "step2HeadingWFRLogo": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./step2HeadingWFRLogo",
+                          "fieldLabel": "Wayfair logo",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step2 Wayfair logo"
+                        },
+                        "step2TitleText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./step2TitleText",
+                          "fieldLabel": "Title Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "A title to display as paragraph text"
+                        },
+                        "wfrOptIntext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./wfrOptIntext",
+                          "fieldLabel": "WFR optIn text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Wayfair Registry optIn text"
+                        },
+                        "wfrTCtext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./wfrTCtext",
+                          "fieldLabel": "Wayfair Terms text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading A"
+                        },
+                        "wfrTCLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./wfrTCLink",
+                          "fieldLabel": "WFR Terms Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading F"
+                        },
+                        "wfrPrivacytext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./wfrPrivacytext",
+                          "fieldLabel": "WFR Privacy text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Wayfair Registry Privacy text"
+                        },
+                        "wfrPrivacyLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./wfrPrivacyLink",
+                          "fieldLabel": "WFR Privacy Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Wayfair Registry Privacy Link"
+                        },
+                        "mwhOptIntext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./mwhOptIntext",
+                          "fieldLabel": "MWH optIn text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Men's Wearhouse optIn text"
+                        },
+                        "mwhTCtext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./mwhTCtext",
+                          "fieldLabel": "Men's Wearhouse Terms text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "mwhTCLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./mwhTCLink",
+                          "fieldLabel": "Men's Wearhouse Terms Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "mwhPrivacytext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./mwhPrivacytext",
+                          "fieldLabel": "Men's Wearhouse Privacy text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Men's Wearhouse Privacy text"
+                        },
+                        "mwhPrivacyLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./mwhPrivacyLink",
+                          "fieldLabel": "Men's Wearhouse Privacy Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Men's Wearhouse Privacy Link"
+                        },
+                        "demoVprOptIntext": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./demoVprOptIntext",
+                          "fieldLabel": "DEMO Vendor Partners optIn text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "DEMO Vendor Partner optIn text"
+                        },
+                        "demoTuxRulesText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./demoTuxRulesText",
+                          "fieldLabel": "DEMO Tux Rules text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "DEMO Tux Rules text"
+                        },
+                        "demoTuxRulesLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./demoTuxRulesLink",
+                          "fieldLabel": "DEMO Tux Rules Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "DEMO Tux Rules Link"
+                        },
+                        "fianceeText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./fianceeText",
+                          "fieldLabel": "Finacee Foot Note",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Finacee Foot Note"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "step3": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Step 3 - Apparel",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "deskTopApparelConfirmHeroImg": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./deskTopApparelConfirmHeroImg",
+                          "fieldLabel": "Desktop Confirmation Hero Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Desktop Confirmation Hero Image"
+                        },
+                        "deskTopApparelConfirmHeroLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./deskTopApparelConfirmHeroLink",
+                          "fieldLabel": "Desktop Apparel Confirmation Hero Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "mobileApparelConfirmHeroImg": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./mobileApparelConfirmHeroImg",
+                          "fieldLabel": "Mobile Confirmation Hero Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Mobile Confirmation Hero Image"
+                        },
+                        "mobileApparelConfirmHeroLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./mobileApparelConfirmHeroLink",
+                          "fieldLabel": "Mobile Apparel Confirmation Hero Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        },
+                        "apparelPartnerHeading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartnerHeading",
+                          "fieldLabel": "Apparel Partner Heading",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Step3 Apparel Partner Heading"
+                        },
+                        "apparelShoppingHeading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShoppingHeading",
+                          "fieldLabel": "Apparel Shopping Heading",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Step3 Apparel Shopping Heading"
+                        },
+                        "apparelPartner1Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner1Link",
+                          "fieldLabel": "Apparel Confirmation Partner1 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading A"
+                        },
+                        "apparelPartner1Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner1Text",
+                          "fieldLabel": "Apparel Confirmation Partner1 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "apparelPartner1CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner1CTA",
+                          "fieldLabel": "Apparel Confirmation Partner1 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Step3 Apparel Confirmation Partner1 CTA"
+                        },
+                        "apparelPartner1CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner1CTAText",
+                          "fieldLabel": "Apparel Confirmation Partner1 CTA Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "apparelPartner1Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./apparelPartner1Image",
+                          "fieldLabel": "Apparel Confirmation Partner1 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Demo Heading B"
+                        },
+                        "apparelPartner2Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner2Link",
+                          "fieldLabel": "Apparel Confirmation Partner2 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading A"
+                        },
+                        "apparelPartner2Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner2Text",
+                          "fieldLabel": "Apparel Confirmation Partner2 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "apparelPartner2CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner2CTA",
+                          "fieldLabel": "Apparel Confirmation Partner2 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Step3 Apparel Confirmation Partner2 CTA"
+                        },
+                        "apparelPartner2CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner2CTAText",
+                          "fieldLabel": "Apparel Confirmation Partner2 CTA Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "apparelPartner2Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./apparelPartner2Image",
+                          "fieldLabel": "Confirmation Partner2 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Partner2 Image"
+                        },
+                        "apparelPartner3Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner3Link",
+                          "fieldLabel": "Apparel Confirmation Partner3 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "apparelPartner3Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner3Text",
+                          "fieldLabel": "Apparel Confirmation Partner3 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "apparelPartner3CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner3CTA",
+                          "fieldLabel": "Apparel Confirmation Partner3 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Step3 Apparel Confirmation Partner3 CTA"
+                        },
+                        "apparelPartner3CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner3CTAText",
+                          "fieldLabel": "Apparel Confirmation Partner3 CTA Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "apparelPartner3Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./apparelPartner3Image",
+                          "fieldLabel": "Confirmation Partner3 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Partner3 Image"
+                        },
+                        "apparelPartner4Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner4Link",
+                          "fieldLabel": "Apparel Confirmation Partner4 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "apparelPartner4Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner4Text",
+                          "fieldLabel": "Apparel Confirmation Partner4 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading A"
+                        },
+                        "apparelPartner4CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner4CTA",
+                          "fieldLabel": "Apparel Confirmation Partner4 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Step3 Apparel Confirmation Partner4 CTA"
+                        },
+                        "apparelPartner4CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelPartner4CTAText",
+                          "fieldLabel": "Apparel Confirmation Partner4 CTA Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "apparelPartner4Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./apparelPartner4Image",
+                          "fieldLabel": "Confirmation Partner4 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Partner4 Image"
+                        },
+                        "apparelShopping1Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping1Link",
+                          "fieldLabel": "Apparel Confirmation Shopping1 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "apparelShopping1Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping1Text",
+                          "fieldLabel": "Apparel Confirmation Shopping1 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        },
+                        "apparelShopping1CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping1CTA",
+                          "fieldLabel": "Apparel Confirmation Shopping1 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "apparelShopping1CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping1CTAText",
+                          "fieldLabel": "Apparel Confirmation Shopping1 CTA Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "apparelShopping1Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./apparelShopping1Image",
+                          "fieldLabel": "Confirmation Shopping1 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Shopping1 Image"
+                        },
+                        "apparelShopping2Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping2Link",
+                          "fieldLabel": "Apparel Confirmation Shopping2 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "apparelShopping2Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping2Text",
+                          "fieldLabel": "Apparel Confirmation Shopping2 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "apparelShopping2CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping2CTA",
+                          "fieldLabel": "Apparel Confirmation Shopping2 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        },
+                        "apparelShopping2CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping2CTAText",
+                          "fieldLabel": "Apparel Confirmation Shopping2 CTA Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "apparelShopping2Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./apparelShopping2Image",
+                          "fieldLabel": "Confirmation Shopping2 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Shopping2 Image"
+                        },
+                        "apparelShopping3Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping3Link",
+                          "fieldLabel": "Apparel Confirmation Shopping3 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "apparelShopping3Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping3Text",
+                          "fieldLabel": "Apparel Confirmation Shopping3 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "apparelShopping3CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping3CTA",
+                          "fieldLabel": "Apparel Confirmation Shopping3 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "apparelShopping3CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping3CTAText",
+                          "fieldLabel": "Apparel Confirmation Shopping3 CTA Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "apparelShopping3Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./apparelShopping3Image",
+                          "fieldLabel": "Confirmation Shopping3 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Shopping3 Image"
+                        },
+                        "apparelShopping4Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping4Link",
+                          "fieldLabel": "Apparel Confirmation Shopping4 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "apparelShopping4Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping4Text",
+                          "fieldLabel": "Apparel Confirmation Shopping4 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "apparelShopping4CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping4CTA",
+                          "fieldLabel": "Apparel Confirmation Shopping4 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "apparelShopping4CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./apparelShopping4CTAText",
+                          "fieldLabel": "Apparel Confirmation Shopping4 CTA Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "apparelShopping4Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./apparelShopping4Image",
+                          "fieldLabel": "Confirmation Shopping4 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Shopping4 Image"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "step4": {
+              "jcr:primaryType": "nt:unstructured",
+              "jcr:title": "Step 3 - Non Apparel",
+              "margin": true,
+              "sling:resourceType": "granite/ui/components/coral/foundation/container",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "columns": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "margin": true,
+                  "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "column": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "deskTopNonApparelConfirmHeroImg": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./deskTopNonApparelConfirmHeroImg",
+                          "fieldLabel": "Desktop Confirmation Hero Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Desktop Confirmation Hero Image"
+                        },
+                        "deskTopNonApparelConfirmHeroLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./deskTopNonApparelConfirmHeroLink",
+                          "fieldLabel": "Demo Heading D",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        },
+                        "mobileNonApparelConfirmHeroImg": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./mobileNonApparelConfirmHeroImg",
+                          "fieldLabel": "Mobile Confirmation Hero Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Mobile Confirmation Hero Image"
+                        },
+                        "mobileNonApparelConfirmHeroLink": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./mobileNonApparelConfirmHeroLink",
+                          "fieldLabel": "Demo Heading E",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "nonApparelPartnerHeading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartnerHeading",
+                          "fieldLabel": "NonApparel Partner Heading",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Step3 NonApparel Partner Heading"
+                        },
+                        "nonApparelShoppingHeading": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShoppingHeading",
+                          "fieldLabel": "NonApparel Shopping Heading",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Step3 NonApparel Shopping Heading"
+                        },
+                        "nonApparelPartner1Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner1Link",
+                          "fieldLabel": "NonApparel Confirmation Partner1 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        },
+                        "nonApparelPartner1Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner1Text",
+                          "fieldLabel": "NonApparel Confirmation Partner1 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "nonApparelPartner1CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner1CTA",
+                          "fieldLabel": "NonApparel Confirmation Partner1 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading F"
+                        },
+                        "nonApparelPartner1CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner1CTAText",
+                          "fieldLabel": "Demo Heading C",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        },
+                        "nonApparelPartner1Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./nonApparelPartner1Image",
+                          "fieldLabel": "NonApparel Confirmation Partner1 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Demo Heading F"
+                        },
+                        "nonApparelPartner2Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner2Link",
+                          "fieldLabel": "NonApparel Confirmation Partner2 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading F"
+                        },
+                        "nonApparelPartner2Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner2Text",
+                          "fieldLabel": "NonApparel Confirmation Partner2 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelPartner2CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner2CTA",
+                          "fieldLabel": "NonApparel Confirmation Partner2 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelPartner2CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner2CTAText",
+                          "fieldLabel": "Demo Heading H",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "nonApparelPartner2Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./nonApparelPartner2Image",
+                          "fieldLabel": "Confirmation Partner2 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Partner2 Image"
+                        },
+                        "nonApparelPartner3Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner3Link",
+                          "fieldLabel": "NonApparel Confirmation Partner3 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "nonApparelPartner3Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner3Text",
+                          "fieldLabel": "NonApparel Confirmation Partner3 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "nonApparelPartner3CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner3CTA",
+                          "fieldLabel": "NonApparel Confirmation Partner3 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelPartner3CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner3CTAText",
+                          "fieldLabel": "Demo Heading C",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelPartner3Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./nonApparelPartner3Image",
+                          "fieldLabel": "Confirmation Partner3 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Partner3 Image"
+                        },
+                        "nonApparelPartner4Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner4Link",
+                          "fieldLabel": "NonApparel Confirmation Partner4 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        },
+                        "nonApparelPartner4Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner4Text",
+                          "fieldLabel": "NonApparel Confirmation Partner4 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "nonApparelPartner4CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner4CTA",
+                          "fieldLabel": "NonApparel Confirmation Partner4 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "nonApparelPartner4CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelPartner4CTAText",
+                          "fieldLabel": "Demo Heading F",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading H"
+                        },
+                        "nonApparelPartner4Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./nonApparelPartner4Image",
+                          "fieldLabel": "Confirmation Partner4 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Partner4 Image"
+                        },
+                        "nonApparelShopping1Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping1Link",
+                          "fieldLabel": "NonApparel Confirmation Shopping1 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "nonApparelShopping1Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping1Text",
+                          "fieldLabel": "NonApparel Confirmation Shopping1 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelShopping1CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping1CTA",
+                          "fieldLabel": "NonApparel Confirmation Shopping1 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelShopping1CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping1CTAText",
+                          "fieldLabel": "Demo Heading A",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelShopping1Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./nonApparelShopping1Image",
+                          "fieldLabel": "Confirmation Shopping1 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Shopping1 Image"
+                        },
+                        "nonApparelShopping2Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping2Link",
+                          "fieldLabel": "NonApparel Confirmation Shopping2 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelShopping2Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping2Text",
+                          "fieldLabel": "NonApparel Confirmation Shopping2 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "nonApparelShopping2CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping2CTA",
+                          "fieldLabel": "NonApparel Confirmation Shopping2 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "nonApparelShopping2CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping2CTAText",
+                          "fieldLabel": "Demo Heading A",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelShopping2Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./nonApparelShopping2Image",
+                          "fieldLabel": "Confirmation Shopping2 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Shopping2 Image"
+                        },
+                        "nonApparelShopping3Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping3Link",
+                          "fieldLabel": "NonApparel Confirmation Shopping3 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelShopping3Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping3Text",
+                          "fieldLabel": "NonApparel Confirmation Shopping3 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "nonApparelShopping3CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping3CTA",
+                          "fieldLabel": "NonApparel Confirmation Shopping3 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading D"
+                        },
+                        "nonApparelShopping3CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping3CTAText",
+                          "fieldLabel": "Demo Heading G",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading A"
+                        },
+                        "nonApparelShopping3Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./nonApparelShopping3Image",
+                          "fieldLabel": "Confirmation Shopping3 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Shopping3 Image"
+                        },
+                        "nonApparelShopping4Link": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping4Link",
+                          "fieldLabel": "NonApparel Confirmation Shopping4 Link",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading E"
+                        },
+                        "nonApparelShopping4Text": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping4Text",
+                          "fieldLabel": "NonApparel Confirmation Shopping4 Text",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading C"
+                        },
+                        "nonApparelShopping4CTA": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping4CTA",
+                          "fieldLabel": "NonApparel Confirmation Shopping4 CTA",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading B"
+                        },
+                        "nonApparelShopping4CTAText": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./nonApparelShopping4CTAText",
+                          "fieldLabel": "Demo Heading F",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "fieldDescription": "Demo Heading F"
+                        },
+                        "nonApparelShopping4Image": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "rootPath": "/content/dam/demo/_generated/content.gif",
+                          "name": "./nonApparelShopping4Image",
+                          "fieldLabel": "Confirmation Shopping4 Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Step3 Confirmation Shopping4 Image"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -225,11 +225,11 @@ Three columns. Each column is a zone box with a label at the top and 2–6 small
 #### Zone 2 — Local cache (middle column)
 
 - Zone label: `Local cache` · sublabel: `tenants/<tenant>/output/`
-- Card: `output/cache/aem/*` · annotation: `component dialogs`
-- Card: `output/cache/raw/*` · annotation: `page trees`
+- Card: `output/cache/aem/content/*` · annotation: `page + tag trees (path-mirror)`
+- Card: `output/cache/aem/apps/*` · annotation: `component dialogs (path-mirror)`
 - Card: `output/cache/categories/*` · annotation: `taxonomy docs + manifest`
-- Card: `output/cache/clean/*` · annotation: `Sanity-shaped JSON`
-- Card: `content-type-registry.json` · annotation: `field types per component`
+- Card: `output/cache/clean/*` · annotation: `Sanity-shaped JSON (path-mirror)`
+- Card: `output/cache/content-type-registry.json` · annotation: `field types per component`
 - Card: `apps/studio/schemas/generated/*` · annotation: `defineType() per component + per-template doc types`
 - Card: `output/cache/assets/manifest.json` · annotation: `per-DAM-path upload state`
 
@@ -251,19 +251,19 @@ Style this zone visually as **out-of-scope** (dashed border, muted color, or a s
 
 Render each as a small arrow with the **stage name** above and a one-phrase caption below. Color the arrows by stage if the design system has accent colors.
 
-1. **Author → `output/cache/aem/*` and `output/cache/raw/*`**
+1. **Author → `output/cache/aem/content/*` and `output/cache/aem/apps/*`**
    - Stage: `aem-extract` + dialog fetch in `migrate:schema`
    - Caption: `download .infinity.json + dialog trees`
 
-2. **Tag tree → `output/cache/categories/*`**
+2. **Tag tree → `output/cache/aem/content/cq:tags/*` + `output/cache/categories/*`**
    - Stage: `aem-tags`
    - Caption: `walk `cq:Tag` nodes, emit category docs`
 
-3. **`output/cache/aem/*` → `content-type-registry.json` + `apps/studio/schemas/generated/*`**
+3. **`output/cache/aem/apps/*` → `output/cache/content-type-registry.json` + `apps/studio/schemas/generated/*`**
    - Stage: `migrate:schema`
    - Caption: `dialog walker → defineType() + registry + per-template docs`
 
-4. **`output/cache/raw/*` + `content-type-registry.json` + `categories/manifest.json` → `output/cache/clean/*`**
+4. **`output/cache/aem/content/*` + `content-type-registry.json` + `categories/manifest.json` → `output/cache/clean/*`**
    - Stage: `aem-transform`
    - Caption: `coerce values, resolve tag refs, link slot children`
 

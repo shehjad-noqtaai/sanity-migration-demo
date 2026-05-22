@@ -1,0 +1,144 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Properties",
+  "height": 600,
+  "trackingFeature": "core-components:tabs:v1",
+  "extraClientlibs": [
+    "Demo Heading D",
+    "core.wcm.components.tabs.v1.editor",
+    "tabs.author",
+    "tabtitle.tabicons.author"
+  ],
+  "width": 630,
+  "sling:resourceType": "cq/gui/components/authoring/dialog",
+  "content": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+    "items": {
+      "jcr:primaryType": "nt:unstructured",
+      "tabs": {
+        "jcr:primaryType": "nt:unstructured",
+        "maximized": true,
+        "sling:resourceType": "granite/ui/components/coral/foundation/tabs",
+        "items": {
+          "jcr:primaryType": "nt:unstructured",
+          "TabIcons": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Tab Icons",
+            "margin": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "asset-allowed-heading": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "Praesent feugiat tellus eget velit fringilla, nec vehicula nisi vulputate.",
+                        "level": "2",
+                        "sling:resourceType": "granite/ui/components/foundation/heading"
+                      },
+                      "images": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "composite": "true",
+                        "granite:id": "checkstatus",
+                        "fieldLabel": "Tab images",
+                        "sling:resourceType": "granite/ui/components/coral/foundation/form/multifield",
+                        "field": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "jcr:title": "Image options",
+                          "name": "./tabImages",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                          "items": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "background-image": {
+                              "jcr:primaryType": "nt:unstructured",
+                              "fileReferenceParameter": "./fileReference",
+                              "required": true,
+                              "useHTML5": false,
+                              "mimeTypes": [
+                                "image/gif",
+                                "image/jpeg",
+                                "image/webp",
+                                "image/tiff",
+                                "image/svg+xml"
+                              ],
+                              "fileNameParameter": "./fileName",
+                              "name": "./image",
+                              "class": "cq-droptarget",
+                              "disabled": false,
+                              "fieldLabel": "Tab Image",
+                              "multiple": false,
+                              "allowUpload": false,
+                              "sling:resourceType": "cq/gui/components/authoring/dialog/fileupload",
+                              "autoStart": false
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "properties": {
+            "jcr:primaryType": "nt:unstructured",
+            "jcr:title": "Properties",
+            "maximized": true,
+            "sling:resourceType": "granite/ui/components/coral/foundation/container",
+            "items": {
+              "jcr:primaryType": "nt:unstructured",
+              "columns": {
+                "jcr:primaryType": "nt:unstructured",
+                "margin": true,
+                "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+                "items": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "column": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:resourceType": "granite/ui/components/coral/foundation/container",
+                    "items": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "anchor-heading": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+                        "level": "2",
+                        "sling:orderBefore": "activeItem",
+                        "sling:resourceType": "granite/ui/components/foundation/heading"
+                      },
+                      "link-heading": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "text": "Link:",
+                        "level": "4",
+                        "sling:resourceType": "granite/ui/components/foundation/heading"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "section": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/apps/demo-site-a/components/dialog/abstract-section/cq:dialog/content/items/tabs/items/section",
+            "sling:resourceType": "granite/ui/components/foundation/include"
+          },
+          "buttonsTab": {
+            "jcr:primaryType": "nt:unstructured",
+            "path": "/apps/demo-site-a/components/dialog/buttons-tab/cq:dialog/content/items/tabs/items/buttonsTab",
+            "sling:resourceType": "granite/ui/components/foundation/include"
+          }
+        }
+      }
+    }
+  }
+}

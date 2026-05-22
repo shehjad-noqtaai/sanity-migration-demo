@@ -44,7 +44,7 @@ Every artifact has a content-derived identity (JCR path → `_id`, JCR UUID → 
 |---|---|---|
 | **Schemas** | `migrate:schema` | Fetches each `_cq_dialog.infinity.json`, walks the Granite UI tree (supertype chain included), auto-discovers named-slot children and container drop-zones, emits one Sanity object type per AEM component plus a `pageBuilder` array and per-template page document types. |
 | **Types** | `typegen` | Generates `sanity.types.ts` from the emitted schemas via `@sanity/schema` (in-process — no network call, no Studio required). |
-| **Extract** | `aem-extract` | Walks `{root}.infinity.json` for each content root, transparently following depth-5 truncation markers. Writes `output/cache/raw/*.json`. |
+| **Extract** | `aem-extract` | Walks `{root}.infinity.json` for each content root, transparently following depth-5 truncation markers. Writes `output/cache/aem/content/.../*.json`. |
 | **Tags** | `aem-tags` | Walks `/content/cq:tags/...` and emits one Sanity `category` doc per `cq:Tag` (parent-child taxonomy). Optional; skip for migrations without AEM tags. |
 | **Transform** | `aem-transform` | Maps `sling:resourceType` → Sanity types via the generated registry. Coerces AEM's JSON strings into proper types: HTML → Portable Text, `"true"` → `boolean`, `"10"` → `number`, tag refs → resolved Sanity references, recursively through nested multifields. Writes `output/cache/clean/*.json`. |
 | **Assets** | `aem-assets` | Five phases — ML dedup, AEM download, Media Library upload, dataset link, in-place rewrite of clean docs. Resumable via `output/cache/assets/manifest.json`. Work-stealing pool sized by `ASSET_CONCURRENCY`. |
@@ -86,6 +86,16 @@ pnpm --filter studio dev              # http://localhost:3333
 
 Need `AEM_*` and `SANITY_*` credentials before step 4 — see [`docs/running-the-migration.md` § 1a](docs/running-the-migration.md) for the full env table, including the **AEMaaCS Service Credentials** flow (recommended over basic auth / dev tokens).
 
+### Demo without AEM
+
+The committed [`tenants/demo/`](tenants/demo/) tenant replays scrubbed AEM REST fixtures offline — no live AEM instance required. Copy `.env.example` → `.env`, fill in your Sanity project vars, then:
+
+```bash
+pnpm --filter tenant-demo migrate:demo
+```
+
+See [`docs/running-the-migration.md` § 1-pre-bis](docs/running-the-migration.md) for maintainer fixture regeneration (`pnpm build:demo-fixtures`).
+
 ---
 
 ## Where everything lives
@@ -102,7 +112,8 @@ aem-to-sanity/
 │                                      (Frontend apps moved to aem-to-sanity-demo-web — separate repo)
 │
 ├── tenants/                          Per-tenant working folders
-│   ├── tenant/                        Committed template (copy this to start a new migration)
+│   ├── template/                      Committed template (copy this to start a new migration)
+│   ├── demo/                          Committed offline demo (scrubbed AEM fixtures, no live AEM)
 │   ├── davids-bridal/                 (gitignored) operator working copy
 │   └── t-mobile/                      (gitignored) operator working copy
 │
@@ -143,7 +154,7 @@ Every migration runs from `tenants/<your-tenant>/`. Only `tenants/template/` (th
 | `aem-component-containers.json` | Components with drop-zone children (`cq:isContainer=true`) |
 | `aem-component-hints.json` | Components opting into AEM authoring hints (`cq:panelTitle` etc.) |
 | `aem-page-components.json` | Page-shell components + their `cq:template` paths |
-| `output/cache/…` | Per-stage artifacts — gitignored caches, regenerable |
+| `output/cache/…` | Per-stage artifacts — gitignored caches, regenerable. See `docs/running-the-migration.md` § 1e for the full tree (`aem/content/`, `aem/apps/`, `clean/`, `categories/`, `assets/`, reports). |
 
 ---
 

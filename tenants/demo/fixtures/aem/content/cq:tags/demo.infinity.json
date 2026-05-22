@@ -1,0 +1,5 @@
+{
+  "jcr:primaryType": "cq:Tag",
+  "jcr:title": "Demo Tags",
+  "sling:resourceType": "cq/tagging/components/tag"
+}

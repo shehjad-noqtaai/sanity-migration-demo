@@ -6,8 +6,8 @@
  *
  * Pipeline ordering:
  *
- *   aem-extract   → raw page trees
- *   aem-tags      → category docs + manifest         ← this CLI
+ *   aem-extract   → cache/aem/content page trees
+ *   aem-tags      → cache/aem/content tag trees + category docs + manifest
  *   aem-transform → rewrites authored `cq:tags` strings on pages into
  *                   `_type:"reference"` arrays using the manifest
  *   aem-assets    → DAM uploads
@@ -49,6 +49,10 @@ import {
   AemFetchError,
   applyFixturesFromEnv,
   createColors,
+  ensureExtractedContentFile,
+  extractedContentExists,
+  aemCacheContentRoot,
+  resolveExtractedContentFile,
   fetchInfinityTree,
   resolveConfig,
   startTimer,
@@ -387,9 +391,13 @@ async function main(): Promise<void> {
   }
 
   const categoriesDir = join(outputDir, "cache", "categories");
+  const contentDir = aemCacheContentRoot(outputDir);
   mkdirSync(categoriesDir, { recursive: true });
+  mkdirSync(contentDir, { recursive: true });
 
-  console.error(`[tags] ${roots.length} root(s) from ${config.baseUrl} → ${categoriesDir}`);
+  console.error(
+    `[tags] ${roots.length} root(s) from ${config.baseUrl} → ${categoriesDir} (cache ${contentDir})`,
+  );
 
   const manifest: Manifest = {};
   const failures: Array<{ rootPath: string; message: string; category: FailureCategory }> = [];
@@ -407,25 +415,50 @@ async function main(): Promise<void> {
 
   for (const rootPath of roots) {
     try {
-      const { tree, stats } = await fetchInfinityTree(
-        applyFixturesFromEnv({ config }),
-        rootPath,
-        { maxResponseBytes: maxBytes, maxDepthExpansions },
-      );
-      if (
-        stats.markersFound > 0 ||
-        stats.markersResolved > 0 ||
-        stats.markersTruncated > 0 ||
-        stats.markersFailed > 0
-      ) {
-        depthExpansions.push({
+      let tree: Record<string, unknown>;
+      if (!overwrite && extractedContentExists(outputDir, rootPath)) {
+        const cached = JSON.parse(
+          readFileSync(resolveExtractedContentFile(outputDir, rootPath), "utf8"),
+        ) as { tree?: unknown };
+        if (!cached.tree || typeof cached.tree !== "object" || Array.isArray(cached.tree)) {
+          throw new Error(`tag cache at ${rootPath} is missing a tree object`);
+        }
+        tree = cached.tree as Record<string, unknown>;
+      } else {
+        const fetched = await fetchInfinityTree(
+          applyFixturesFromEnv({ config }),
           rootPath,
-          markersFound: stats.markersFound,
-          markersResolved: stats.markersResolved,
-          markersTruncated: stats.markersTruncated,
-          markersFailed: stats.markersFailed,
-          expansionsUsed: stats.expansionsUsed,
-        });
+          { maxResponseBytes: maxBytes, maxDepthExpansions },
+        );
+        tree = fetched.tree as Record<string, unknown>;
+        if (
+          fetched.stats.markersFound > 0 ||
+          fetched.stats.markersResolved > 0 ||
+          fetched.stats.markersTruncated > 0 ||
+          fetched.stats.markersFailed > 0
+        ) {
+          depthExpansions.push({
+            rootPath,
+            markersFound: fetched.stats.markersFound,
+            markersResolved: fetched.stats.markersResolved,
+            markersTruncated: fetched.stats.markersTruncated,
+            markersFailed: fetched.stats.markersFailed,
+            expansionsUsed: fetched.stats.expansionsUsed,
+          });
+        }
+        writeFileSync(
+          ensureExtractedContentFile(outputDir, rootPath),
+          JSON.stringify(
+            {
+              jcrPath: rootPath,
+              fetchedAt: new Date().toISOString(),
+              tree,
+            },
+            null,
+            2,
+          ) + "\n",
+          "utf8",
+        );
       }
       const tags = collectTags(tree, rootPath);
       console.error(

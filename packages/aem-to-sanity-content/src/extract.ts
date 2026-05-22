@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 import "dotenv/config";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve, dirname } from "node:path";
 import {
   AemFetchError,
   applyFixturesFromEnv,
   createColors,
+  ensureExtractedContentFile,
+  extractedContentExists,
+  aemCacheContentRoot,
   fetchInfinityTree,
   resolveConfig,
   startTimer,
@@ -79,10 +82,6 @@ function lastSegment(path: string): string | undefined {
   return i < 0 || i === path.length - 1 ? undefined : path.slice(i + 1);
 }
 
-function encodeFilename(jcrPath: string): string {
-  return jcrPath.replace(/^\/+/, "").replace(/[^A-Za-z0-9_-]/g, "_") + ".json";
-}
-
 type FailureCategory = "notFound" | "ambiguous" | "auth" | "tooLarge" | "other";
 
 function categorize(err: unknown): FailureCategory {
@@ -121,10 +120,10 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  const rawDir = join(outputDir, "cache", "raw");
-  mkdirSync(rawDir, { recursive: true });
+  const contentDir = aemCacheContentRoot(outputDir);
+  mkdirSync(contentDir, { recursive: true });
 
-  console.error(`[extract] ${entries.length} root(s) from ${config.baseUrl} → ${rawDir}`);
+  console.error(`[extract] ${entries.length} root(s) from ${config.baseUrl} → ${contentDir}`);
 
   const ambiguous: Array<{ rootPath: string; resolution: AmbiguousResolution }> = [];
   const failures: Array<{ rootPath: string; message: string; category: FailureCategory }> = [];
@@ -142,8 +141,7 @@ async function main(): Promise<void> {
   const maxDepthExpansions = numEnv("AEM_MAX_DEPTH_EXPANSIONS");
 
   for (const entry of entries) {
-    const file = join(rawDir, encodeFilename(entry.jcrPath));
-    if (!overwrite && existsSync(file)) {
+    if (!overwrite && extractedContentExists(outputDir, entry.jcrPath)) {
       skipped++;
       continue;
     }
@@ -168,6 +166,7 @@ async function main(): Promise<void> {
           expansionsUsed: stats.expansionsUsed,
         });
       }
+      const file = ensureExtractedContentFile(outputDir, entry.jcrPath);
       writeFileSync(
         file,
         JSON.stringify(

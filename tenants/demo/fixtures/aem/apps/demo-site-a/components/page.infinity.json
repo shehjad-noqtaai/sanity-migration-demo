@@ -1,0 +1,206 @@
+{
+  "jcr:primaryType": "cq:Component",
+  "cq:dialog": {
+    "jcr:primaryType": "nt:unstructured",
+    "content": {
+      "jcr:primaryType": "nt:unstructured",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "tabs": {
+          "jcr:primaryType": "nt:unstructured",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "sling:hideChildren": [
+              "socialmedia",
+              "personalization",
+              "permissions"
+            ],
+            "basic": {
+              "jcr:primaryType": "nt:unstructured",
+              "items": {
+                "jcr:primaryType": "nt:unstructured",
+                "column": {
+                  "jcr:primaryType": "nt:unstructured",
+                  "items": {
+                    "jcr:primaryType": "nt:unstructured",
+                    "sling:hideChildren": [
+                      "htmlid",
+                      "vanityurl"
+                    ],
+                    "title": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "jcr:title": "Title and Tags",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "title": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "required": true,
+                          "name": "./jcr:title",
+                          "fieldLabel": "Meta Title",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "renderReadOnly": true,
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "cq-msm-lockable": "jcr:title"
+                          }
+                        },
+                        "pagename": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq:showOnCreate": true,
+                          "validation": "admin.pagename",
+                          "name": "pageName",
+                          "fieldLabel": "Name",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "cq:hideOnEdit": true
+                        },
+                        "msmConfigEndpoint": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "granite:class": "msm-config-endpoint",
+                          "value": "Demo Heading D",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/hidden"
+                        },
+                        "tags": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "allowBulkEdit": true,
+                          "name": "./cq:tags",
+                          "fieldLabel": "Tags",
+                          "multiple": true,
+                          "sling:resourceType": "cq/gui/components/coral/common/form/tagfield",
+                          "autocreateTag": true,
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "cq-msm-lockable": "cq:tags"
+                          }
+                        },
+                        "tagsShowOnCreate": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq:showOnCreate": true,
+                          "name": "./cq:tags",
+                          "fieldLabel": "Tags",
+                          "multiple": true,
+                          "sling:resourceType": "cq/gui/components/coral/common/form/tagfield",
+                          "cq:hideOnEdit": true,
+                          "granite:comment": "Demo Heading E"
+                        },
+                        "hideinnav": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./hideInNav",
+                          "text": "Hide in Navigation",
+                          "value": "true",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/checkbox",
+                          "renderReadOnly": true,
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "allowBulkEdit": true,
+                            "cq-msm-lockable": "hideInNav"
+                          }
+                        },
+                        "charset": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "allowBulkEdit": true,
+                          "name": "_charset_",
+                          "value": "utf-8",
+                          "ignoreData": true,
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/hidden"
+                        }
+                      }
+                    },
+                    "moretitles": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "cq:showOnCreate": true,
+                      "jcr:title": "More Titles and Description",
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "pagetitle": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq:showOnCreate": true,
+                          "name": "./pageTitle",
+                          "fieldLabel": "Page Title",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "renderReadOnly": true,
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "allowBulkEdit": true,
+                            "cq-msm-lockable": "pageTitle"
+                          }
+                        },
+                        "navigationtitle": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "cq:showOnCreate": true,
+                          "allowBulkEdit": true,
+                          "name": "./navTitle",
+                          "fieldLabel": "Navigation Title",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "renderReadOnly": true,
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "allowBulkEdit": true,
+                            "cq-msm-lockable": "navTitle"
+                          }
+                        },
+                        "subtitle": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./subtitle",
+                          "fieldLabel": "Subtitle",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textfield",
+                          "renderReadOnly": true,
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "allowBulkEdit": true,
+                            "cq-msm-lockable": "subtitle"
+                          }
+                        },
+                        "description": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "name": "./jcr:description",
+                          "fieldLabel": "Meta Description",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/textarea",
+                          "renderReadOnly": true,
+                          "granite:data": {
+                            "jcr:primaryType": "nt:unstructured",
+                            "allowBulkEdit": true,
+                            "cq-msm-lockable": "jcr:description"
+                          }
+                        }
+                      }
+                    },
+                    "openGraphImageFieldset": {
+                      "jcr:primaryType": "nt:unstructured",
+                      "sling:orderBefore": [
+                        "moretitles"
+                      ],
+                      "sling:resourceType": "granite/ui/components/coral/foundation/form/fieldset",
+                      "items": {
+                        "jcr:primaryType": "nt:unstructured",
+                        "openGraphImage": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "rootPath": "/content/dam",
+                          "name": "./openGraphImage",
+                          "fieldLabel": "Open Graph Image",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/pathfield",
+                          "fieldDescription": "Demo Heading G"
+                        },
+                        "priority": {
+                          "jcr:primaryType": "nt:unstructured",
+                          "max": 1,
+                          "min": 0,
+                          "name": "./priority",
+                          "step": 0.1,
+                          "fieldLabel": "Sitemap priority",
+                          "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield",
+                          "fieldDescription": "Demo Heading A"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

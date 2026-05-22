@@ -16,39 +16,73 @@ import {
  * (`BpFIDGFA`) and for unit-testing every failure path without talking to a
  * live AEM instance.
  *
- * ## Fixture on-disk layout
+ * ## Fixture on-disk layout (canonical — path mirror)
  *
- * Each AEM URL maps to exactly one fixture file. The URL path *and* any
- * selector/extension (`.infinity.json`, `.4.json`, `.json`) are encoded into
- * the filename so a single directory captures any number of variants of the
- * same JCR path without collision.
+ * Each AEM URL maps to a file whose relative path mirrors the URL path:
  *
- * Mapping: slash → `__`, leading slash dropped. Examples:
- *
- *   GET  /content/dbi.infinity.json              → content__dbi.infinity.json
- *   GET  /content/dbi/en/home.infinity.json      → content__dbi__en__home.infinity.json
- *   GET  /content/dbi.4.json                     → content__dbi.4.json
+ *   GET  /content/dbi.infinity.json
+ *        → {fixturesDir}/content/dbi.infinity.json
+ *   GET  /content/dbi/en/home.infinity.json
+ *        → {fixturesDir}/content/dbi/en/home.infinity.json
  *   GET  /apps/dbi/components/content/about/_cq_dialog.infinity.json
- *        → apps__dbi__components__content__about___cq_dialog.infinity.json
+ *        → {fixturesDir}/apps/dbi/components/content/about/_cq_dialog.infinity.json
  *
- * Non-200 responses are captured by placing a sibling `<filename>.meta.json`
- * next to the response body (or in place of it, for 404s where we never get a
- * body). The meta file is a JSON object:
+ * Non-200 responses use a sibling `<path>.meta.json` sidecar:
  *
  *   { "status": 300, "body": "<raw 300 body>" }
  *   { "status": 404 }
- *   { "status": 500, "body": "..." }
  *
  * A 200 is implied when only the JSON body file is present and no meta exists.
+ *
+ * ## Legacy layout (still read, not written)
+ *
+ * Older captures encode slashes as `__` in a flat filename, optionally under
+ * `content/` or `components/` bucket folders. `lookupFixture` falls back to
+ * these paths when a path-mirror file is missing.
  *
  * If a fixture is missing entirely, the fetcher throws
  * `AemFetchError("network", ..., { status: 404 })` — i.e. treats missing
  * fixtures as 404s, which matches how live AEM reports non-existent paths.
- * This makes fixture mode "closed-world": you can't accidentally hit a URL
- * you forgot to capture.
  */
 
-/** Encodes a JCR path + selector into a filesystem-safe filename. */
+const KNOWN_SELECTORS = [
+  ".infinity.json",
+  ".4.json",
+  ".3.json",
+  ".2.json",
+  ".1.json",
+  ".0.json",
+] as const;
+
+/** Normalize a URL path relative to baseUrl (always leading `/`). */
+export function normalizeRelativeUrlPath(relativePath: string): string {
+  return relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+}
+
+/**
+ * Canonical on-disk path segment for a relative AEM URL (no leading slash).
+ * Example: `/content/dbi/en/home.infinity.json` → `content/dbi/en/home.infinity.json`
+ */
+export function fixtureRelativePathForUrl(relativePath: string): string {
+  return normalizeRelativeUrlPath(relativePath).replace(/^\/+/, "");
+}
+
+/** Absolute path to write/read a path-mirror fixture body. */
+export function fixturePathForUrl(fixturesDir: string, relativePath: string): string {
+  return join(fixturesDir, fixtureRelativePathForUrl(relativePath));
+}
+
+/** Legacy flat filename: slash → `__`, leading slash dropped. */
+export function fixtureLegacyFilenameForUrl(relativePath: string): string {
+  return fixtureRelativePathForUrl(relativePath).replace(/\//g, "__");
+}
+
+/** @deprecated Prefer `fixtureRelativePathForUrl` — kept for legacy callers. */
+export function fixtureFilenameForUrl(relativePath: string): string {
+  return fixtureLegacyFilenameForUrl(relativePath);
+}
+
+/** Encodes a JCR path + selector into a legacy flat filename. */
 export function fixtureFilenameFor(jcrPath: string, selector: string): string {
   const trimmed = jcrPath.replace(/^\/+/, "");
   const encoded = trimmed.replace(/\//g, "__");
@@ -56,14 +90,62 @@ export function fixtureFilenameFor(jcrPath: string, selector: string): string {
 }
 
 /**
- * Encode a full URL (relative to the configured baseUrl) into a fixture
- * filename. Handles `.infinity.json`, `.N.json`, and dialog paths uniformly.
+ * Decode a legacy flat fixture filename back to a path-mirror relative path.
+ * Returns undefined when the name does not look like a legacy capture.
  */
-export function fixtureFilenameForUrl(relativePath: string): string {
-  // relativePath looks like "/content/dbi.infinity.json" or
-  // "/apps/dbi/components/content/about/_cq_dialog.infinity.json".
-  const trimmed = relativePath.replace(/^\/+/, "");
-  return trimmed.replace(/\//g, "__");
+export function decodeLegacyFixtureFilename(filename: string): string | undefined {
+  let name = filename;
+  if (name.endsWith(".meta.json")) {
+    name = name.slice(0, -".meta.json".length);
+  }
+
+  let selector = "";
+  for (const s of KNOWN_SELECTORS) {
+    if (name.endsWith(s)) {
+      selector = s;
+      name = name.slice(0, -s.length);
+      break;
+    }
+  }
+  if (!selector) {
+    if (!name.endsWith(".json")) return undefined;
+    selector = ".json";
+    name = name.slice(0, -".json".length);
+  }
+  if (!name.includes("__")) return undefined;
+  return `${name.replace(/__/g, "/")}${selector}`;
+}
+
+/** Bucket subfolder for legacy split fixture trees. */
+export function fixtureBucketForUrl(relativePath: string): "content" | "components" | undefined {
+  const normalized = normalizeRelativeUrlPath(relativePath);
+  if (normalized.startsWith("/content/")) return "content";
+  if (normalized.startsWith("/apps/")) return "components";
+  return undefined;
+}
+
+/** Legacy search dirs: bucket subdir (if any), then flat root. */
+export function fixtureSearchDirs(
+  fixturesDir: string,
+  relativePath: string,
+): string[] {
+  const bucket = fixtureBucketForUrl(relativePath);
+  const out = bucket ? [join(fixturesDir, bucket), fixturesDir] : [fixturesDir];
+  return [...new Set(out)];
+}
+
+/** Ordered candidate body paths — path mirror first, then legacy layouts. */
+export function fixtureLookupCandidates(
+  fixturesDir: string,
+  relativePath: string,
+): string[] {
+  const normalized = normalizeRelativeUrlPath(relativePath);
+  const legacyName = fixtureLegacyFilenameForUrl(normalized);
+  const out = [fixturePathForUrl(fixturesDir, normalized)];
+  for (const dir of fixtureSearchDirs(fixturesDir, normalized)) {
+    out.push(join(dir, legacyName));
+  }
+  return [...new Set(out)];
 }
 
 export interface FixtureMeta {
@@ -82,32 +164,17 @@ export interface FixtureLookup {
   resolvedPath: string;
 }
 
-/**
- * Resolve a fixture for a given relative URL path under the configured
- * `fixturesDir`. Returns `undefined` if no fixture exists (caller decides
- * whether that's a 404 or a hard error).
- */
-export function lookupFixture(
-  fixturesDir: string,
-  relativePath: string,
-): FixtureLookup | undefined {
-  const filename = fixtureFilenameForUrl(relativePath);
-  const bodyPath = join(fixturesDir, filename);
-  const metaPath = join(fixturesDir, `${filename}.meta.json`);
+function lookupFixtureAtPath(bodyPath: string): FixtureLookup | undefined {
+  const metaPath = `${bodyPath}.meta.json`;
 
   const hasBody = existsSync(bodyPath);
   const hasMeta = existsSync(metaPath);
 
   if (!hasBody && !hasMeta) return undefined;
 
-  // Invariant: a fixture captures EITHER a successful 200 body OR a non-200
-  // meta sidecar — never both. Having both means the capture is ambiguous
-  // (the next round of `buildFixturesFetch` would silently prefer the meta
-  // and drop the body, which is the exact silent-data-loss pattern we're
-  // trying to avoid). Fail loudly instead.
   if (hasBody && hasMeta) {
     throw new Error(
-      `Fixture ${filename}: both a body file and a meta sidecar exist under ${fixturesDir}. ` +
+      `Fixture ${bodyPath}: both a body file and a meta sidecar exist. ` +
         `Remove one — a body file implies a 200 response; a meta sidecar implies a non-200.`,
     );
   }
@@ -131,16 +198,19 @@ export function lookupFixture(
   return { body200, meta, resolvedPath: bodyPath };
 }
 
+export function lookupFixture(
+  fixturesDir: string,
+  relativePath: string,
+): FixtureLookup | undefined {
+  for (const bodyPath of fixtureLookupCandidates(fixturesDir, relativePath)) {
+    const hit = lookupFixtureAtPath(bodyPath);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
 /**
  * Build a `fetch`-compatible function that reads from a fixtures directory.
- * The returned function can be injected into `FetchDeps.fetch` to run the
- * existing `fetchInfinityJson` code path entirely offline — preserving all
- * error kinds (`network`/`auth`/`tooLarge`/`parseError`) by returning the
- * correct HTTP status that `parseResponse` then branches on.
- *
- * This is the recommended way to use fixture mode: it lets the unit tests
- * cover the real HTTP-response-shape logic (e.g. 300 → parse alternatives →
- * refetch) without mocking internal functions.
  */
 export function buildFixturesFetch(
   fixturesDir: string,
@@ -150,7 +220,6 @@ export function buildFixturesFetch(
   const fetchImpl: typeof globalThis.fetch = async (input, _init) => {
     const url = typeof input === "string" ? input : (input as URL).toString();
     if (!url.startsWith(normalizedBase)) {
-      // Unexpected out-of-fixture URL — surface clearly rather than silently 404.
       throw new Error(
         `fixtures fetch: URL ${url} is not under configured baseUrl ${normalizedBase}`,
       );
@@ -159,7 +228,6 @@ export function buildFixturesFetch(
     const lookup = lookupFixture(fixturesDir, relativePath);
 
     if (!lookup) {
-      // Closed-world: missing fixture == 404. Matches real AEM for missing paths.
       return makeResponse(404, "", url);
     }
 
@@ -168,7 +236,6 @@ export function buildFixturesFetch(
       return makeResponse(status, body, url, lookup.meta.sizeBytes);
     }
 
-    // 200 with a JSON body — default case.
     return makeResponse(200, lookup.body200 ?? "", url);
   };
   return fetchImpl;
@@ -180,8 +247,6 @@ function makeResponse(
   url: string,
   overrideSize?: number,
 ): Response {
-  // Build a Response with a streamable body so `readTextWithCap` in
-  // fetcher.ts exercises its streaming path (required for tooLarge coverage).
   const bodyBytes = Buffer.from(body, "utf8");
   const actualSize = overrideSize ?? bodyBytes.byteLength;
   const stream = new ReadableStream<Uint8Array>({
@@ -214,15 +279,6 @@ function statusText(status: number): string {
   return map[status] ?? "";
 }
 
-/**
- * If `deps.fixturesDir` is set and points at a readable directory, returns an
- * augmented `FetchDeps` with a fixtures-backed `fetch`. Otherwise returns
- * `deps` unchanged. Pure function of inputs — does NOT read process env, so
- * library callers see deterministic behaviour (an explicit `deps.fetch` is
- * only overridden when `deps.fixturesDir` is set too). To pick up
- * `AEM_FIXTURES_DIR` from the environment at CLI entry points, call
- * `applyFixturesFromEnv(deps)` first.
- */
 export function maybeApplyFixturesMode(deps: FetchDeps): FetchDeps {
   const dir = deps.fixturesDir;
   if (!dir) return deps;
@@ -244,11 +300,6 @@ export function maybeApplyFixturesMode(deps: FetchDeps): FetchDeps {
   };
 }
 
-/**
- * CLI-only helper: copies `AEM_FIXTURES_DIR` from `process.env` into
- * `deps.fixturesDir` (if not already set). Keeps env-var reading out of
- * library code — only CLI entry points should touch `process.env`.
- */
 export function applyFixturesFromEnv(deps: FetchDeps): FetchDeps {
   if (deps.fixturesDir) return deps;
   const dir = process.env.AEM_FIXTURES_DIR;
@@ -256,6 +307,4 @@ export function applyFixturesFromEnv(deps: FetchDeps): FetchDeps {
   return { ...deps, fixturesDir: dir };
 }
 
-// Avoid unused warnings on the re-export list — these types are part of the
-// fixture-mode public surface.
 export type { AemFetchError, AmbiguousResolution, FetchInfinityOptions };
