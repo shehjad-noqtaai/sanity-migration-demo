@@ -41,7 +41,7 @@ pnpm install                         # pnpm auto-discovers via the `tenants/*` g
 
 `<your-tenant>` is any short slug — `acme`, `tmobile`, `davids-bridal`. The new folder is gitignored — only `tenants/template/` is committed, so each operator's working copy (with real credentials, customer-specific component lists, and per-run pipeline output) stays local.
 
-Existing tenant folders may lag the template as new env vars, scripts, or pipeline stages get added. Run `pnpm -w migrate:doctor <your-tenant>` to detect drift and missing env, and `pnpm -w migrate:doctor <your-tenant> --fix` to auto-repair the `package.json` scripts block. Use `pnpm -w migrate:doctor --all` to scan every tenant under `tenants/` at once.
+Existing tenant folders may lag the template as new env vars, scripts, or pipeline stages get added. Run `pnpm -w migrate:doctor <your-tenant>` to detect drift and missing env, and `pnpm -w migrate:doctor <your-tenant> --fix` to auto-repair the `package.json` scripts block. Use `pnpm -w migrate:doctor --all` to scan every tenant under `tenants/` at once. When `AEM_FIXTURES_DIR` is set in `.env`, the doctor skips AEM auth checks and validates the fixtures layout instead.
 
 ### 1-pre-bis. Demo tenant (no AEM)
 

@@ -70,7 +70,8 @@ pnpm -w migrate:doctor --all                  # check every tenant under tenants
 Doctor checks:
 - `package.json` scripts block matches the template (auto-fixable)
 - `.env` contains every required var from `.env.example` with no leftover placeholder values
-- At least one AEM authentication flow is configured (service credentials, developer token, or basic auth)
+- At least one AEM authentication flow is configured (service credentials, developer token, or basic auth) — **skipped when `AEM_FIXTURES_DIR` is set** (offline fixture replay)
+- When `AEM_FIXTURES_DIR` is set, validates the fixtures directory has `content/` and `components/` with `.infinity.json` files (warns if `images/` is empty unless you use `--link-only`)
 - `MIGRATION_DRY_RUN=false` runs have `SANITY_MEDIA_LIBRARY_ID` set
 - Template files (`README.md`, `.env.example`, `aem-content-roots.example`) are not silently out of date
 

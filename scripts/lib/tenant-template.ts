@@ -5,8 +5,8 @@
  * safe to refresh) vs operator-owned (do not touch, never compare) vs
  * ignored (caches, node_modules, output).
  */
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -155,4 +155,85 @@ export function isMeaningfulValue(value: string | undefined): boolean {
   if (!value) return false;
   if (PLACEHOLDER_RE.test(value)) return false;
   return true;
+}
+
+/** Env keys tied to live AEM HTTP — not required when `AEM_FIXTURES_DIR` is set. */
+export const AEM_CONNECTIVITY_KEYS = new Set([
+  "AEM_ENV",
+  "AEM_AUTHOR_URL",
+  "AEM_AUTHOR_USERNAME",
+  "AEM_AUTHOR_PASSWORD",
+  "AEM_PUBLISH_URL",
+  "AEM_PUBLISH_USERNAME",
+  "AEM_PUBLISH_PASSWORD",
+  "AEM_TOKEN",
+  "AEM_SERVICE_CREDENTIALS_FILE",
+  "AEM_SERVICE_CREDENTIALS",
+]);
+
+export interface FixturesLayout {
+  fixturesRoot: string;
+  exists: boolean;
+  isDirectory: boolean;
+  contentJsonCount: number;
+  componentsJsonCount: number;
+  flatInfinityJsonCount: number;
+  imageCount: number;
+}
+
+/** Resolve `AEM_FIXTURES_DIR` relative to the tenant folder. */
+export function resolveFixturesRoot(tenantDirPath: string, envValue: string): string {
+  const trimmed = envValue.trim();
+  return isAbsolute(trimmed) ? trimmed : resolve(tenantDirPath, trimmed);
+}
+
+/** Count `.infinity.json` files under content/, components/, and the fixtures root. */
+export function inspectFixturesLayout(fixturesRoot: string): FixturesLayout {
+  const layout: FixturesLayout = {
+    fixturesRoot,
+    exists: existsSync(fixturesRoot),
+    isDirectory: false,
+    contentJsonCount: 0,
+    componentsJsonCount: 0,
+    flatInfinityJsonCount: 0,
+    imageCount: 0,
+  };
+  if (!layout.exists) return layout;
+  if (!statSync(fixturesRoot).isDirectory()) return layout;
+  layout.isDirectory = true;
+
+  for (const name of readdirSync(fixturesRoot)) {
+    if (name.endsWith(".infinity.json")) layout.flatInfinityJsonCount++;
+  }
+
+  const contentDir = join(fixturesRoot, "content");
+  if (existsSync(contentDir) && statSync(contentDir).isDirectory()) {
+    for (const name of readdirSync(contentDir)) {
+      if (name.endsWith(".infinity.json")) layout.contentJsonCount++;
+    }
+  }
+
+  const componentsDir = join(fixturesRoot, "components");
+  if (existsSync(componentsDir) && statSync(componentsDir).isDirectory()) {
+    for (const name of readdirSync(componentsDir)) {
+      if (name.endsWith(".infinity.json")) layout.componentsJsonCount++;
+    }
+  }
+
+  const imagesDir = join(fixturesRoot, "images");
+  if (existsSync(imagesDir) && statSync(imagesDir).isDirectory()) {
+    for (const name of readdirSync(imagesDir)) {
+      if (!name.startsWith(".")) layout.imageCount++;
+    }
+  }
+
+  return layout;
+}
+
+export function hasFixturesContent(layout: FixturesLayout): boolean {
+  return (
+    layout.contentJsonCount > 0 ||
+    layout.componentsJsonCount > 0 ||
+    layout.flatInfinityJsonCount > 0
+  );
 }
