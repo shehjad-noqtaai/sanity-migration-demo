@@ -57,7 +57,7 @@ cp tenants/<your-tenant>/.env.example tenants/<your-tenant>/.env
 | `AEM_AUTHOR_PASSWORD` | conditional | Basic-auth password for author. **AMS / on-prem only.** |
 | `AEM_PUBLISH_URL` / `USERNAME` / `PASSWORD` | conditional | Same, for publish. |
 | `AEM_TOKEN` | optional | Bearer token. Use this for **AEMaaCS developer (local-development) tokens** generated in Cloud Manager → Environment → Developer Console → *Integrations* → *Get Local Development Token*. They expire after 24h. Overrides basic auth when set. |
-| `AEM_SERVICE_CREDENTIALS_FILE` | optional | Path to a **Service Credentials JSON** downloaded from Adobe Developer Console. The migration exchanges these credentials with Adobe IMS at startup and uses the resulting short-lived access token as a bearer. Works for both modern OAuth Server-to-Server and legacy JWT shapes. See § 1a-bis. Highest priority — overrides `AEM_TOKEN` and basic auth. |
+| `AEM_SERVICE_CREDENTIALS_FILE` | optional | Path to a **Service Credentials JSON** downloaded from Adobe Developer Console. The migration exchanges these credentials with Adobe IMS at startup and uses the resulting short-lived access token as a bearer. Works for both modern OAuth Server-to-Server and legacy JWT shapes. **Resolved against the tenant folder when run via `pnpm` scripts** — drop the JSON file alongside `.env` and reference it as `./service-credentials.json`. Absolute paths also work. See § 1a-bis. Highest priority — overrides `AEM_TOKEN` and basic auth. |
 | `AEM_SERVICE_CREDENTIALS` | optional | Same content as the file above, but inlined as a JSON string (useful for CI where you'd rather paste into a secret manager than mount a file). Mutually exclusive with `AEM_SERVICE_CREDENTIALS_FILE`. |
 | `AEM_COMPONENT_PATHS_FILE` | optional | File listing component JCR paths to migrate (one per line, `#` for comments). Default: `./aem-component-paths`. |
 | `AEM_CONTENT_ROOTS_FILE` | optional | File listing content roots to walk during extraction. Default: `./aem-content-roots`. See `aem-content-roots.example` for syntax. |
@@ -96,10 +96,11 @@ The right choice for anything more than a quick local trial — the token Adobe 
 1. In **Cloud Manager**, open the target environment (the one you want to migrate from).
 2. Click the actions menu → **Developer Console** (opens `dev-console-ns-team-aem-cm-prd-nXXXXX.ethos05-prod-va6.dev.adobeaemcloud.com/...` or similar).
 3. Go to **Integrations** → **Service Credentials** → **Get Service Credentials** → **Create new technical account**. Adobe IMS provisions a technical account, generates a private key, and downloads a JSON file. Save it somewhere outside the repo — it carries credentials.
-4. Point the migration at the file:
+4. Point the migration at the file. Drop the JSON alongside the tenant's `.env` and use a relative path (resolved against the tenant folder when run via `pnpm` scripts):
    ```bash
-   AEM_SERVICE_CREDENTIALS_FILE=/path/to/service-credentials.json
+   AEM_SERVICE_CREDENTIALS_FILE=./service-credentials.json
    ```
+   Absolute paths also work if you'd rather keep the file outside the repo.
    Or, for CI, inline the JSON:
    ```bash
    AEM_SERVICE_CREDENTIALS='{"CLIENT_ID":"...","CLIENT_SECRET":"...","SCOPES":["..."], ...}'
