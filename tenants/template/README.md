@@ -47,7 +47,7 @@ pnpm -w migrate:doctor <your-tenant>
 pnpm -F tenant-<your-tenant> migrate:schema   # AEM dialogs → Sanity schemas
 pnpm -F tenant-<your-tenant> extract          # AEM pages → output/cache/aem/content/
 pnpm -F tenant-<your-tenant> tags             # cq:Tag nodes → output/cache/categories/
-pnpm -F tenant-<your-tenant> transform        # raw → output/cache/clean/
+pnpm -F tenant-<your-tenant> transform        # extract cache → output/cache/clean/
 pnpm -F tenant-<your-tenant> assets           # DAM → Media Library + link
 pnpm -F tenant-<your-tenant> import           # clean docs → Sanity dataset
 

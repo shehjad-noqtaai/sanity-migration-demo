@@ -13,9 +13,10 @@
       "dependsOn": ["^build", "build"],
       "cache": false,
       "outputs": [
-        "output/schemas/**",
-        "output/migration-report.json",
-        "output/aem/**"
+        "output/cache/content-type-registry.json",
+        "output/cache/migration-report.json",
+        "output/cache/aem/**",
+        "output/cache/audit/**"
       ]
     },
     "typegen": {
@@ -25,7 +26,7 @@
     "migrate:content": {
       "dependsOn": ["^build", "build", "typegen"],
       "cache": false,
-      "outputs": ["output/audit/**", "output/content/**"]
+      "outputs": ["output/cache/**"]
     },
     "docs": {
       "dependsOn": ["^build"],

@@ -3,10 +3,10 @@
 AEM → Sanity content migration as five flat scripts. Each step is inspectable on disk, so you can stop between phases and re-run just one.
 
 ```
-aem-extract    AEM  → output/cache/aem/content/**/*.json          + output/extract-report.json
+aem-extract    AEM  → output/cache/aem/content/**/*.json          + output/cache/extract-report.json
 aem-tags       AEM  → output/cache/categories/*.json + manifest.json + output/cache/tags-report.json   (optional)
-aem-transform  raw + categories manifest → output/clean/*.json + output/transform-report.json
-aem-assets     DAM  → output/assets/* + Sanity                + output/assets/manifest.json           (resumable)
+aem-transform  cache/aem/content + categories manifest → output/cache/clean/**/*.json + output/cache/transform-report.json
+aem-assets     DAM  → output/cache/assets/* + Sanity                + output/cache/assets/manifest.json           (resumable)
 aem-import     clean + categories → Sanity (dry-run by default)
 ```
 
@@ -209,18 +209,18 @@ Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (de
 
 ## Reports
 
-- `output/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.
-- `output/extract-404.log` — one `<jcrPath>\t<fullUrl>` per 404 (only written when 404s occur).
-- `output/transform-report.json` — unknown `sling:resourceType`s (with hit counts and example paths), unknown properties per mapped component, transform bails (max-depth or cycle). `aem-transform` also echoes unmapped types to the console at the end of the run as a paste-ready `/apps/...` list (the page root and `responsivegrid` wrapper are hidden — they're always passthroughs, never missing schemas). Add the listed paths to `aem-component-paths`, then re-run `migrate:schema` → `transform` → `import` so the new component's content stops being dropped.
-- `output/assets-report.json` — asset download/upload/link counts, failures.
-- `output/assets/manifest.json` — per-asset state (damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef + sanityRef). Drives resumability for all four phases: download, upload to Media Library, GDR link to dataset, doc rewrite.
+- `output/cache/extract-report.json` — per-root outcome; HTTP 300/404/auth/too-large failures grouped by category.
+- `output/cache/extract-404.log` — one `<jcrPath>\t<fullUrl>` per 404 (only written when 404s occur).
+- `output/cache/transform-report.json` — unknown `sling:resourceType`s (with hit counts and example paths), unknown properties per mapped component, transform bails (max-depth or cycle). `aem-transform` also echoes unmapped types to the console at the end of the run as a paste-ready `/apps/...` list (the page root and `responsivegrid` wrapper are hidden — they're always passthroughs, never missing schemas). Add the listed paths to `aem-component-paths`, then re-run `migrate:schema` → `transform` → `import` so the new component's content stops being dropped.
+- `output/cache/assets-report.json` — asset download/upload/link counts, failures.
+- `output/cache/assets/manifest.json` — per-asset state (damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef + sanityRef). Drives resumability for all four phases: download, upload to Media Library, GDR link to dataset, doc rewrite.
 
 ## aem-assets — Media Library flow (@shehjadkhan 2026-04-22)
 
 `aem-assets` runs five phases. Dry-run default stops after phase 1 (local download).
 
 0. **Dedup against the Media Library + manifest staleness check** — GROQ on `aspects.aemSource.damPath`. A hit populates the manifest with both ids so phases 1+2 skip entirely for that asset. When the lookup misses but the manifest claims an `mediaLibraryAssetId`, phase 0 verifies the doc still exists in the ML by id; if it's been deleted (e.g. ML wipe), the stale linkage is cleared so phases 2-3 re-upload + re-link for real. Transport errors are treated conservatively — manifest state is preserved and the next healthy-network run re-verifies. Requires the `aemSource` aspect to be deployed once per ML. Skipped on dry-run by default; `--link-only` forces it to run (safe, read-only).
-1. **Download** AEM DAM binary → local cache in `output/assets/`.
+1. **Download** AEM DAM binary → local cache in `output/cache/assets/`.
 2. **Upload to Media Library** — `POST https://api.sanity.io/v{apiVersion}/media-libraries/{mlId}/upload`. Response `{asset: {_id}, assetInstance: {_id}}` captures the parent asset id and the versioned instance id (both needed for step 3). Uses `SANITY_TOKEN`. A project robot token historically worked here, but newer Media Library API versions reject project-scoped sessions with `401 SIO-401-ANF "Session not found"` — when that happens, swap in a **personal auth token** (see `docs/running-the-migration.md` § 4c-bis for how to mint one).
 3. **Link to dataset** — `POST https://{projectId}.api.sanity.io/v{apiVersion}/assets/media-library-link/{dataset}` with body `{mediaLibraryId, assetInstanceId, assetId}`. Response `{document: {_id, media: {_ref}, ...}}` — `document._id` is the dataset-local asset ref that goes into docs. **Requires a personal auth token** (`SANITY_ML_LINK_TOKEN`) because the endpoint rejects project robot tokens with `401 Invalid non-global session`. See `docs/running-the-migration.md` § 4c-bis.
 4. **Rewrite clean docs** in place — every `/content/dam/...` string becomes `{_type:'image'|'file', asset:{_ref:'<linked-ref>'}}`. Pattern A (Studio-compatible), matches existing doc shape.
@@ -237,12 +237,12 @@ When `AEM_FIXTURES_DIR` is set, phase 1 copies committed DAM binaries from `{AEM
 
 Skips AEM download (phase 1). Copies SVG files from `./placeholders/` into the local asset cache — each DAM path hashes to one of 12 slots (`placeholder-slot-00.svg` … `placeholder-slot-11.svg`). Prefer fixture images for the demo tenant. Mutually exclusive with `--link-only`, `--upload-only`, and `AEM_FIXTURES_DIR`.
 
-Manifest entry shape (`output/assets/manifest.json`):
+Manifest entry shape (`output/cache/assets/manifest.json`):
 
 ```ts
 {
   damPath: "/content/dam/dbi/m1.png",
-  cachedFile: "/path/to/output/assets/dbi--m1.png",
+  cachedFile: "/path/to/output/cache/assets/dbi--m1.png",
   mimeType: "image/png", fileSize: 4049,
   mediaLibraryAssetId: "3CjO...",                // asset._id in ML
   linkedAssetInstanceId: "image-<sha1>-WxH-png", // assetInstance._id in ML

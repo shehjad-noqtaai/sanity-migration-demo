@@ -154,7 +154,7 @@ Every migration runs from `tenants/<your-tenant>/`. Only `tenants/template/` (th
 | `aem-component-containers.json` | Components with drop-zone children (`cq:isContainer=true`) |
 | `aem-component-hints.json` | Components opting into AEM authoring hints (`cq:panelTitle` etc.) |
 | `aem-page-components.json` | Page-shell components + their `cq:template` paths |
-| `output/cache/…` | Per-stage artifacts — gitignored caches, regenerable |
+| `output/cache/…` | Per-stage artifacts — gitignored caches, regenerable. See `docs/running-the-migration.md` § 1e for the full tree (`aem/content/`, `aem/apps/`, `clean/`, `categories/`, `assets/`, reports). |
 
 ---
 

@@ -57,13 +57,13 @@ Runs `@sanity/schema` in-process to produce `output/sanity.types.ts` — no netw
 
 **Stage 3 — Content migration** (`packages/aem-to-sanity-content`, four flat scripts run in order)
 - `aem-extract` — walks `.infinity.json` for each root in `aem-content-roots`, transparently following depth-5 truncation markers. Writes to `output/cache/aem/content/` (path-mirror) plus `output/cache/extract-report.json`.
-- `aem-transform` — maps extracted AEM nodes to Sanity `page` docs using `content-type-registry.json`. Adds `_type`, deterministic `_id` (from JCR path), stable `_key`s (from `jcr:uuid` or path SHA1). Unknown resource types and exceptions are skipped but noted. Writes to `output/clean/` plus `output/transform-report.json`.
-- `aem-assets` — scans clean docs for `/content/dam/...` references, downloads from AEM, uploads to Sanity's asset pipeline, and rewrites the clean docs in place so fileupload fields hold Sanity asset refs. Maintains `output/assets/manifest.json` so re-runs skip uploaded assets.
-- `aem-import` — commits docs from `output/clean/` via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Deterministic `_id`s mean re-runs upsert instead of duplicating.
+- `aem-transform` — maps extracted AEM nodes to Sanity `page` docs using `content-type-registry.json`. Adds `_type`, deterministic `_id` (from JCR path), stable `_key`s (from `jcr:uuid` or path SHA1). Unknown resource types and exceptions are skipped but noted. Writes to `output/cache/clean/` (path-mirror) plus `output/cache/transform-report.json`.
+- `aem-assets` — scans clean docs for `/content/dam/...` references, downloads from AEM, uploads to Sanity's asset pipeline, and rewrites the clean docs in place so fileupload fields hold Sanity asset refs. Maintains `output/cache/assets/manifest.json` so re-runs skip uploaded assets.
+- `aem-import` — commits docs from `output/cache/clean/` via `@sanity/client` using `transaction().createOrReplace(doc).commit()`. Deterministic `_id`s mean re-runs upsert instead of duplicating.
 
 **All writes to Sanity are dry-run unless `MIGRATION_DRY_RUN=false` is set.** `aem-extract` and `aem-transform` are local-only regardless; only `aem-assets` and `aem-import` touch Sanity.
 
-Drift findings (unknown resource types, unknown props per mapped component, transform bails) are captured in `output/transform-report.json` with first-N example paths per finding — feed these back into `mapping-table.ts` when extending the mapping.
+Drift findings (unknown resource types, unknown props per mapped component, transform bails) are captured in `output/cache/transform-report.json` with first-N example paths per finding — feed these back into `mapping-table.ts` when extending the mapping.
 
 **Studio app** (`apps/studio`)
 A real Sanity Studio. `apps/studio/schemas/index.ts` re-exports `allSchemaTypes` from `tenants/<your-tenant>/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import. It's a consumer test — if emitted schemas break `sanity schema validate`, this is where it surfaces.
@@ -206,7 +206,7 @@ SANITY_STUDIO_DATASET=production
 | `aem-component-paths` | JCR paths of components to migrate, one per line. `#` comments allowed. Consumed by `migrate:schema`. |
 | `aem-content-roots` | Content paths to walk, with `@base` sections and slug lines. Consumed by `aem-extract`. See `aem-content-roots.example` for syntax. |
 | `aem-component-exceptions` | Components to skip or override during schema emission. |
-| `output/content-type-registry.json` | **Generated** by `migrate:schema`. Maps AEM `sling:resourceType` → Sanity type name + fields. Consumed by stage 3. Preserved on re-run if you remove the `__generated` marker. |
+| `output/cache/content-type-registry.json` | **Generated** by `migrate:schema`. Maps AEM `sling:resourceType` → Sanity type name + fields. Consumed by stage 3. Preserved on re-run if you remove the `__generated` marker. |
 
 ### Auth precedence
 

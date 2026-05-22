@@ -2,7 +2,7 @@
 
 Offline demo of the AEM → Sanity migration pipeline. All AEM REST responses are
 committed as scrubbed fixtures under `fixtures/aem/`; running the pipeline
-regenerates `output/cache/aem/content/`, `clean/`, schemas, and imports locally.
+regenerates `output/cache/aem/content/`, `output/cache/clean/`, schemas, and imports locally.
 `output/` is gitignored — only fixtures and tenant config are committed.
 
 ## Fixture layout

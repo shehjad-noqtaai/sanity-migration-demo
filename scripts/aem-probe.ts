@@ -345,7 +345,7 @@ function resolveSavePath(jcrPath: string, target: string | undefined): string {
     return isAbsolute(target) ? target : resolve(process.cwd(), target);
   }
   // Default: <cwd>/probe-<jcrpath-with-slashes-as-underscores>.json — same
-  // naming idea as `aem-extract`'s output/cache/raw/* so the operator can
+  // naming idea as `aem-extract`'s output/cache/aem/content/* so the operator can
   // eyeball-correlate, but in cwd to avoid mixing with a real extract run.
   const sanitized = jcrPath.replace(/^\/+/, "").replace(/[^A-Za-z0-9_-]/g, "_");
   return join(process.cwd(), `probe-${sanitized}.json`);

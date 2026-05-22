@@ -9,8 +9,8 @@ Reads AEM Granite UI component dialog definitions (`cq:dialog` trees) and emits:
 - One Sanity object schema per AEM component (`defineType` / `defineField` TypeScript files in `output/schemas/<componentName>.ts`)
 - Matching TypeScript types via Sanity TypeGen (`output/schema.json`, `output/sanity.types.ts`)
 - A `page` + `pageBuilder` pair that registers all emitted components as array members — drop-in for a pagebuilder Studio
-- A content-type registry (`output/content-type-registry.json`) mapping `sling:resourceType` → `sanityType` (used by downstream tooling; safe to ignore)
-- A migration report (`output/migration-report.json`) with per-component outcome and unmapped fields
+- A content-type registry (`output/cache/content-type-registry.json`) mapping `sling:resourceType` → `sanityType` (used by downstream tooling; safe to ignore)
+- A migration report (`output/cache/migration-report.json`) with per-component outcome and unmapped fields
 - Optional audit pointing at concrete JSON examples of unmapped AEM resource types, to extend the mapping table
 
 What it does **not** do: fetch page content, migrate assets, import documents. Those pieces live in `aem-to-sanity-content` and are intentionally excluded from this handover — the user has decided to discard them.
