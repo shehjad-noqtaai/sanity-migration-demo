@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "timezone": "UTC",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 8,
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "Auto-merge patch and minor updates after CI passes",
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Group all Sanity packages so one bump moves the whole ecosystem together",
+      "matchPackageNames": ["sanity", "@sanity/**"],
+      "groupName": "sanity"
+    },
+    {
+      "description": "Group Portable Text + jsdom (used together in the transform stage)",
+      "matchPackageNames": ["@portabletext/**", "jsdom"],
+      "groupName": "portable-text"
+    },
+    {
+      "description": "Group dev tooling (TypeScript, tsup, tsx, turbo)",
+      "matchPackageNames": ["typescript", "tsup", "tsx", "turbo", "@types/node"],
+      "groupName": "dev tooling"
+    },
+    {
+      "description": "Major version bumps require human review — never auto-merge",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major-bump", "needs-review"]
+    }
+  ]
+}
