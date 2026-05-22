@@ -1,0 +1,72 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "jcr:title": "Margin and padding",
+  "margin": true,
+  "sling:resourceType": "granite/ui/components/coral/foundation/container",
+  "items": {
+    "jcr:primaryType": "nt:unstructured",
+    "columns": {
+      "jcr:primaryType": "nt:unstructured",
+      "margin": true,
+      "sling:resourceType": "granite/ui/components/coral/foundation/fixedcolumns",
+      "items": {
+        "jcr:primaryType": "nt:unstructured",
+        "column": {
+          "jcr:primaryType": "nt:unstructured",
+          "sling:resourceType": "granite/ui/components/coral/foundation/container",
+          "items": {
+            "jcr:primaryType": "nt:unstructured",
+            "mt": {
+              "jcr:primaryType": "nt:unstructured",
+              "name": "./mt",
+              "fieldLabel": "mt",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            },
+            "mr": {
+              "jcr:primaryType": "nt:unstructured",
+              "name": "./mr",
+              "fieldLabel": "mr",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            },
+            "mb": {
+              "jcr:primaryType": "nt:unstructured",
+              "name": "./mb",
+              "fieldLabel": "mb",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            },
+            "ml": {
+              "jcr:primaryType": "nt:unstructured",
+              "name": "./ml",
+              "fieldLabel": "ml",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            },
+            "pt": {
+              "jcr:primaryType": "nt:unstructured",
+              "name": "./pt",
+              "fieldLabel": "pt",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            },
+            "pr": {
+              "jcr:primaryType": "nt:unstructured",
+              "name": "./pr",
+              "fieldLabel": "pr",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            },
+            "pb": {
+              "jcr:primaryType": "nt:unstructured",
+              "name": "./pb",
+              "fieldLabel": "pb",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            },
+            "pl": {
+              "jcr:primaryType": "nt:unstructured",
+              "name": "./pl",
+              "fieldLabel": "pl",
+              "sling:resourceType": "granite/ui/components/coral/foundation/form/numberfield"
+            }
+          }
+        }
+      }
+    }
+  }
+}
