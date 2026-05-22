@@ -192,7 +192,7 @@ info "=== PHASE 2: Studio boot against ${SANITY_PROJECT_ID:-rolz99xh}/${SANITY_D
 : "${SANITY_DATASET:?SANITY_DATASET must be set for Phase 2}"
 
 # Generate schemas for the davids-bridal example (Studio imports from there)
-info "Generating schemas for examples/davids-bridal (Studio source)..."
+info "Generating schemas for tenants/davids-bridal (Studio source)..."
 cd "${REPO_ROOT}"
 
 # Ensure packages are built in the monorepo
@@ -200,8 +200,8 @@ pnpm --filter aem-to-sanity-core --filter aem-to-sanity-schema build 2>&1 \
   | grep -E '(Build success|error TS)' || true
 
 # Create .env for the example if it doesn't exist
-if [[ ! -f "${REPO_ROOT}/examples/davids-bridal/.env" ]]; then
-  cat > "${REPO_ROOT}/examples/davids-bridal/.env" << ENV2
+if [[ ! -f "${REPO_ROOT}/tenants/davids-bridal/.env" ]]; then
+  cat > "${REPO_ROOT}/tenants/davids-bridal/.env" << ENV2
 AEM_ENV=author
 AEM_AUTHOR_URL=${AEM_AUTHOR_URL}
 AEM_AUTHOR_USERNAME=${AEM_AUTHOR_USERNAME}
@@ -210,22 +210,22 @@ OUTPUT_DIR=./output
 CONCURRENCY=4
 AEM_COMPONENT_PATHS_FILE=./aem-component-paths
 ENV2
-  info "Created examples/davids-bridal/.env"
+  info "Created tenants/davids-bridal/.env"
 fi
 
 # Create aem-component-paths if it doesn't exist
-if [[ ! -f "${REPO_ROOT}/examples/davids-bridal/aem-component-paths" ]]; then
-  cat > "${REPO_ROOT}/examples/davids-bridal/aem-component-paths" << 'PATHS2'
+if [[ ! -f "${REPO_ROOT}/tenants/davids-bridal/aem-component-paths" ]]; then
+  cat > "${REPO_ROOT}/tenants/davids-bridal/aem-component-paths" << 'PATHS2'
 # Smoke test — real DBI components
 /apps/dbi/components/content/3-column-staggered-grid-portrait-images-mobile-stacked
 /apps/dbi/components/content/4-column-staggered-grid-2-column-mobile
 PATHS2
-  info "Created examples/davids-bridal/aem-component-paths"
+  info "Created tenants/davids-bridal/aem-component-paths"
 fi
 
-pnpm --filter example-davids-bridal migrate:schema 2>&1 | grep -E '(Emitted|Failed|error)' || true
+pnpm --filter tenant-davids-bridal migrate:schema 2>&1 | grep -E '(Emitted|Failed|error)' || true
 
-STUDIO_SCHEMAS="${REPO_ROOT}/examples/davids-bridal/output/schemas/index.ts"
+STUDIO_SCHEMAS="${REPO_ROOT}/tenants/davids-bridal/output/schemas/index.ts"
 [[ -f "${STUDIO_SCHEMAS}" ]] || fail "davids-bridal output/schemas/index.ts not generated"
 success "davids-bridal schemas generated"
 

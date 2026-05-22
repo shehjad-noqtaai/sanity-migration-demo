@@ -95,7 +95,7 @@ Update the `data-label` on the slide 1 `<section>` from `01 Pipeline` to:
 
 ## Section B — Add per-template page documents to the pipeline overview
 
-Per-template document types (declared in `examples/<tenant>/aem-page-components.json`) became a first-class feature in commit `72bc8d9 feat(pages): emit per-template Sanity docs for AEM page-shell components`, with auto-discovery added in `4e61656`. The deck doesn't mention them at all.
+Per-template document types (declared in `tenants/<tenant>/aem-page-components.json`) became a first-class feature in commit `72bc8d9 feat(pages): emit per-template Sanity docs for AEM page-shell components`, with auto-discovery added in `4e61656`. The deck doesn't mention them at all.
 
 ### B1. Slide 1, Step 02 — Schema generation
 
@@ -176,12 +176,12 @@ Replace with:
 Wherever the deck currently shows the content sub-stages as four commands (look for the "One step at a time" row, `cmd-code` block listing extract/transform/assets/import), insert a `tags` line between `extract` and `transform`:
 
 ```
-pnpm --filter example-<tenant> migrate:schema
-pnpm --filter example-<tenant> extract
-pnpm --filter example-<tenant> tags         # optional — only when migrating AEM tags
-pnpm --filter example-<tenant> transform
-pnpm --filter example-<tenant> assets
-pnpm --filter example-<tenant> import
+pnpm --filter tenant-<tenant> migrate:schema
+pnpm --filter tenant-<tenant> extract
+pnpm --filter tenant-<tenant> tags         # optional — only when migrating AEM tags
+pnpm --filter tenant-<tenant> transform
+pnpm --filter tenant-<tenant> assets
+pnpm --filter tenant-<tenant> import
 ```
 
 Apply the same insertion to any other row on slide 4 that lists the content chain.
@@ -224,7 +224,7 @@ Three columns. Each column is a zone box with a label at the top and 2–6 small
 
 #### Zone 2 — Local cache (middle column)
 
-- Zone label: `Local cache` · sublabel: `examples/<tenant>/output/`
+- Zone label: `Local cache` · sublabel: `tenants/<tenant>/output/`
 - Card: `output/cache/aem/*` · annotation: `component dialogs`
 - Card: `output/cache/raw/*` · annotation: `page trees`
 - Card: `output/cache/categories/*` · annotation: `taxonomy docs + manifest`
@@ -296,7 +296,7 @@ Render each as a small arrow with the **stage name** above and a one-phrase capt
 
 ## Where placeholders should appear in examples
 
-Keep the tenant-folder placeholder `<tenant>` (or `your-app`) consistent across the deck — it stands for the user's package name (matching `name` in the workspace `package.json`). In the David's Bridal example repo it's `example-davids-bridal`, but the deck is generic; pick one convention and use it everywhere.
+Keep the tenant-folder placeholder `<tenant>` (or `your-app`) consistent across the deck — it stands for the user's package name (matching `name` in the workspace `package.json`). In the David's Bridal example repo it's `tenant-davids-bridal`, but the deck is generic; pick one convention and use it everywhere.
 
 ---
 

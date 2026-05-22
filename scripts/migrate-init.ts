@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Scaffold a new tenant migration folder from examples/tenant/.
+ * Scaffold a new tenant migration folder from tenants/template/.
  *
  *   pnpm migrate:init <slug>
  *
@@ -20,7 +20,6 @@ import {
 import { join, relative } from "node:path";
 
 import {
-  EXAMPLES_DIR,
   IGNORED_NAMES,
   TEMPLATE_DIR,
   tenantDir,
@@ -53,7 +52,7 @@ function renameWorkspace(packageJsonPath: string, slug: string): void {
     name: string;
     [k: string]: unknown;
   };
-  pkg.name = `example-${slug}`;
+  pkg.name = `tenant-${slug}`;
   writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
 }
 
@@ -62,8 +61,8 @@ function main(): void {
   if (!slug) {
     fail("usage: pnpm migrate:init <slug>   (e.g. pnpm migrate:init acme)");
   }
-  if (slug === "tenant") {
-    fail("slug 'tenant' is reserved for the template");
+  if (slug === "template") {
+    fail("slug 'template' is reserved for the migration template");
   }
   if (!SLUG_RE.test(slug)) {
     fail(
@@ -73,7 +72,7 @@ function main(): void {
 
   const dest = tenantDir(slug);
   if (existsSync(dest)) {
-    fail(`examples/${slug}/ already exists — refusing to overwrite`);
+    fail(`tenants/${slug}/ already exists — refusing to overwrite`);
   }
 
   if (!existsSync(TEMPLATE_DIR)) {
@@ -98,7 +97,7 @@ function main(): void {
   console.log(`  3. $EDITOR ${rel}/aem-content-roots                 # list pages to migrate`);
   console.log(`  4. $EDITOR ${rel}/aem-component-paths               # list components to map`);
   console.log(`  5. pnpm -w migrate:doctor ${slug}                   # verify before running`);
-  console.log(`  6. pnpm -F example-${slug} migrate                  # run the full pipeline`);
+  console.log(`  6. pnpm -F tenant-${slug} migrate                   # run the full pipeline`);
 }
 
 main();

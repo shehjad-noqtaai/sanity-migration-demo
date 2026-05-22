@@ -12,7 +12,7 @@ Every user-facing change must update its documentation in the same commit. Drift
 - `docs/running-the-migration.md` — canonical operator's guide (env vars table, per-stage flag tables, troubleshooting).
 - `docs/overview.md` — architecture + layout.
 - `docs/aem-to-sanity-mapping.md` — **auto-generated** by `packages/aem-to-sanity-schema/src/docs.ts`. Do not edit by hand; regenerate.
-- `examples/tenant/.env.example` — must list every env var a CLI reads. `examples/tenant/` is the **committed template**; operator working copies live at `examples/<their-tenant>/` and are gitignored.
+- `tenants/template/.env.example` — must list every env var a CLI reads. `tenants/template/` is the **committed template**; operator working copies live at `tenants/<their-tenant>/` and are gitignored.
 
 **Triggers:**
 - **New CLI flag** → update the package README + the stage section in `docs/running-the-migration.md` + `.env.example` if there's a matching env var.
@@ -22,18 +22,18 @@ Every user-facing change must update its documentation in the same commit. Drift
 - **Mapping table change** (`packages/aem-to-sanity-schema/src/mapping-table.ts`) → rerun `pnpm migrate:schema` so `docs/aem-to-sanity-mapping.md` regenerates from the source of truth. `writeMappingDocs` can also be called standalone from the schema package's `dist/index.js` (no AEM round-trip needed).
 - **Container config shape change** (`packages/aem-to-sanity-core/src/config/containers.ts` or `aem-component-containers.json` fields) → update the "Container components" section in `packages/aem-to-sanity-schema/src/docs.ts`, regenerate `docs/aem-to-sanity-mapping.md`, and mirror in `docs/running-the-migration.md` § 1c-quater + content package README.
 - **Slot discovery shape change** (`packages/aem-to-sanity-schema/src/slots.ts` behavior, `slot-reference` field emission rules) → update the "Named slots (auto-discovered)" section in `packages/aem-to-sanity-schema/src/docs.ts`, regenerate the mapping doc, and mirror in `docs/running-the-migration.md` § 2 + content package README.
-- **Tenant template change** (anything under `examples/tenant/`) → keep `scripts/lib/tenant-template.ts` + `scripts/migrate-doctor.ts` in sync so `pnpm -w migrate:doctor` doesn't silently miss the new surface. Details below.
+- **Tenant template change** (anything under `tenants/template/`) → keep `scripts/lib/tenant-template.ts` + `scripts/migrate-doctor.ts` in sync so `pnpm -w migrate:doctor` doesn't silently miss the new surface. Details below.
 
 **Tenant template ↔ doctor sync rules**
 
-`pnpm -w migrate:init` and `pnpm -w migrate:doctor` treat `examples/tenant/` as the source of truth, but the doctor classifies each file by hand. When the template grows, update the classification or the checks won't catch drift on the new surface.
+`pnpm -w migrate:init` and `pnpm -w migrate:doctor` treat `tenants/template/` as the source of truth, but the doctor classifies each file by hand. When the template grows, update the classification or the checks won't catch drift on the new surface.
 
-- **New file added to `examples/tenant/`** → add its basename to either `TEMPLATE_FILES` (template-owned content like `README.md`, `*.example`) or `OPERATOR_FILES` (operator-customized like `aem-*-roots`, `*.json`) in `scripts/lib/tenant-template.ts`. Files in neither set are silently ignored by doctor.
+- **New file added to `tenants/template/`** → add its basename to either `TEMPLATE_FILES` (template-owned content like `README.md`, `*.example`) or `OPERATOR_FILES` (operator-customized like `aem-*-roots`, `*.json`) in `scripts/lib/tenant-template.ts`. Files in neither set are silently ignored by doctor.
 - **New required env var added to `.env.example`** → no code change needed. The doctor parses `.env.example` at runtime and treats every uncommented `KEY=value` line as required. The placeholder regex (`PLACEHOLDER_RE` in `scripts/lib/tenant-template.ts`) detects leftover values; add a pattern there if you introduce a new placeholder shape (e.g. `<your-thing>`, `xxxx`).
 - **New optional env var added to `.env.example`** → no code change needed. Commented `# KEY=value` lines are picked up automatically and excluded from the "unknown var" warning.
 - **New conditional env requirement** (e.g. "var X is required only when var Y has a particular value") → add a special-case block in `checkEnv` inside `scripts/migrate-doctor.ts`. The `MIGRATION_DRY_RUN=false` → `SANITY_MEDIA_LIBRARY_ID` check is the existing template.
 - **New AEM authentication flow** → extend `AEM_AUTH_FLOWS` in `scripts/lib/tenant-template.ts` (name + keys + `any-of`/`all-of` mode). The doctor's "no AEM auth configured" error iterates that list.
-- **New pipeline stage script** (e.g. another `aem-foo` between extract and import) → add it to the `scripts` block in `examples/tenant/package.json` AND to the migrate chains (`migrate`, `migrate:content`). The doctor's `package.json` scripts-block check reads the template at runtime, so once the template is updated, `pnpm -w migrate:doctor --all --fix` propagates the new script to existing tenants.
+- **New pipeline stage script** (e.g. another `aem-foo` between extract and import) → add it to the `scripts` block in `tenants/template/package.json` AND to the migrate chains (`migrate`, `migrate:content`). The doctor's `package.json` scripts-block check reads the template at runtime, so once the template is updated, `pnpm -w migrate:doctor --all --fix` propagates the new script to existing tenants.
 - **New ignored directory** (build output, cache, etc. that init must skip on copy) → add to `IGNORED_NAMES` in `scripts/lib/tenant-template.ts`.
 
 After any of the above, re-run `pnpm -w migrate:doctor --all` and confirm the report reflects the new expectation.
@@ -54,7 +54,7 @@ The pipeline emits many artifacts into `output/cache/` and `apps/studio/schemas/
 - `output/cache/categories/*.json` + `manifest.json` — written by `aem-tags`. One Sanity `category` doc per AEM `cq:Tag` node (parent-child taxonomy), plus a manifest keyed by AEM tag id that `aem-transform` consults when resolving authored `cq:tags` references.
 - `output/cache/assets/manifest.json` — per-DAM-path state; drives `aem-assets` resumability.
 
-When you change how any artifact is generated, **re-run the relevant stage against whichever local tenant folder you have set up** — don't just typecheck. Operator tenant folders (`examples/davids-bridal/`, `examples/<your-tenant>/`, etc.) are gitignored, so on a fresh clone there's nothing to run against — copy `examples/tenant/` first and fill in real credentials. Prefer `--link-only` on `aem-assets` for re-runs — it skips AEM downloads and ML uploads.
+When you change how any artifact is generated, **re-run the relevant stage against whichever local tenant folder you have set up** — don't just typecheck. Operator tenant folders (`tenants/davids-bridal/`, `tenants/<your-tenant>/`, etc.) are gitignored, so on a fresh clone there's nothing to run against — copy `tenants/template/` first and fill in real credentials. Prefer `--link-only` on `aem-assets` for re-runs — it skips AEM downloads and ML uploads.
 
 ## Document ID generation
 
@@ -125,7 +125,7 @@ After code changes that affect the pipeline output:
 pnpm -r build
 
 # 2. Full schema + content run against your local tenant folder
-cd examples/<your-tenant>             # e.g. examples/davids-bridal, examples/acme
+cd tenants/<your-tenant>             # e.g. tenants/davids-bridal, tenants/acme
 pnpm migrate:schema
 pnpm extract
 pnpm transform

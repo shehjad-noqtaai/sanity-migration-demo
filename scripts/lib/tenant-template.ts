@@ -1,7 +1,7 @@
 /**
  * Shared helpers for migrate:init + migrate:doctor.
  *
- * Knows which files in examples/tenant/ are template-owned (drift checked,
+ * Knows which files in tenants/template/ are template-owned (drift checked,
  * safe to refresh) vs operator-owned (do not touch, never compare) vs
  * ignored (caches, node_modules, output).
  */
@@ -11,8 +11,8 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(here, "..", "..");
-export const EXAMPLES_DIR = join(REPO_ROOT, "examples");
-export const TEMPLATE_DIR = join(EXAMPLES_DIR, "tenant");
+export const TENANTS_DIR = join(REPO_ROOT, "tenants");
+export const TEMPLATE_DIR = join(TENANTS_DIR, "template");
 
 /**
  * Files whose contents come from the template. Doctor compares these and
@@ -119,7 +119,7 @@ export function readFileIfExists(path: string): string | null {
 }
 
 export function tenantDir(slug: string): string {
-  return join(EXAMPLES_DIR, slug);
+  return join(TENANTS_DIR, slug);
 }
 
 /**

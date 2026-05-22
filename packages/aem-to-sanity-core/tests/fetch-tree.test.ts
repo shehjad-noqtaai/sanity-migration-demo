@@ -13,7 +13,7 @@ import type { Config } from "../src/config/schema.ts";
 
 const FIXTURES_DIR = resolve(
   fileURLToPath(import.meta.url),
-  "../../../../examples/davids-bridal/output/cache/fixtures/aem",
+  "../../../../tenants/davids-bridal/output/cache/fixtures/aem",
 );
 
 const testConfig: Config = {

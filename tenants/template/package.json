@@ -1,8 +1,8 @@
 {
-  "name": "example-tenant",
+  "name": "tenant-template",
   "version": "0.0.0",
   "private": true,
-  "description": "Migration template. Copy this folder to examples/<your-tenant>/ and rename the workspace before use.",
+  "description": "Migration template. Copy this folder to tenants/<your-tenant>/ and rename the workspace before use.",
   "type": "module",
   "scripts": {
     "migrate:schema": "aem-to-sanity-schema",
