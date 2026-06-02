@@ -192,12 +192,14 @@ Missing / empty file → every page uses the generic `page` doc (today's behavio
 
 ## Named-slot components (auto-detected)
 
-A different AEM pattern shows up on components like `media-paragraph`: a single nested child under a **fixed** JCR key (e.g. `content`) whose value is itself a full component with its own `sling:resourceType`. Not a dialog field, not a drop-zone container — just a named slot.
+A different AEM pattern shows up on components like `media-paragraph`: a nested child under a JCR key (e.g. `content`) whose value is itself a full component with its own `sling:resourceType`. Not a dialog field, not a drop-zone container — just a named slot.
 
-- **Transform** always emits these as single nested blocks under the slot key (`mediaParagraph.content = {_type: 'content', text: [{_type:'block', ...}], ...}`). Detection is structural: any direct child with `sling:resourceType` that isn't already claimed by container logic is a slot. Works on the first run with no config.
-- **Schema** catches up on the next `migrate:schema`: that pass scans `output/cache/aem/content/` (extracted content) and appends a typed `defineField({ name: slotKey, type: childTypeName })` to the parent schema. Until then the Studio shows a yellow "Unknown fields found" warning on the nested data but the data itself is preserved.
+Authors often drop **many** instances of the same child into one parent, and AEM auto-names the siblings (`content`, `content_1793623844`, `content_1893078103_c`, `content…_copy_copy`, `title_1967938466_cop_1581547696`, …). Treating each JCR key as its own field would emit one `defineField` per author-drop and blow past Sanity's per-dataset attribute limit, so siblings are collapsed by their **logical base** (timestamps, paste ids, and `_c`/`_co`/`_cop`/`_copy`/`C…` copy markers stripped — see `normalizeSlotBase` in `aem-to-sanity-core`).
 
-There's no config for named slots — the shape is inferred from content. Container parents (listed in `aem-component-containers.json`) skip slot synthesis so their drop-zone children stay on the container-items path.
+- **Transform** groups a node's child components by logical base and emits them under the base field name (`mediaParagraph.content = [{_type:'content', text:[{_type:'block',...}], ...}, ...]`). Detection is structural: any direct child with `sling:resourceType` that isn't already claimed by container logic is a slot. Works on the first run with no config.
+- **Schema** catches up on the next `migrate:schema`: that pass scans `output/cache/aem/content/` (extracted content) and appends one field per base — an **array of `<childType>`** for repeated/auto-named slots, a single typed reference for a lone hand-named slot. Until then the Studio shows a yellow "Unknown fields found" warning on the nested data but the data itself is preserved.
+
+The array-vs-single decision is made once by the schema (from its global view of every page) and recorded in `content-type-registry.json`; the transform reads it back so both sides agree on the shape regardless of how many instances a given page carries. There's no config for named slots — the shape is inferred from content. Container parents (listed in `aem-component-containers.json`) skip slot synthesis so their drop-zone children stay on the container-items path.
 
 ## Timing
 
