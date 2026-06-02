@@ -382,9 +382,11 @@ output/
 │   ├── migration-report.json      ← per-component schema pass/fail
 │   ├── page-templates.json        ← cq:template routing manifest (migrate:schema)
 │   ├── extract-report.json        ← aem-extract summary
+│   ├── extract-404.log            ← aem-extract: roots that returned 404 (path + URL)
 │   ├── transform-report.json      ← aem-transform drift findings
 │   ├── tags-report.json           ← aem-tags summary
 │   ├── assets-report.json         ← aem-assets summary
+│   ├── assets-failures.log        ← aem-assets: DAM paths that failed download/upload/link
 │   └── audit/unmapped-examples.json
 └── execution-*.log                ← combined migrate log (when using run-with-log.ts)
 ```
@@ -644,6 +646,8 @@ interface ManifestEntry {
   - `--placeholders` (or `MIGRATION_ASSETS_PLACEHOLDERS=true`) — legacy: skip AEM download (phase 1). Copies SVG files from `./placeholders/` into the local asset cache instead, hashing each DAM path to one of 12 slots. Mutually exclusive with `--link-only`, `--upload-only`, and `AEM_FIXTURES_DIR`. See § 4c-ter.
   - `--no-rewrite` — skip phase 4 (in-place rewrite of `clean/*.json`).
 
+**Outputs:** `output/cache/assets/manifest.json` (per-DAM-path state, above), `output/cache/assets-report.json` (download/upload/link counts + `rewrite.unresolved`), and — when anything failed — `output/cache/assets-failures.log`: one tab-separated `<damPath>\t<status>\t<error>` line per DAM path that failed to download (e.g. `HTTP 404 Not Found` for assets missing from AEM), failed to upload/link, or stayed unresolved as a raw `/content/dam/*` string in clean docs. This is the asset analog of `extract-404.log` — grep it to see exactly which assets were skipped and why, without parsing the JSON report. The run summary prints its path and entry count.
+
 Ordering contract: the link phase must complete before `aem-import` runs, because the clean docs only contain the linked `_ref` after phase 4. The `migrate:content` chain (`extract → transform → assets → import`) already enforces this.
 
 ### 4c-bis. Generating a personal Sanity auth token
@@ -816,6 +820,8 @@ The report excludes internal `sanity.*` / `system.*` types and prints the API's 
 | `aem-assets` phase 2 → `409 asset already exists` | Informational, not an error. The binary was already uploaded to the Media Library. The code recovers both IDs via a GROQ lookup and continues. |
 | `aem-assets` → `Missing env var: SANITY_MEDIA_LIBRARY_ID` | Set it to the org-level ML id that the project belongs to. `sanity media library list` on the org shows available ids. |
 | `aem-extract` fails with `HTTP 300` on a root | AEM returned an ambiguous-path response (the path may point at a folder). Check `output/cache/extract-report.json` → `ambiguous[]` for the resolution suggestion. |
+| Fewer pages imported than roots listed | Roots that AEM 404'd were skipped at extract (not authored pages — often commerce/PLP URLs pulled from a sitemap). `summary.downloaded` + `summary.notFound` in `output/cache/extract-report.json` accounts for the gap; the full list of skipped paths is in `output/cache/extract-404.log`. Verify a sample at `<path>.infinity.json` in AEM, then prune them from `aem-content-roots` or point them at the real JCR path. |
+| Images render broken / fewer assets linked than expected | DAM paths AEM 404'd (or that failed upload/link) are listed in `output/cache/assets-failures.log` (`<damPath>\t<status>\t<error>`). 404s mean the asset isn't in AEM at that path; upload/link failures usually mean a token-scope issue (see the `SIO-401-ANF` rows above). |
 | `aem-transform` → `No extracted content in output/cache/aem/content` | Run `aem-extract` first. The transform stage only reads from disk — it never hits AEM. |
 | Studio boots but shows no schemas (only `category`) | `apps/studio/schemas/generated/index.ts` is the bare-clone stub (exports `[]`). Run `pnpm --filter tenant-<your-tenant> migrate:schema` to regenerate the real barrel locally. |
 | `sanity schema validate` → `Type has property "fields", but is not an object/document type` | The sanitizer is injecting placeholder fields into a non-object type. Confirm you're on the latest schema package (this is fixed). |

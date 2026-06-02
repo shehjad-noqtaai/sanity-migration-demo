@@ -1093,6 +1093,33 @@ async function main(): Promise<void> {
     ) + "\n",
   );
 
+  // Human-readable log of every DAM path that didn't make it all the way into
+  // the dataset — the asset analog of `extract-404.log`. Tab-separated
+  // `damPath <TAB> status <TAB> error` so operators can grep which assets were
+  // skipped and why (download 404s, upload/link failures) without parsing JSON.
+  // `unresolved` (raw `/content/dam/*` strings still in clean docs) are folded
+  // in too, since those are the paths import will render as broken refs.
+  const failureStatuses = new Set(["failed-download", "failed-upload", "failed-link"]);
+  const failureRows = new Map<string, string>();
+  for (const [damPath, entry] of Object.entries(manifest)) {
+    if (failureStatuses.has(entry.status)) {
+      const err = (entry.error ?? "").replace(/\s+/g, " ").trim();
+      failureRows.set(damPath, `${damPath}\t${entry.status}\t${err}`);
+    }
+  }
+  for (const damPath of unresolvedList) {
+    if (failureRows.has(damPath)) continue;
+    const entry = manifest[damPath];
+    const status = entry?.status ?? "missing-from-manifest";
+    const err = (entry?.error ?? "left as raw DAM string in clean docs").replace(/\s+/g, " ").trim();
+    failureRows.set(damPath, `${damPath}\t${status}\t${err}`);
+  }
+  const assetFailuresLog = join(outputDir, "cache", "assets-failures.log");
+  if (failureRows.size > 0) {
+    const lines = [...failureRows.values()].sort();
+    writeFileSync(assetFailuresLog, lines.join("\n") + "\n", "utf8");
+  }
+
   console.error(c.dim("\n────────────────────────────────────────"));
   console.error(`Downloaded: ${c.green(stats.downloaded)}   Cached: ${c.dim(stats.cached)}   Failed: ${stats.failedDownload > 0 ? c.yellow(stats.failedDownload) : c.green(0)}`);
   console.error(`Uploaded:   ${c.green(stats.uploaded)}   Failed: ${stats.failedUpload > 0 ? c.yellow(stats.failedUpload) : c.green(0)}`);
@@ -1120,6 +1147,9 @@ async function main(): Promise<void> {
     }
   }
   console.error(`Manifest:   ${c.dim(manifestFile)}`);
+  if (failureRows.size > 0) {
+    console.error(`Failures:   ${c.dim(assetFailuresLog)} ${c.dim(`(${failureRows.size} DAM path(s) — download 404s / upload / link / unresolved)`)}`);
+  }
   const phaseLabels: Record<string, string> = {
     phase0: "phase 0 (ML dedup)",
     phase1: "phase 1 (download)",

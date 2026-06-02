@@ -215,6 +215,7 @@ Phases 0, 1, 2, 3 run with a work-stealing pool sized by `ASSET_CONCURRENCY` (de
 - `output/cache/extract-404.log` — one `<jcrPath>\t<fullUrl>` per 404 (only written when 404s occur).
 - `output/cache/transform-report.json` — unknown `sling:resourceType`s (with hit counts and example paths), unknown properties per mapped component, transform bails (max-depth or cycle). `aem-transform` also echoes unmapped types to the console at the end of the run as a paste-ready `/apps/...` list (the page root and `responsivegrid` wrapper are hidden — they're always passthroughs, never missing schemas). Add the listed paths to `aem-component-paths`, then re-run `migrate:schema` → `transform` → `import` so the new component's content stops being dropped.
 - `output/cache/assets-report.json` — asset download/upload/link counts, failures.
+- `output/cache/assets-failures.log` — one `<damPath>\t<status>\t<error>` per DAM path that failed download (e.g. `HTTP 404 Not Found`), upload, or link, plus paths left unresolved as raw `/content/dam/*` strings. Asset analog of `extract-404.log`; only written when something failed.
 - `output/cache/assets/manifest.json` — per-asset state (damPath → cachedFile → mediaLibraryAssetId → linkedAssetInstanceId → linkedRef + sanityRef). Drives resumability for all four phases: download, upload to Media Library, GDR link to dataset, doc rewrite.
 
 ## aem-assets — Media Library flow (@shehjadkhan 2026-04-22)
