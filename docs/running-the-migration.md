@@ -770,6 +770,33 @@ pnpm --filter studio exec sanity schema validate
 
 The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `tenants/<your-tenant>/output/schemas/index.ts`, and `sanity.config.ts` runs them through `sanitizeSchemaTypes` (from `aem-to-sanity-schema/sanitize`) at import time — it's a real consumer of the pipeline output, not a toy fixture. If you change the emitted schemas, `sanity schema validate` is the gate that catches breakage.
 
+### 6a. Attribute limit & the diagnostic script
+
+Sanity's Content Lake caps how many **unique attributes** a dataset can hold, where an attribute is *a unique combination of path + datatype* (`obj[].pageBuilder[].theme → string` is one attribute). It's a **hard technical limit** that depends on your plan ([docs](https://www.sanity.io/docs/content-lake/attribute-limit)):
+
+| Plan | Attribute limit |
+| --- | --- |
+| Free | 2,000 |
+| Growth | 10,000 |
+| Enterprise | custom |
+
+Only paths that **hold content** count (schema definitions alone don't), each unique path counts once no matter how many documents use it, and a path only drops off the count when *every* document stops using it. When you exceed the limit the Studio refuses to open with `Total attribute count exceeds limit`.
+
+AEM content is a prime way to blow past this: the page editor auto-names every authored instance of a component with a unique JCR key, and presentation-heavy dialogs (per-component `fontSize`, `color`, `mb`, `align`, …) multiply paths across every block. The pipeline already mitigates the biggest offender — **repeated named slots collapse into a single array field** (§ 2, "Slot discovery") instead of one path per author-drop, which is exactly Sanity's own first recommendation ("use arrays for page building"). If you're still close to the limit, lean on the rest of their guidance: prefer arrays over deeply nested objects, avoid recursive page-builder-in-page-builder nesting, and keep presentation out of the content model.
+
+**Measure before and after.** `apps/studio/scripts/attributes.ts` is a self-contained diagnostic that streams the whole dataset (via the `/export` endpoint, or a local `.ndjson` file) and reports the live attribute count against your dataset's limit, broken down by document type and listing every path:
+
+```bash
+# Against the configured dataset (needs a personal token):
+pnpm --filter studio exec sanity exec scripts/attributes.ts --with-user-token
+
+# Target a specific project/dataset, or analyze an export offline:
+pnpm --filter studio exec sanity exec scripts/attributes.ts --with-user-token -- --project=abc123 --dataset=production
+pnpm --filter studio exec sanity exec scripts/attributes.ts -- --file=production.ndjson
+```
+
+The report excludes internal `sanity.*` / `system.*` types and prints the API's own `fields.count.value` / `fields.count.limit` (the same numbers Sanity enforces, also visible at `https://<projectId>.api.sanity.io/v1/data/stats/<dataset>`). The "attributes by type" table tells you which document types dominate — usually the page types whose `pageBuilder` carries the deepest blocks. Run it after a migration to confirm you're comfortably under the limit before importing the next wave of content.
+
 ---
 
 ## 7. Troubleshooting
@@ -794,6 +821,7 @@ The studio's `schemas/index.ts` re-exports `allSchemaTypes` from `tenants/<your-
 | `sanity schema validate` → `Type has property "fields", but is not an object/document type` | The sanitizer is injecting placeholder fields into a non-object type. Confirm you're on the latest schema package (this is fixed). |
 | `ERR_PACKAGE_PATH_NOT_EXPORTED` when running sanity CLI | Rebuild: `pnpm build`. The bundled CJS loader the Sanity CLI uses needs the `default` export condition that `dist/` ships. |
 | Depth-5 follow-ups never fire on a deep page | Make sure you're calling `aem-extract`, not hitting `.infinity.json` manually. Raise `maxDepthExpansions` if you have pages > 6 follow-up rounds deep. |
+| Studio won't open: `Total attribute count exceeds limit` | The dataset exceeded Sanity's per-plan attribute limit (Free 2k / Growth 10k). Run the diagnostic in § 6a to see which types dominate, then reduce unique paths — confirm repeated slots are collapsing to arrays (§ 2), drop presentational dialog fields, and avoid nested page-builder structures. Export first (`sanity dataset export`) before deleting content to get back under the limit. |
 
 ---
 
