@@ -71,15 +71,20 @@ When a dialog node has `sling:resourceType`: `granite/ui/components/coral/founda
 
 Some AEM components embed a **single named child component** under a fixed JCR key — e.g. `aem-integration/components/media-paragraph` has a `content` child whose own `sling:resourceType` is `aem-integration/components/content`. That's not a dialog field, and it's not a `cq:isContainer` drop-zone either; it's a named slot. The dialog itself doesn't describe it, so the shape only shows up in authored content.
 
-`migrate:schema` runs a post-extract scan of `output/cache/aem/content/` (the output of `aem-extract` and tag roots from `aem-tags`) and records every `parentResourceType → slotKey → childResourceType` combo it sees. For each one it appends a `defineField({ name: slotKey, type: childTypeName })` to the parent schema so the Studio shows the slot as a first-class typed field rather than flagging it as an "Unknown field found".
+`migrate:schema` runs a post-extract scan of `output/cache/aem/content/` (the output of `aem-extract` and tag roots from `aem-tags`) and records every `parentResourceType → slotKey → childResourceType` combo it sees. It then appends one `defineField` per **logical** slot to the parent schema so the Studio shows the slot as a first-class typed field rather than flagging it as an "Unknown field found".
+
+**Repeated slots collapse to one array field.** AEM auto-names every authored instance of the same child — `content`, `content_1793623844`, `content_1893078103_c`, `content…_copy_copy`, `title_1967938466_cop_1581547696`, … — so a single logical slot surfaces under hundreds of distinct JCR keys on content-heavy pages. Emitting one field per key would produce one `defineField` per author-drop and blow past Sanity's per-dataset attribute limit. Instead the scan groups keys by their **logical base** (suffix-stripped: timestamps, paste ids, and `_c`/`_co`/`_cop`/`_copy`/`C…` copy markers all peeled off), and emits:
+
+- a single **array** field (`array of <childType>`) when the base was authored more than once or under an auto-generated key — the common case for drop-zone-style slots, and
+- a single inline **reference** field when it's a lone, hand-named slot (key equals base, seen once).
 
 - **First run has no extracted content** → scan returns empty, no slot fields emitted. Run `aem-extract` then re-run `migrate:schema`; the second pass picks up every slot.
 - **Dialog field with the same name** → dialog field wins; slot synthesis skipped.
-- **Container parents** (listed in `aem-component-containers.json`) skip slot synthesis entirely — their drop-zone children are already claimed by `childrenField`, and author-generated JCR keys like `item_1657754806454` would otherwise pollute the schema with one defineField per instance.
-- **Multiple child types** seen at the same slot → skipped + warned; the pipeline won't guess which type to reference. Transform still writes the nested block under the JCR key so data isn't lost; the Studio keeps flagging "Unknown field" until a human authors the field.
+- **Container parents** (listed in `aem-component-containers.json`) skip slot synthesis entirely — their drop-zone children are already claimed by `childrenField`.
+- **Multiple child types** seen under one base → skipped + warned; the pipeline won't guess which type to reference. Transform still writes the nested blocks under their JCR keys so data isn't lost; the Studio keeps flagging "Unknown field" until a human authors the field.
 - **Unmapped child type** (not in `aem-component-paths`) → skipped + warned. Add the path to the list, re-run `migrate:schema`.
 
-The content transform always emits nested child components under their JCR key (single-object under the slot key, same `_type` + `_key` + coercion pipeline as top-level blocks), regardless of whether the schema has a matching `slot-reference` field yet. So data flows correctly on the first run; the second `migrate:schema` upgrades "Unknown field" warnings to typed fields in the Studio.
+The content transform mirrors this offline: it groups a node's child components by the same logical base and emits them under the base field name — an **array** when the registry marks the field as a repeated slot, a single inline object otherwise — using the same `_type` + `_key` + coercion pipeline as top-level blocks. The schema makes the array-vs-single decision once (from its global view of every page) and records it in `content-type-registry.json`; the transform obeys it, so both sides agree on the shape regardless of how many instances any single page happens to carry. Data flows correctly on the first run; the second `migrate:schema` upgrades "Unknown field" warnings to typed fields in the Studio.
 
 ## Container components (`cq:isContainer`)
 

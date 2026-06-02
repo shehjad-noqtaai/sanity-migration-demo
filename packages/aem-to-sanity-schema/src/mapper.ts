@@ -38,6 +38,7 @@ export type SanityField =
   | (CommonFieldProps & ReferenceArrayField)
   | (CommonFieldProps & ContainerChildrenField)
   | (CommonFieldProps & SlotReferenceField)
+  | (CommonFieldProps & SlotArrayField)
   | (CommonFieldProps & PlaceholderField);
 
 export interface CommonFieldProps {
@@ -123,6 +124,21 @@ interface ContainerChildrenField {
 interface SlotReferenceField {
   type: "slot-reference";
   /** Sanity type name of the nested block that fills this slot. */
+  slotTypeName: string;
+}
+/**
+ * Repeated named slot: a single logical slot that authors filled with many
+ * instances of the same child component. AEM auto-names each instance
+ * (`content`, `content1732069919C`, `content…CopyCopy`, …); discovery groups
+ * them by {@link normalizeSlotBase} and emits ONE array field instead of one
+ * `defineField` per instance — otherwise content-heavy pages blow past
+ * Sanity's per-dataset attribute limit. Emitted as `array of <slotTypeName>`;
+ * the content transform collects every sibling node sharing the base into this
+ * array.
+ */
+interface SlotArrayField {
+  type: "slot-array";
+  /** Sanity type name of the nested blocks that fill this slot. */
   slotTypeName: string;
 }
 interface PlaceholderField {

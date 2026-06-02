@@ -4,6 +4,7 @@ import {
   AEM_AUTHORING_HINTS,
   AemFetchError,
   aemCacheAppsFile,
+  normalizeSlotBase,
   resolveDialogViaSuperType,
   writeJson,
   writeTextFile,
@@ -538,18 +539,21 @@ async function processOne(
     }
   }
 
-  // Named-slot synthesis. For each discovered slot key (parentResourceType →
-  // slotKey → childResourceType(s)), append a direct type-reference field.
+  // Named-slot synthesis. Discovered slots are grouped by their logical base
+  // (`normalizeSlotBase`) so the many author-generated JCR keys AEM stamps
+  // onto repeated instances of one child (`content`, `content_1793623844`,
+  // `content_1893078103_c`, …) collapse into ONE field instead of one
+  // defineField per instance.
   // Priority rules:
   //   - Dialog field with the same name wins (skip).
   //   - Container parents skip slot synthesis entirely: their drop-zone
-  //     children are already handled by `childrenField`, and their JCR
-  //     keys are author-generated (`item_1657754806454`,
-  //     `content_1747537251_c`) which would otherwise pollute the schema
-  //     with one defineField per instance.
-  //   - Multiple child resource types observed at the same slot → skip +
+  //     children are already handled by `childrenField`.
+  //   - Repeated / auto-named base → one `slot-array` (array of childType);
+  //     a lone hand-named base (key === base, seen once) → one
+  //     `slot-reference` (single inline block).
+  //   - Multiple child resource types observed under one base → skip +
   //     warn; author tooling would need to pick one and we don't want to
-  //     guess. Transform still emits under the JCR key, so data isn't lost;
+  //     guess. Transform still emits under the JCR keys, so data isn't lost;
   //     the Studio just keeps flagging "Unknown field" until the operator
   //     hand-authors a field.
   //   - Child resource type without a known Sanity mapping (not in
@@ -557,60 +561,84 @@ async function processOne(
   //     exist yet.
   if (!deps.containerEntry && deps.slotMap && deps.slotMap.size > 0) {
     const existingNames = new Set(mapped.fields.map((f) => f.name));
+
+    // Group the discovered slot keys by their logical base. AEM auto-names
+    // repeated authored instances of the same child (`content`,
+    // `content1732069919C`, `content…CopyCopy`, `item_1657754806454`), so a
+    // single logical slot surfaces under many JCR keys. Emitting one field
+    // per key produces one `defineField` per author-drop — on content-heavy
+    // tenants that blows past Sanity's per-dataset attribute limit. Collapse
+    // each base to ONE field instead: an array when the base was authored
+    // more than once or under an auto-generated key, a single reference when
+    // it's a lone, hand-named slot.
+    interface SlotBaseGroup {
+      /** First raw key seen for this base — used for the field title. */
+      sampleKey: string;
+      childTypes: Set<string>;
+      keyCount: number;
+      /** True once any observed key differs from its base (auto-named). */
+      autoNamed: boolean;
+    }
+    const byBase = new Map<string, SlotBaseGroup>();
     for (const [slotKey, slotEntry] of deps.slotMap) {
-      if (existingNames.has(slotKey)) continue;
       if (slotEntry.childTypes.size === 0) continue;
-      // Skip AEM-author-generated keys: `item_1657754806454`,
-      // `content_1747537251_c`, `promo_1234_copy`. Any underscore followed
-      // by a run of digits is the AEM page-editor's "new instance id"
-      // stamp — emitting a schema field per instance would produce one
-      // defineField per author-drop, which is noise, not content model.
-      // If the parent is a real container the config file handles this;
-      // this regex is defense-in-depth when the config is missing (or
-      // when someone adds a new container and forgets to register it).
-      if (/_\d+/.test(slotKey)) {
-        deps.logger?.warn(
-          `slot-discovery: ${componentPath} has author-generated slot key "${slotKey}" ` +
-            `(child type ${[...slotEntry.childTypes.keys()][0]}). Looks like a cq:isContainer drop-zone — add this component to aem-component-containers.json.`,
-        );
-        continue;
+      const base = normalizeSlotBase(slotKey);
+      let group = byBase.get(base);
+      if (!group) {
+        group = { sampleKey: slotKey, childTypes: new Set(), keyCount: 0, autoNamed: false };
+        byBase.set(base, group);
       }
-      if (slotEntry.childTypes.size > 1) {
-        deps.logger?.warn(
-          `slot-discovery: ${componentPath} slot "${slotKey}" carries ${slotEntry.childTypes.size} child types — ` +
-            `${[...slotEntry.childTypes.keys()].join(", ")}. Skipping synthesis; hand-author this field in the dialog or in a custom wrapper if you need it typed.`,
-        );
-        continue;
-      }
-      const childResourceType = [...slotEntry.childTypes.keys()][0]!;
-      const childTypeName = deps.typeNameByResourceType.get(childResourceType);
-      if (!childTypeName) {
-        deps.logger?.warn(
-          `slot-discovery: ${componentPath} slot "${slotKey}" references unmapped child type "${childResourceType}". ` +
-            `Add /apps/${childResourceType} to aem-component-paths and re-run migrate:schema to pick it up.`,
-        );
-        continue;
-      }
-      // Sanity field names must match /^[A-Za-z]+[0-9A-Za-z_]*$/ — no
-      // hyphens, no leading digits. AEM JCR keys frequently use kebab
-      // case (`resources-column-item`), so normalize the same way
-      // dialog field names are normalized. Content transform applies
-      // the same camelCase pass when emitting the slot, so both sides
-      // agree on the on-disk field name.
-      const fieldName = toCamelCase(slotKey);
+      for (const ct of slotEntry.childTypes.keys()) group.childTypes.add(ct);
+      group.keyCount += 1;
+      if (slotKey !== base) group.autoNamed = true;
+    }
+
+    for (const [base, group] of byBase) {
+      // A dialog field already owns this name → dialog wins, skip synthesis.
+      const fieldName = toCamelCase(base);
       if (!fieldName) {
         deps.logger?.warn(
-          `slot-discovery: ${componentPath} slot "${slotKey}" camelCased to empty string — skipping.`,
+          `slot-discovery: ${componentPath} slot base "${base}" camelCased to empty string — skipping.`,
         );
         continue;
       }
       if (existingNames.has(fieldName)) continue;
-      const slotField: SanityField = {
-        name: fieldName,
-        title: slotKey,
-        type: "slot-reference",
-        slotTypeName: childTypeName,
-      };
+      // Mixed child types under one base — can't pick a single member type
+      // to declare. Leave it to the operator (dialog or custom wrapper);
+      // transform still emits the data under the raw key so nothing is lost.
+      if (group.childTypes.size > 1) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} slot "${base}" carries ${group.childTypes.size} child types — ` +
+            `${[...group.childTypes].join(", ")}. Skipping synthesis; hand-author this field in the dialog or in a custom wrapper if you need it typed.`,
+        );
+        continue;
+      }
+      const childResourceType = [...group.childTypes][0]!;
+      const childTypeName = deps.typeNameByResourceType.get(childResourceType);
+      if (!childTypeName) {
+        deps.logger?.warn(
+          `slot-discovery: ${componentPath} slot "${base}" references unmapped child type "${childResourceType}". ` +
+            `Add /apps/${childResourceType} to aem-component-paths and re-run migrate:schema to pick it up.`,
+        );
+        continue;
+      }
+      // Array when authored repeatedly or under an auto-generated key
+      // (`content1732069919C`); a single inline reference only when it's a
+      // lone, hand-named slot (key === base, seen once).
+      const isArray = group.keyCount > 1 || group.autoNamed;
+      const slotField: SanityField = isArray
+        ? {
+            name: fieldName,
+            title: base,
+            type: "slot-array",
+            slotTypeName: childTypeName,
+          }
+        : {
+            name: fieldName,
+            title: base,
+            type: "slot-reference",
+            slotTypeName: childTypeName,
+          };
       mapped.fields.push(slotField);
       existingNames.add(fieldName);
     }

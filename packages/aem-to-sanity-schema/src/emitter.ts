@@ -366,6 +366,15 @@ function fieldBody(field: SanityField, _indentLevel: number): string {
       props.type = JSON.stringify(field.slotTypeName);
       break;
     }
+    case "slot-array": {
+      // Repeated named slot collapsed to a single array of the child type.
+      // Transform collects every author-named sibling (`content`,
+      // `content1732069919C`, …) into this one array, keeping the schema
+      // attribute count flat regardless of how many instances were authored.
+      props.type = '"array"';
+      props.of = `[{ type: ${JSON.stringify(field.slotTypeName)} }]`;
+      break;
+    }
     case "placeholder": {
       props.type = '"string"';
       props.description = JSON.stringify(

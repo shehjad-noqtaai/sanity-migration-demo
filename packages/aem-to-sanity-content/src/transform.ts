@@ -10,6 +10,7 @@ import {
   listExtractedContentFiles,
   loadAuthoringHintConfig,
   loadContainerConfig,
+  normalizeSlotBase,
   startTimer,
   type AuthoringHintConfig,
   type ContainerConfig,
@@ -1046,26 +1047,47 @@ function collectPageBuilder(
       splitAemFileUploadDamPaths(inline, entry.fieldNames);
       coerceFieldTypes(inline, entry.fieldTypes, frame.jcrPath, ctx);
 
+      // Group sibling slot keys by their logical base. AEM auto-names
+      // repeated authored instances of the same child (`content`,
+      // `content1732069919C`, `content…CopyCopy`), so a single logical slot
+      // appears under many JCR keys. Schema-side discovery collapses these to
+      // ONE field (`slot-array` when authored repeatedly, else
+      // `slot-reference`); mirror that here so the migrated data matches the
+      // emitted schema and the attribute count stays flat. Field names are
+      // restricted (/^[A-Za-z]+[0-9A-Za-z_]*$/), so camelCase the base the
+      // same way the emitter does.
+      const slotGroups = new Map<string, string[]>();
       for (const slotKey of slotKeys) {
-        const child = frame.node[slotKey] as AemNode;
-        const childItems = collectPageBuilder(
-          child,
-          `${frame.jcrPath}/${slotKey}`,
-          ctx,
-          filter,
-          exceptions,
-        );
-        // Sanity field names are restricted (/^[A-Za-z]+[0-9A-Za-z_]*$/),
-        // so a JCR key like `resources-column-item` becomes the camelCased
-        // `resourcesColumnItem` at schema-emission time. Land the slot
-        // data under the same camelCased name so both sides agree.
-        const outKey = toCamelCase(slotKey) || slotKey;
-        // Named slots hold a single nested block. If the child walker
-        // returned more than one (unlikely — would mean the slot child
-        // was itself a container-of-containers), keep them as an array
-        // so nothing is dropped; the Studio will flag the shape mismatch
-        // rather than losing data.
-        if (childItems.length === 1) {
+        const outKey = toCamelCase(normalizeSlotBase(slotKey)) || slotKey;
+        const keys = slotGroups.get(outKey);
+        if (keys) keys.push(slotKey);
+        else slotGroups.set(outKey, [slotKey]);
+      }
+      for (const [outKey, groupKeys] of slotGroups) {
+        const childItems: PageBuilderItem[] = [];
+        for (const slotKey of groupKeys) {
+          const child = frame.node[slotKey] as AemNode;
+          childItems.push(
+            ...collectPageBuilder(
+              child,
+              `${frame.jcrPath}/${slotKey}`,
+              ctx,
+              filter,
+              exceptions,
+            ),
+          );
+        }
+        // The schema decides array-vs-single (global view, recorded in the
+        // registry); obey it. `slot-array` → always an array, even for a
+        // single authored instance, so the shape is stable across pages with
+        // different instance counts. A lone `slot-reference` carries one
+        // inline block; if more than one surfaced (container-of-containers,
+        // or instances the registry didn't model as an array) keep them as an
+        // array rather than dropping data.
+        const declaredType = entry.fieldTypes.get(outKey)?.type;
+        if (declaredType === "slot-array") {
+          inline[outKey] = childItems;
+        } else if (childItems.length === 1) {
           inline[outKey] = childItems[0];
         } else if (childItems.length > 1) {
           inline[outKey] = childItems;

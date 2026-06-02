@@ -28,6 +28,7 @@ export {
 } from "./fetcher-fixtures.ts";
 export type { FixtureLookup, FixtureMeta } from "./fetcher-fixtures.ts";
 export { AEM_AUTHORING_HINTS } from "./authoring-hints.ts";
+export { normalizeSlotBase } from "./slot-naming.ts";
 export { detectTruncations, isTruncationMarker } from "./infinity.ts";
 export type { ContentNode, TruncationFailureMarker } from "./infinity.ts";
 export { fetchInfinityTree } from "./fetch-tree.ts";
