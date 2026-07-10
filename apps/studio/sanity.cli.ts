@@ -12,6 +12,8 @@ const appId =
 
 export default defineCliConfig({
   api: { projectId, dataset },
-  deployment: appId ? { appId } : undefined,
   mediaLibrary: { aspectsPath: "./aspects" },
+  deployment: {
+    appId: 'c38f8xv8aq7vaqs295a4109d',
+  }
 });
